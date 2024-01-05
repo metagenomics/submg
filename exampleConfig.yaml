@@ -1,0 +1,53 @@
+# For more information on primary metagenome submission, see https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/primary.html
+
+# Mandatory fields
+RELEASE_DATE:
+STUDY: 'PRJEB71644' # The accession of your study
+PROJECT_NAME: 'Biogas4Horses' # A name for your project
+BAM_FILES: # The reads from your experiment mapped back to the assembly. Sorted and indexed. Needed to calculate coverages.
+  - 'mydata/1.sorted.bam'
+  - 'mydata/2.sorted.bam'
+ASSEMBLY:
+  ASSEMBLY_NAME: 'Biogas digester metagenome' # choose a name (cannot include taxonomy. see ena-docs link above for details)
+  SAMPLE_REFS: # Accessions of samples used to create this assembly. If more than one sample is referenced, a co-assembly submission will be created using ERC000011.
+    - 'ERS15898933'
+    - 'ERS15898932'
+    - 'ERS15898931'
+  PLATFORM: # All platforms that were used to generate reads
+    - 'Illumina HiSeq 1500'
+    - 'Illumina MiSeq'
+  PROGRAM: 'MEGAHIT' # assembly software
+  ISOLATION_SOURCE: 'biogas plant anaerobic digester' # describe where your sample was taken from
+  DATE: '2023-12-27T16:07' # When the samples that the assembly is based on were taken. Any ISO compliant time. Can be truncated from the righ (e.g. '2023-12')
+  LOCATION: 'Germany' # See https://www.ebi.ac.uk/ena/browser/view/ERC000011 for valid options
+  SPECIES_SCIENTIFIC_NAME: 'biogas fermenter metagenome' # Check the ENA metagenome taxonomy tree to find a taxonomy ID and species name fitting your sample
+  MOLECULE_TYPE: 'genomic DNA' # one of 'genomic DNA', 'genomic RNA', 'viral cRNA'
+
+# Fill the following field only if you assembly has already been uploaded. Leave empty otherwise.
+  ACCESSION: 'GCA_001684375.1' # Assembly accession if your assembly was uploaded alreads.
+
+# Fill the following feels if you want to use the --submit_assembly option
+  TAXID: '718289' # Must match SPECIES_SCIENTIFIC_NAME 
+  FASTA: './tests/data/assembly.fasta'
+  RUN_REFS: # Accessions of all runs that were used to create this assembly.
+    - "ERR11584976"
+    - "ERR11584979"
+    - "ERR11585864"
+  
+# Fill the following fields if you want to use the --submit_bins option
+BINS:
+  COMPLETENESS_SOFTWARE: 'CheckM' # software used to calculate completeness (e.g. 'CheckM')
+  BINS_DIRECTORY: './tests/data/bins'
+  BINS_QUALITY: './tests/data/checkm_quality.tsv' # This doesn't have to be CheckM output, but it needs to have the columns "Bin Id", "Completeness" and "Contamination"
+  NCBI_TAXONOMY_FILES:
+  - './tests/data/bacteria_taxonomy.tsv'
+  - './tests/data/archaea_taxonomy.tsv'
+  MANUAL_TAXONOMY_FILE: './tests/data/manual_taxonomy.tsv' # Only needed if you want to manually overwrite the taxonomy for certain bins
+  BINNING_SOFTWARE: 'metabat2'
+
+# Parameters below are optional. It is highly encouraged to provide as much information as possible. 
+# TODO
+METADATA:
+  GENERAL:
+  ASSEMBLY:
+  BINS:

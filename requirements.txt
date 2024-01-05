@@ -1,0 +1,5 @@
+pysam>=0.19.1
+PyYAML>=5.4.1
+Requests>=2.31.0
+tqdm>=4.64.1
+yaspin>=3.0.1

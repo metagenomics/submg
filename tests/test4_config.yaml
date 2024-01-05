@@ -1,0 +1,49 @@
+# This test will:
+# - query taxonomy for 3 bins
+# - submit samplesheet for 3 bins
+# - submit .fasta for 3 bins through webin cli
+
+# DOES NOT USE REAL DATA. ONLY SUBMIT TO TEST SERVER.
+
+# These fields are always mandatory
+RELEASE_DATE:
+STUDY: 'PRJEB71644' # The test study
+PROJECT_NAME: 'project name test_4' # A name for your project  
+
+BAM_FILES: # Needed to calculate coverages
+  - './tests/data/mapping/1.sorted.bam'
+  - './tests/data/mapping/2.sorted.bam'
+  #- './tests/data/mapping/1.bam'
+  
+# ASSEMBLY DATA (these fields are only needed if uploading an assembly)
+# for more information see https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/primary.html
+ASSEMBLY:
+  ACCESSION: GCA_001684375.1 # example: 'ERS27620076'
+  ASSEMBLY_NAME: "mock assembly for test_4_2"
+  SAMPLE_REFS: # Accessions of samples used to create this assembly. If more than one sample is referenced, a co-assembly submission will be created using ERC000011.
+    - 'ERS15898933'
+    - 'ERS15898932'
+    - 'ERS15898931'
+  PLATFORM: 'Illumina HiSeq 1500'
+  PROGRAM: 'MEGAHIT'
+  ISOLATION_SOURCE: 'biogas plant anaerobic digester' # describe where your sample was taken from
+  DATE: '2023-12' # Any ISO compliant time. Can be truncated from the right, e.g. 2008-01
+  LOCATION: 'Germany'
+  SPECIES_SCIENTIFIC_NAME: 'biogas fermenter metagenome' # see above
+
+  
+#is missing from the config YAML file.  DATE: '2023-12' # Any ISO compliant time. Can be truncated from the right, e.g. 2008-01
+
+# BIN DATA (these fields are only needed if uploading metagenomic bins)
+BINS:
+  BINS_DIRECTORY: './tests/data/bins'
+  BINS_QUALITY: './tests/data/checkm_quality.tsv' # This doesn't have to be CheckM output, but it needs to have the columns "Bin Id", "Completeness" and "Contamination"
+  NCBI_TAXONOMY_FILES:
+  - './tests/data/bacteria_taxonomy.tsv'
+  - './tests/data/archaea_taxonomy.tsv'
+  MANUAL_TAXONOMY_FILE: './tests/data/manual_taxonomy.tsv' # Only needed if you want to manually overwrite the taxonomy for certain bins
+  BINNING_SOFTWARE: 'metabat2'
+  BINNING_PARAMETERS: 'default'
+  TAXONOMIC_IDENTITY_MARKER: 'multi marker approach (GTDB-Tk)' # one of 'single marker approach (16S rRNA)', 'single marker approach (other)', 'multi marker approach (GTDB-Tk)', 'multi marker approach (other)'
+  COMPLETENESS_SOFTWARE: 'CheckM'
+  
