@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 import os
 
@@ -223,7 +225,7 @@ def main():
             contamination = bin_quality[name]['contamination']
             if contamination > staticConfig.max_contamination:
                 print(f"\nERROR: Bin {name} has a contamination score of {contamination} which is higher than {staticConfig.max_contamination}")
-                print(f"ENA will reject the submission of this bin. If you want to upload your data anyways, please remove the bin from your dataset.")
+                print(f"ENA will reject the submission of this bin. Consult the 'Contamination above 100%' of README.md for more information.")
                 exit(1)
         # Query bin taxonomy
         bin_taxonomy = get_bin_taxonomy(config, verbose)
