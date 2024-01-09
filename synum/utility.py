@@ -323,7 +323,7 @@ def calculate_coverage(depth_files: list,
             return local_coverage, local_length
 
     if verbose > 0:
-        print(f">Calculating coverage from depth files. This might take a while...")
+        print(f">Calculating coverage from depth files. This might take a while.")
 
     inuse = min(threads, len(depth_files))
     with yaspin(text=f"Processing with {inuse} threads...\t", color="yellow") as spinner:
@@ -457,16 +457,16 @@ def read_receipt(receipt_path: str, verbose=1) -> str:
     analysis_element = root.find('.//ANALYSIS')
     if analysis_element is not None:
         accession = analysis_element.attrib['accession']
-        if verbose > 0:
-            print(f"\n\t...analysis submission successful, accession is {accession}")
+        #if verbose > 0:
+        #    print(f"\n>...analysis submission successful, accession is {accession}\n\n")
         return accession
 
     # Check for SAMPLE receipt
     sample_element = root.find('.//SAMPLE')
     if sample_element is not None:
         accession = sample_element.attrib['accession']
-        if verbose > 0:
-            print(f"\t...sample submission successful, accession is {accession}")
+        #if verbose > 0:
+        #    print(f"\t...sample submission successful, accession is {accession}")
         return accession
 
     # If neither, print error message

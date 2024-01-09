@@ -65,7 +65,7 @@ def __check_config(args: argparse.Namespace,
                     print("#####")
     if args.submit_assembly:
         # Check if assembly fasta file looks correct
-        fasta_path = utility.from_config(config, 'ASSEMBLY', 'FASTA')
+        fasta_path = utility.from_config(config, 'ASSEMBLY', 'FASTA_FILE')
         utility.check_fasta(fasta_path)
         # Is the molecule type valid?
         molecule_type = utility.from_config(config, 'ASSEMBLY', 'MOLECULE_TYPE')
@@ -252,6 +252,9 @@ def main():
                     depth_files,
                     threads=args.threads,
                     verbose=verbose)
+
+    print(">You will receive final accessions once your submission has been processed by ENA.")
+    print(">ENA will send those final accession by email to the contact adress of your ENA account.")
 
     # Cleanup
     if not args.keep_depth_files:

@@ -26,7 +26,7 @@ ASSEMBLY:
   PLATFORM:
     - 'Illumina HiSeq 1500'
     - 'Illumina MiSeq'
-  FASTA: '../data_for_colpyMAG/mono_assembly_analysis/megahit/final.contigs.fa.gz'
+  FASTA_FILE: '../data_for_colpyMAG/mono_assembly_analysis/megahit/final.contigs.fa.gz'
   PROGRAM: 'MEGAHIT' # assembly software (e.g. 'MEGAHIT')
   MOLECULE_TYPE: 'genomic DNA' # one of 'genomic DNA', 'genomic RNA', 'viral cRNA'
   RUN_REFS: # Accessions of all runs that were used to create this assembly.

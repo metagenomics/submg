@@ -349,7 +349,7 @@ def get_bin_quality(config, verbose) -> dict:
             bin_basenames.add(basename)
     
     # Get quality scores
-    quality_file = utility.from_config(config, 'BINS', 'BINS_QUALITY')
+    quality_file = utility.from_config(config, 'BINS', 'BINS_QUALITY_FILE')
     result = {}
     if verbose > 0:
         print(f"\t...reading bin quality file at {os.path.abspath(quality_file)}")
@@ -396,7 +396,7 @@ def __prep_bins_samplesheet(config: dict,
 
     bin_quality = get_bin_quality(config, verbose=verbose)
 
-    project_name = utility.from_config(config, 'PROJECT_NAME')
+#    project_name = utility.from_config(config, 'PROJECT_NAME')
 
     sequencing_platform = utility.from_config(config, 'ASSEMBLY', 'PLATFORM')
     if type(sequencing_platform) == list:
@@ -410,7 +410,7 @@ def __prep_bins_samplesheet(config: dict,
     
     assembly_quality = staticConfig.bin_assembly_quality
     
-    isolation_source = utility.from_config(config, 'ASSEMBLY', 'ISOLATION_SOURCE')
+#    isolation_source = utility.from_config(config, 'ASSEMBLY', 'ISOLATION_SOURCE')
     
     collection_date = utility.from_config(config, 'ASSEMBLY', 'DATE')
     
@@ -474,7 +474,7 @@ def __prep_bins_samplesheet(config: dict,
         
         # Add all specified attributes
         attribute_data = {
-            "project name": project_name,
+#            "project name": project_name,
             "sequencing method": sequencing_method,
             "assembly software": assembly_software,
             "completeness score": completeness,
@@ -601,9 +601,9 @@ def __prep_bin_manifest(config: dict,
     if isinstance(platform, list):
         platform = ",".join(platform)
 
-#    run_refs = utility.from_config(config, 'ASSEMBLY', 'RUN_REFS')
-#    if isinstance(run_refs, list):
-#        run_refs = ",".join(run_refs)
+    run_refs = utility.from_config(config, 'ASSEMBLY', 'RUN_REFS')
+    if isinstance(run_refs, list):
+        run_refs = ",".join(run_refs)
 
     bin_assembly_name = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME') + "_bin_" + bin_sample_accession
     if len(bin_assembly_name) > staticConfig.max_assembly_name_length:
@@ -618,9 +618,9 @@ def __prep_bin_manifest(config: dict,
         ['COVERAGE', bin_coverage],
         ['PROGRAM', utility.from_config(config, 'BINS', 'BINNING_SOFTWARE')],
         ['PLATFORM', platform],
-    #    ['MOLECULETYPE', utility.from_config(config, 'ASSEMBLY','MOLECULE_TYPE')],
+        ['MOLECULETYPE', utility.from_config(config, 'ASSEMBLY','MOLECULE_TYPE')],
     #    ['DESCRIPTION', utility.from_config(config, 'ASSEMBLY','DESCRIPTION')],
-    #    ['RUN_REF', run_refs],
+        ['RUN_REF', run_refs],
         ['FASTA', os.path.basename(gzipped_fasta_path)]
     ]
 
@@ -760,9 +760,10 @@ def submit_bins(config: dict,
 
     # Upload the bins
     if verbose>0:
-        print(f">Using ENA webin-cli to submit bins.\n\n")
+        print(f">Using ENA webin-cli to submit bins.\n")
     usr, pwd = utility.get_login()
     bin_receipts = {}
+    bin_accessions = {}
     for bin_name, bin_staging_dir in staging_directories.items():
         bin_logging_dir = os.path.join(logging_dir, f"{bin_name}")
         os.makedirs(bin_logging_dir, exist_ok=False)
@@ -771,19 +772,28 @@ def submit_bins(config: dict,
         assembly_name = utility.from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
         subdir_name = assembly_name + '_' + bin_name
 
-        bin_receipts[bin_name] = webin_cli(manifest=bin_manifest,
-                                           inputdir=bin_staging_dir,
-                                           outputdir=bin_logging_dir,
-                                           username=usr,
-                                           password=pwd,
-                                           subdir_name=subdir_name,
-                                           submit=submit,
-                                           test=test,
-                                           verbose=verbose)
+        bin_receipts[bin_name], bin_accessions[bin_name] = webin_cli(manifest=bin_manifest,
+                                                                     inputdir=bin_staging_dir,
+                                                                     outputdir=bin_logging_dir,
+                                                                     username=usr,
+                                                                     password=pwd,
+                                                                     subdir_name=subdir_name,
+                                                                     submit=submit,
+                                                                     test=test,
+                                                                     verbose=verbose)
+        print("")
         
     if verbose>0:
-        print("\nSubmission is complete!.")
+        print("\n>Bin submission completed!")
     if verbose>1:
-        print(f"bin receipt paths are:")
+        print(f">Bin receipt paths are:")
         for bin_name, bin_receipt in bin_receipts.items():
             print(f"\t{bin_name}: {bin_receipt}")
+
+    bin_to_accession_file = os.path.join(logging_dir, 'bin_to_preliminary_accession.tsv')
+    with open(bin_to_accession_file, 'w') as f:
+        writer = csv.writer(f, delimiter='\t')
+        for bin_name, accession in bin_accessions.items():
+            writer.writerow([bin_name, accession])
+
+    print(f">The preliminary(!) accessions of your bins have been written to {bin_to_accession_file}.")

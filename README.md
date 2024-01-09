@@ -4,15 +4,33 @@
   <source media="(prefers-color-scheme: light)" srcset="synum/logo_light.png">
   <img alt="Synom Logo" src="synum/logo_light.png">
 </picture>
+&nbsp;
 
-<br>
-
+&nbsp;
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ttubb/synum)
 
+
 # synum
-Uploading hundreds of bins is often the most cumbersome step when submitting data for a metagenome study. Synum aids in the submission of (co-)metagenome assemblies as well es MAG bins to the European Nucleotide Archive (ENA). After you enter your (meta)data in single YAML form, Synum derives additional information where required, creates all samplesheets and manifests and uploads them to your ENA account. The tool will not work for non-metagenome submissions.
+Synum aids in the submission of (co-)metagenome assemblies as well es MAG bins to the European Nucleotide Archive (ENA). After you enter your (meta)data in single YAML form, Synum derives additional information where required, creates all samplesheets and manifests and uploads everything to your ENA account. The tool will not work for non-metagenome submissions.
 
 Be aware that the [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenome bin and that bins should be submitted before MAGs. We plan to support MAG upload in the future. In case you intend to upload assemblies assembled from third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
+
+
+- [Installation](#installation)
+- [Usage](#usage)
+  * [Prerequisites](#prerequisites)
+  * [ENA Development Test Server](#ena-development-test-server)
+  * [The Config File](#the-config-file)
+  * [Arguments](#arguments)
+  * [Examples](#examples)
+    + [Uploading an Assembly](#uploading-an-assembly)
+    + [Uploading Bins](#uploading-bins)
+    + [Uploading an Assembly and Bins](#uploading-an-assembly-and-bins)
+- [Taxonomy Assignment](#taxonomy-assignment)
+- [Dereplication](#dereplication)
+- [Bin Contamination above 100%](#bin-contamination-above-100-percent)
+- [Support](#support)
+
 
 # Installation
 - Make sure Python 3.10 or higher is installed
@@ -118,8 +136,8 @@ In some cases synum will be unable to assign a valid taxonomy to a bin. The subm
 # Dereplication
 If your bins are the result of dereplicating data from a single assembly you can use synum as described above. If your bins are the result of dereplicating data from multiple different assemblies, you need to split them based on which assembly they belong to. You can then start synum seperately for each assembly (and corresponding set of bins).
 
-# Bin Contamination above 100%
-When calculating completeness and contamination of a bin with e.g. CheckM, contamination values above 100% can occur. [This is not an error](https://github.com/Ecogenomics/CheckM/issues/107). However, the ENA API will refuse to accept bins with contamination values above 100%. This issue is unrelated to synum, but to avoid partial submissions synum will refuse to submit data if it detects such a bin. If you have bins with contamination values above 100%, you can either leave them out by removing them from you dataset or manually set the contamination value to 100% in the `BINS_QUALITY` file you provide to synum.
+# Bin Contamination above 100 percent
+When calculating completeness and contamination of a bin with e.g. CheckM, contamination values above 100% can occur. [This is not an error](https://github.com/Ecogenomics/CheckM/issues/107). However, the ENA API will refuse to accept bins with contamination values above 100%. This issue is unrelated to synum, but to avoid partial submissions synum will refuse to submit data if it detects such a bin. If you have bins with contamination values above 100%, you can either leave them out by removing them from you dataset or manually set the contamination value to 100% in the `BINS_QUALITY_FILE` file you provide to synum.
 
-## Support
+# Support
 Synum is being actively developed. Please use the github issue tracker to report problems. A discussions page is available for questions, comments or suggestions. 

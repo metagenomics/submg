@@ -6,59 +6,43 @@
 # - submit samplesheet for 3 bins
 # - submit .fasta for 3 bins through webin cli
 
-# DOES NOT USE REAL DATA. ONLY SUBMIT TO TEST SERVER.
+# THIS DOES NOT USE REAL DATA. ONLY SUBMIT TO TEST SERVER.
 
-# These fields are always mandatory
-RELEASE_DATE:
-STUDY: 'PRJEB71644' # The test study
-PROJECT_NAME: 'project name test_1' # A name for your project  
-
-BAM_FILES: # Needed to calculate coverages
+STUDY: 'PRJEB71644'
+BAM_FILES:
   - './tests/data/mapping/1.sorted.bam'
   - './tests/data/mapping/2.sorted.bam'
-  #- './tests/data/mapping/1.bam'
   
-# ASSEMBLY DATA (these fields are only needed if uploading an assembly)
-# for more information see https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/primary.html
 ASSEMBLY:
-  ACCESSION: # example: 'ERS27620076'
-  ASSEMBLY_NAME: 'mock assembly of test_1_3' # choose a name (cannot include taxonomy. see ena-docs link above for details)
-  ISOLATION_SOURCE: 'biogas plant anaerobic digester' # describe where your sample was taken from
+  ASSEMBLY_NAME: 'mock assembly of test_1_8'
+  ISOLATION_SOURCE: 'biogas plant anaerobic digester'
   PLATFORM:
     - 'Illumina HiSeq 1500'
     - 'Illumina MiSeq'
-  FASTA: './tests/data/assembly.fasta'
-  PROGRAM: 'MEGAHIT' # assembly software (e.g. 'MEGAHIT')
-  MOLECULE_TYPE: 'genomic DNA' # one of 'genomic DNA', 'genomic RNA', 'viral cRNA'
-  RUN_REFS: # Accessions of all runs that were used to create this assembly.
+  FASTA_FILE: './tests/data/assembly.fasta'
+  PROGRAM: 'MEGAHIT'
+  MOLECULE_TYPE: 'genomic DNA'
+  RUN_REFS:
     - "ERR11584976"
     - "ERR11584979"
     - "ERR11585864"
-  SAMPLE_REFS: # Accessions of samples used to create this assembly. If more than one sample is referenced, a co-assembly submission will be created using ERC000011.
+  SAMPLE_REFS:
     - 'ERS15898933'
     - 'ERS15898932'
     - 'ERS15898931'
-
-  DATE: '2023-12' # Any ISO compliant time. Can be truncated from the right, e.g. 2008-01
+  DATE: '2023-12'
   LOCATION: 'Germany'
-  SPECIES_SCIENTIFIC_NAME: 'biogas fermenter metagenome' # see above
-
-  # Fields below only relevant for Co-Assemblies
-  TAXID: '718289' # Check the ENA metagenome taxonomy tree to find a taxonomy ID and species name fitting your sample
+  SPECIES_SCIENTIFIC_NAME: 'biogas fermenter metagenome'
+  TAXID: '718289'
   
-
-  
-  
-
-# BIN DATA (these fields are only needed if uploading metagenomic bins)
 BINS:
-  COMPLETENESS_SOFTWARE: 'CheckM' # software used to calculate completeness (e.g. 'CheckM')
+  COMPLETENESS_SOFTWARE: 'CheckM'
   BINS_DIRECTORY: './tests/data/bins'
-  BINS_QUALITY: './tests/data/checkm_quality.tsv' # This doesn't have to be CheckM output, but it needs to have the columns "Bin Id", "Completeness" and "Contamination"
+  BINS_QUALITY_FILE: './tests/data/checkm_quality.tsv'
   NCBI_TAXONOMY_FILES:
   - './tests/data/bacteria_taxonomy.tsv'
   - './tests/data/archaea_taxonomy.tsv'
-  MANUAL_TAXONOMY_FILE: './tests/data/manual_taxonomy.tsv' # Only needed if you want to manually overwrite the taxonomy for certain bins
+  MANUAL_TAXONOMY_FILE: './tests/data/manual_taxonomy.tsv'
   BINNING_SOFTWARE: 'metabat2'
 
   

@@ -233,7 +233,7 @@ def submit_assembly(config: dict,
     ## make a directory and stage the fasta file
     fasta_submission_dir = os.path.join(assembly_submission_dir, "fasta")
     os.makedirs(fasta_submission_dir, exist_ok=False)
-    fasta_path, gzipped = utility.check_fasta(from_config(config, 'ASSEMBLY', 'FASTA'))
+    fasta_path, gzipped = utility.check_fasta(from_config(config, 'ASSEMBLY', 'FASTA_FILE'))
     gzipped_fasta_path = os.path.join(fasta_submission_dir, f"assembly_upload{staticConfig.zipped_fasta_extension}")
     if not gzipped:
         with open(fasta_path, 'rb') as f_in:
@@ -257,18 +257,24 @@ def submit_assembly(config: dict,
         print(f">Using ENA webin-cli to submit assembly.\n\n")
     assembly_name = utility.from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
     usr, pwd = utility.get_login()
-    receipt = webin_cli(manifest=manifest_path,
-                        inputdir=fasta_submission_dir,
-                        outputdir=fasta_logging_dir,
-                        username=usr,
-                        password=pwd,
-                        subdir_name=assembly_name,
-                        submit=submit,
-                        test=test,
-                        verbose=verbose)
+    receipt, accession = webin_cli(manifest=manifest_path,
+                                   inputdir=fasta_submission_dir,
+                                   outputdir=fasta_logging_dir,
+                                   username=usr,
+                                   password=pwd,
+                                   subdir_name=assembly_name,
+                                   submit=submit,
+                                   test=test,
+                                   verbose=verbose)
     
     # Parse the receipt
     assembly_fasta_accession = utility.read_receipt(receipt, verbose)
+
+    assembly_accession_file = os.path.join(logging_dir, "assembly_preliminary_accession.txt")
+    with open(assembly_accession_file, 'w') as f:
+        f.write(assembly_fasta_accession)
+
+    print(f"\n>The preliminary assembly accession has been written to {assembly_accession_file}\n")
 
 
     return assembly_sample_accession, assembly_fasta_accession

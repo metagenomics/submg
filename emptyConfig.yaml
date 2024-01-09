@@ -1,77 +1,71 @@
 # For more information on metagenome submission, see https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/primary.html
 
-### MANDATORY FIELDS                                                         ###
+### MANDATORY FIELDS ###
 # STUDY: The accession of your study (which has to already exist in ENA)
-STUDY: 'PRJEB71644'
+STUDY:
 # BAM_FILES: The reads from your experiment mapped back to the assembly.
 # Should be sorted and indexed. Needed to calculate coverages.
 BAM_FILES:
-  - 'mydata/1.sorted.bam'
-  - 'mydata/2.sorted.bam'
-
+  - 
+# ASSEMBLY-section
 ASSEMBLY:
   # ASSEMBLY_NAME: choose a name (cannot include taxonomy. see ena-docs link above for details)
-  ASSEMBLY_NAME: 'Biogas digester metagenome' 
+  ASSEMBLY_NAME: 
   # SAMPLE_REFS: Accessions of samples used to create this assembly.
   # If more than one sample is referenced, a co-assembly submission will be created using ERC000011.
   SAMPLE_REFS: 
-    - 'ERS15898933'
-    - 'ERS15898932'
-    - 'ERS15898931'
+    - 
   # PLATFORM: All platforms that were used to generate reads
   PLATFORM:
-    - 'Illumina HiSeq 1500'
-    - 'Illumina MiSeq'
+    - 
   # PROGRAM: Software used to generate the assembly
-  PROGRAM: 'MEGAHIT'
+  PROGRAM:
   # ISOLATION_SOURCE: # describe where your sample was taken from
-  ISOLATION_SOURCE: 'biogas plant anaerobic digester'
+  ISOLATION_SOURCE:
   # DATE: When the samples that the assembly is based on were taken.
   # Any ISO compliant time. Can be truncated from the righ (e.g. '2023-12-27T16:07' or '2023-12')
-  DATE: '2023-12-27T16:07'
+  DATE:
   # LOCATION: see https://www.ebi.ac.uk/ena/browser/view/ERC000011 for valid options
-  LOCATION: 'Germany'
+  LOCATION:
   # SPECIES_SCIENTIFIC_NAME: Taxonomic identifier of the metagenome assembly.
   # Check the ENA metagenome taxonomy tree to find a taxonomy ID and species name fitting your sample
-  SPECIES_SCIENTIFIC_NAME: 'biogas fermenter metagenome' 
+  SPECIES_SCIENTIFIC_NAME: 
   # MOLECULE_TYPE: one of 'genomic DNA', 'genomic RNA', 'viral cRNA'
-  MOLECULE_TYPE: 'genomic DNA'
+  MOLECULE_TYPE:
 
 ### FILL THE FOLLOWING FIELDS ONLY IF YOUR ASSEMBLY HAS ALREADY BEEN UPLOADED ###
 ### LEAVE EMPTY OTHERWISE                                                     ###
-  ACCESSION: 'GCA_001684375.1'
+  # ACCESSION: ENA accession of the assembly you have submitted
+  ACCESSION:
 
 ### FILL THE FOLLOWING FIELDS IF YOU WANT TO USE THE --submit_assembly OPTION ###
 ### LEAVE EMPTY OTHERWISE                                                     ###
   # TAXID: taxonomic identifier of the assembly. Must match SPECIES_SCIENTIFIC_NAME 
-  TAXID: '718289' 
+  TAXID:
   # FASTA_FILE: .fasta of the assembly
-  FASTA_FILE: './tests/data/assembly.fasta'
+  FASTA_FILE:
   # RUN_REFS: Accessions of all runs that were used to create this assembly
   # (you need to submit all runs before using this tool)
   RUN_REFS:
-    - "ERR11584976"
-    - "ERR11584979"
-    - "ERR11585864"
+    -
   
 ### FILL THE FOLLOWING FIELDS ONLY IF YOU WANT TO USE THE --submit_bins OPTION ###
 ### LEAVE EMPTY OTHERWISE                                                      ###
 BINS:
   # COMPLETENESS_SOFTWARE: software used to calculate completeness (e.g. 'CheckM')
-  COMPLETENESS_SOFTWARE: 'CheckM'
+  COMPLETENESS_SOFTWARE:
   # BINS_DIRECTORY: Directory containing fasta files of all metagenome bins for submission
-  BINS_DIRECTORY: './tests/data/bins'
+  BINS_DIRECTORY:
   # BINS_QUALITY_FILE: A file with the columns "Bin Id", "Completeness" and "Contamination" - CheckM output will work
-  BINS_QUALITY_FILE: './tests/data/checkm_quality.tsv'
+  BINS_QUALITY_FILE:
   # NCBI_TAXONOMY_FILES: Any number of files with NCBI taxonomy information about the bins. See the examples for how they are structured.
   NCBI_TAXONOMY_FILES:
-  - './tests/data/bacteria_taxonomy.tsv'
-  - './tests/data/archaea_taxonomy.tsv'
+  - 
   # MANUAL_TAXONOMY_FILE: Scientific names and taxids for bins. See example file for the structure.
   # If you provide information for a bin in NCBI_TAXONOMY_FILES as well as in this, the information from this file will be used.
-  MANUAL_TAXONOMY_FILE: './tests/manual_taxonomy_3bins.tsv'
+  MANUAL_TAXONOMY_FILE:
   # BINNING_SOFTWARE: The program that was used for binning.
-  BINNING_SOFTWARE: 'metabat2'
+  BINNING_SOFTWARE:
 
 # Parameters below are optional. It is highly encouraged to provide as much information as possible. 
 # TODO

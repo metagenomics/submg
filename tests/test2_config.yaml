@@ -3,48 +3,32 @@
 # - calculate depth from 2 .bam files (one of which is unsorted and unindexed)
 # - submit a coassembly .fasta through webin cli
 
-# DOES NOT USE REAL DATA. ONLY SUBMIT TO TEST SERVER.
+# THIS DOES NOT USE REAL DATA. ONLY SUBMIT TO TEST SERVER.
 
-# These fields are always mandatory
-RELEASE_DATE:
-STUDY: 'PRJEB71644' # The test study
-PROJECT_NAME: 'project name test_2' # A name for your project  
-
-BAM_FILES: # Needed to calculate coverages
+STUDY: 'PRJEB71644'
+BAM_FILES:
   - './tests/data/mapping/2.unindexed.bam'
   - './tests/data/mapping/1.unsorted.bam'
   
-# ASSEMBLY DATA (these fields are only needed if uploading an assembly)
-# for more information see https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/primary.html
 ASSEMBLY:
-  ACCESSION: # example: 'ERS27620076'
-  ASSEMBLY_NAME: 'mock assembly for test_2' # choose a name (cannot include taxonomy. see ena-docs link above for details)
-  DESCRIPTION: 'Coassembly of data from biogas plant' # describe your analysis
-  ISOLATION_SOURCE: 'biogas plant anaerobic digester' # describe where your sample was taken from
-  BROAD_ENVIRONMENTAL_CONTEXT: 'anaerobic digestion'
-  LOCAL_ENVIRONMENTAL_CONTEXT: '2 stage biogas digester'
-  ENVIRONMENTAL_MEDIUM: 'feedstock'
+  ASSEMBLY_NAME: 'mock assembly for test_2'
+  ISOLATION_SOURCE: 'biogas plant anaerobic digester'
   PLATFORM:
     - 'Illumina HiSeq 1500'
     - 'Illumina MiSeq'
-  FASTA: './tests/data/assembly.fasta'
-  PROGRAM: 'MEGAHIT' # assembly software (e.g. 'MEGAHIT')
-  COMPLETENESS_SOFTWARE: 'CheckM' # software used to calculate completeness (e.g. 'CheckM')
-  MOLECULE_TYPE: 'genomic DNA' # one of 'genomic DNA', 'genomic RNA', 'viral cRNA'
-  RUN_REFS: # Accessions of all runs that were used to create this assembly.
+  FASTA_FILE: './tests/data/assembly.fasta'
+  PROGRAM: 'MEGAHIT'
+  COMPLETENESS_SOFTWARE: 'CheckM'
+  MOLECULE_TYPE: 'genomic DNA'
+  RUN_REFS:
     - "ERR11584976"
     - "ERR11584979"
     - "ERR11585864"
-  SAMPLE_REFS: # Accessions of samples used to create this assembly. If more than one sample is referenced, a co-assembly submission will be created using ERC000011.
+  SAMPLE_REFS:
     - 'ERS15898933'
     - 'ERS15898932'
     - 'ERS15898931'
-
-  DATE: '2023-12' # Any ISO compliant time. Can be truncated from the right, e.g. 2008-01
+  DATE: '2023-12'
   LOCATION: 'Germany'
-  LONGITUDE: # optional
-  LATITUDE: # optional
-  SPECIES_SCIENTIFIC_NAME: 'biogas fermenter metagenome' # see above
-
-  # Fields below only relevant for Co-Assemblies
-  TAXID: '718289' # Check the ENA metagenome taxonomy tree to find a taxonomy ID and species name fitting your sample
+  SPECIES_SCIENTIFIC_NAME: 'biogas fermenter metagenome'
+  TAXID: '718289'
