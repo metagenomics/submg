@@ -1,21 +1,31 @@
-import os, csv, requests, gzip, shutil
-
+import os
+import csv
+import requests
+import gzip
+import shutil
 import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
 
-import utility
-from utility import from_config
-from statConf import staticConfig
-from webinWrapper import webin_cli
-
-
-
+from synum import utility
+from synum.utility import from_config
+from synum.statConf import staticConfig
+from synum.webinWrapper import webin_cli
 
 def __prep_coassembly_samplesheet(config: dict,
                                   outdir: str,
                                   verbose: int = 1,
                                   staticConfig=staticConfig) -> str:
     """
+    Prepares the samplesheet for a co-assembly.
+
+    Args:
+        config (dict): The configuration dictionary.
+        outdir (str): The directory where the samplesheet will be written.
+        verbose (int, optional): The verbosity level. Defaults to 1.
+        staticConfig (staticConfig, optional): The static configuration object. Defaults to staticConfig.
+
+    Returns:
+        str: The path to the samplesheet.
     """
     checklist = staticConfig.co_assembly_checklist
 
@@ -75,9 +85,14 @@ def __submit_coassembly_samplesheet(sample_xml: str,
     Uploads the samplesheet to ENA.
 
     Args:
+        sample_xml (str): The path to the samplesheet.
+        staging_dir (str): The staging directory.
+        logging_dir (str): The logging directory.
+        url (str): The ENA API URL.
+        verbose (int, optional): The verbosity level. Defaults to 1.
 
     Returns:
-        str: The accession number of the uploaded samplesheet.
+        str: The accession number of the uploaded sample.
     """
 
     submission_xml = os.path.join(staging_dir, "co_assembly_samplesheet_submission.xml")

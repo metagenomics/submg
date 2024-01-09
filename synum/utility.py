@@ -1,21 +1,16 @@
-""" Collection of multiple utility scripts
-"""
-
 import os
 import csv
 import yaml
 import pysam
 import time
-from statConf import staticConfig
-
-# from yaspin import yaspin
-from tqdm import tqdm
 import requests
 import hashlib
 import xml.etree.ElementTree as ET
-
 import concurrent.futures
+from tqdm import tqdm
 from yaspin import yaspin
+
+from synum.statConf import staticConfig
 
 def build_sample_submission_xml(outpath: str,
                                   hold_until_date: str = None,

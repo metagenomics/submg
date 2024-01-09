@@ -2,35 +2,35 @@
 
 import argparse
 import os
-
-import utility
-from statConf import staticConfig
-
-from tqdm import tqdm
-
-from datetime import datetime
 import time
+from tqdm import tqdm
+from datetime import datetime
 
-
-from webinWrapper import find_webin_cli_jar
-from assemblySubmission import submit_assembly
-from binSubmission import submit_bins, get_bin_taxonomy, query_ena_taxonomy, get_bin_quality
-
-from synum import staticConfig
-
+from synum import utility
+from synum.statConf import staticConfig
+from synum.webinWrapper import find_webin_cli_jar
+from synum.assemblySubmission import submit_assembly
+from synum.binSubmission import submit_bins, get_bin_taxonomy, query_ena_taxonomy, get_bin_quality
 
 def __check_date(date: str,
                  verbose: int = 1) -> None:
     """
     Check if the input is an ISO compliant date string.
+
+    Args:
+        date:    The date string to check.
+        verbose: The verbosity level.
+
+    Raises:
+
     """
     valid_formats = [
-        "%Y",              # Year only
-        "%Y-%m",           # Year-month
-        "%Y-%m-%d",        # Year-month-day
-        "%Y-%m-%dT%H",     # Year-month-day hour
-        "%Y-%m-%dT%H:%M",  # Year-month-day hour:minute
-        "%Y-%m-%dT%H:%M:%S",  # Year-month-day hour:minute:second
+        "%Y",                   # Year only
+        "%Y-%m",                # Year-month
+        "%Y-%m-%d",             # Year-month-day
+        "%Y-%m-%dT%H",          # Year-month-day hour
+        "%Y-%m-%dT%H:%M",       # Year-month-day hour:minute
+        "%Y-%m-%dT%H:%M:%S",    # Year-month-day hour:minute:second
     ]
     valid = False
     for fmt in valid_formats:
@@ -48,7 +48,14 @@ def __check_date(date: str,
 def __check_config(args: argparse.Namespace,
                    config: dict,
                    verbose: int) -> None:
-    
+    """
+    Does a superficial check of the config file.
+
+    Args:
+        args:    The command line arguments.
+        config:  The config file as a dictionary.
+        verbose: The verbosity level.
+    """
     if verbose>1:
         print(f">Checking config file at {args.config}")
 
@@ -124,6 +131,14 @@ def __check_config(args: argparse.Namespace,
 def __construct_depth_files(args: argparse.Namespace,
                             config: dict,
                             verbose: int) -> dict:
+    """
+    Construct depth files from bam files.
+
+    Args:
+        args:    The command line arguments.
+        config:  The config file as a dictionary.
+        verbose: The verbosity level.
+    """
     if verbose:
         print(f">Constructing depth files from bam files using {args.threads} threads. This might be stuck at 0% for a while.")
     depth_files = []
@@ -141,7 +156,16 @@ def __construct_depth_files(args: argparse.Namespace,
 
 def __preflight_checks(args: argparse.Namespace,
                        verbose: int) -> None:
-    
+    """
+    Check if everything looks like we can start.
+
+    Args:
+        args:    The command line arguments.
+        verbose: The verbosity level.
+
+    Returns:
+        The config file as a dictionary.
+    """
     # Check if config file exists
     if not os.path.isfile(args.config):
         print(f"\nERROR: The config file '{args.config}' does not exist.")
@@ -182,6 +206,9 @@ def __preflight_checks(args: argparse.Namespace,
     return config
 
 def main():
+    """
+    Main function.
+    """
     
     # Parsing command line input
     parser = argparse.ArgumentParser(description="""Tool for submitting metagenome bins to the European Nucleotide Archive.
@@ -198,9 +225,7 @@ def main():
     parser.add_argument("-v", "--version",          action="version", version=f"%(prog)s {staticConfig.synum_version}")
     args = parser.parse_args()
 
-    # Verbosity
     verbose = args.verbosity
-
 
     # Print version
     if verbose>0:
@@ -211,14 +236,12 @@ def main():
             print(">Making a LIVE SUBMISSION to the ENA production server.")
             time.sleep(3)
 
-    # Read in config and check if everything looks like we can start
     config = __preflight_checks(args, verbose)
 
     # If we are submitting bins, get the quality scores and the
     # taxonomic information.
     # We do this early so we notice issues before we start staging files.
     if args.submit_bins:
-        # Get bin quality scores
         bin_quality = get_bin_quality(config, verbose=0)
         # Test if there are bins which are too contaminated
         for name in bin_quality.keys():
@@ -227,14 +250,11 @@ def main():
                 print(f"\nERROR: Bin {name} has a contamination score of {contamination} which is higher than {staticConfig.max_contamination}")
                 print(f"ENA will reject the submission of this bin. Consult the 'Contamination above 100%' of README.md for more information.")
                 exit(1)
-        # Query bin taxonomy
         bin_taxonomy = get_bin_taxonomy(config, verbose)
        
-    # Construct depth files
     depth_files = __construct_depth_files(args, config, verbose)
 
    
-    # Assembly submission
     if args.submit_assembly:
         submit_assembly(config,
                         args.staging_dir,
@@ -243,7 +263,7 @@ def main():
                         threads=args.threads,
                         verbose=verbose)
         
-    # Bin submission
+    # Bin submision
     if args.submit_bins:
         submit_bins(config,
                     bin_taxonomy,

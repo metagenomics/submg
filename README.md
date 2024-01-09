@@ -37,7 +37,8 @@ Be aware that the [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/l
 - Make sure Java 1.8 or higher is installed
 - Clone this repository (`git clone https://github.com/ttubb/synum`)
 - Switch into the directory that you just cloned
-- Run the `install.py` script (`python3 ./install.py`) which will download the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli). 
+- Run `python -m pip install .`
+- Run `python3 webin_downloader.py` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli). 
 
 # Usage
 

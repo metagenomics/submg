@@ -1,20 +1,25 @@
 import csv
 import os
-
 import requests
 from tqdm import tqdm
-
 import shutil
 import gzip
-
 import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
 
-from webinWrapper import webin_cli
-import utility
-from statConf import staticConfig
+from synum import utility
+from synum.webinWrapper import webin_cli
+from synum.statConf import staticConfig
 
 def __report_tax_issues(issues, verbose=1):
+    """
+    Reports the issues encountered when trying to determine the taxonomy
+    of metagenome bins automatically.
+
+    Args:
+        issues (list): A list of dictionaries with the issues encountered.
+        verbose (int, optional): Verbosity level. Defaults to 1.
+    """
     print(f"\nERROR: Unable to determine taxonomy for {len(issues)} bins:")
     problematic_bins = [x['mag_bin'] for x in issues]
     problematic_bins = set(problematic_bins)
@@ -43,8 +48,20 @@ def query_ena_taxonomy(level: str,
                          classification: str,
                          filtered: bool = True,
                          verbose: int = 1) -> list:
-    """ Based on the query string, use the ENA REST API to get
-        a suggestion for the taxonomy.
+    """ 
+    Based on the query string, use the ENA REST API to get a suggestion for the
+    taxonomy.
+
+    Args:
+        level (str): The taxonomic level of the query string.
+        domain (str): The domain of the query string.
+        classification (str): The query string.
+        filtered (bool, optional): If True, only return the best suggestion.
+            Defaults to True.
+        verbose (int, optional): Verbosity level. Defaults to 1.
+
+    Returns:
+        list: A list of dictionaries with the suggestions from the ENA REST API.
     """
     # If we know the species we just query for that.
     if level == 'species':
@@ -114,7 +131,8 @@ def __calculate_bin_coverage(fasta: str,
 
     Args:
         fasta (str): Path to the fasta file of the bin.
-        depth_files (list): List of paths to the depth files.
+        depth_files (list): A list of paths to the depth files.
+        threads (int, optional): Number of threads to use for samtools. Defaults to 4.
         verbose (int, optional): Verbosity level. Defaults to 1.
 
     Returns:
@@ -145,6 +163,14 @@ def __read_ncbi_taxonomy(ncbi_taxonomy_file: str) -> dict:
     return a dictionary with a taxid and a scientific name for each genome.
     Important note: The output of GTDB-TKs 'gtdb_to_ncbi_majority_vote.py' script
     might miss some genome bins which didn't get GTDB classifications.
+
+    Args:
+        ncbi_to_taxonomy_file (str): Output files of GTDB-TKs
+            'gtdb_to_ncbi_majority_vote.py' script or NCBI taxonomy file with a
+            similar structure.
+
+    Returns:
+        dict: A dictionary with a taxid and a scientific name for each genome. 
     """
     result = {}
     with open(ncbi_taxonomy_file, 'r') as f:
@@ -192,7 +218,8 @@ def __taxonomic_classification(ncbi_taxonomy_files: list) -> dict:
     
     Args:
         ncbi_to_taxonomy_file (str): Output files of GTDB-TKs
-        'gtdb_to_ncbi_majority_vote.py' script.
+            'gtdb_to_ncbi_majority_vote.py' script or NCBI taxonomy file with a
+            similar structure.
 
     Returns:
         dict: A dictionary with a taxid and a scientific name for each genome.
@@ -210,6 +237,13 @@ def __read_manual_taxonomy_file(manual_taxonomy_file: str,
     """
     Read a manual taxonomy file and return a dictionary with the taxid and
     scientific name for each bin.
+
+    Args:
+        manual_taxonomy_file (str): Path to the manual taxonomy file.
+        verbose (int, optional): Verbosity level. Defaults to 1.
+
+    Returns:
+        dict: A dictionary with the taxid and scientific name for each bin.
     """
     if verbose > 0:
         print(f">Reading manual taxonomy file {manual_taxonomy_file}")
@@ -229,7 +263,17 @@ def __read_manual_taxonomy_file(manual_taxonomy_file: str,
 
 def get_bin_taxonomy(config,
                      verbose=1) -> dict:
+    """
+    Based on the NCBI taxonomy files and the manual taxonomy file, create a
+    dictionary with the taxid and scientific name for each bin.
 
+    Args:
+        config (dict): The config dictionary.
+        verbose (int, optional): Verbosity level. Defaults to 1.
+
+    Returns:
+        dict: A dictionary with the taxid and scientific name for each bin.
+    """
     # Extract data from config
     ncbi_taxonomy_files = utility.optional_from_config(config, 'BINS', 'NCBI_TAXONOMY_FILES')
     if ncbi_taxonomy_files == '': # Key not found in config
@@ -390,6 +434,18 @@ def __prep_bins_samplesheet(config: dict,
                             upload_taxonomy_data: dict,
                             verbose: int = 1) -> str:
     """
+    Prepares a samplesheet for all bin samples.
+
+    Args:
+        config (dict): The config dictionary.
+        samples_submission_dir (str): The directory where the samplesheet will
+            be written to.
+        upload_taxonomy_data (dict): A dictionary with the taxid and scientific
+            name for each bin.
+        verbose (int, optional): Verbosity level. Defaults to 1.
+
+    Returns:
+        str: The path to the samplesheet.
     """
     if verbose > 0:
         print(f">Preparing bins samplesheet...")
@@ -516,6 +572,15 @@ def __prep_bins_samplesheet(config: dict,
 def __read_bin_samples_receipt(receipt_path: str,
                                verbose: int = 1) -> dict:
     """
+    Reads the receipt file from the bin samplesheet upload and returns a
+    dictionary with the bin names and their accession numbers.
+
+    Args:
+        receipt_path (str): Path to the receipt file.
+        verbose (int, optional): Verbosity level. Defaults to 1.
+
+    Returns:
+        dict: A dictionary with the bin names and their accession numbers.
     """
     tree = ET.parse(receipt_path)
     root = tree.getroot()
@@ -553,6 +618,11 @@ def __submit_bins_samplesheet(sample_xml: str,
     Uploads the samplesheet to ENA.
 
     Args:
+        sample_xml (str): Path to the samplesheet.
+        staging_dir (str): Path to the staging directory.
+        logging_dir (str): Path to the logging directory.
+        url (str): The URL to the ENA dropbox.
+        verbose (int, optional): Verbosity level. Defaults to 1.
 
     Returns:
         str: The accession number of the uploaded samplesheet.
@@ -594,6 +664,21 @@ def __prep_bin_manifest(config: dict,
                         bin_sample_accession: str,
                         gzipped_fasta_path: str,
                         verbose: int = 1) -> str:
+    """
+    Creates a manifest file for a single bin inside the staging directory.
+
+    Args:
+        config (dict): The config dictionary.
+        staging_directory (str): The directory where the manifest will be
+            written to.
+        bin_coverage (float): The coverage of the bin.
+        bin_sample_accession (str): The accession number of the bin sample.
+        gzipped_fasta_path (str): Path to the gzipped fasta file of the bin.
+        verbose (int, optional): Verbosity level. Defaults to 1.
+
+    Returns:
+        str: The path to the manifest file.
+    """
     if verbose > 1:
         print(f"\t>Preparing bin manifest in {staging_directory}...")
 
@@ -642,6 +727,21 @@ def __stage_bin_submission(staging_directory: str,
                            bin_coverage,
                            verbose: int = 1) -> None:
     """
+    Prepares a bin submission by creating a manifest file inside the staging
+    directory and copying the fasta file to the staging directory.
+
+    Args:
+        staging_directory (str): The directory where the manifest will be
+            written to.
+        bin_name (str): The name of the bin.
+        bin_fasta (str): Path to the fasta file of the bin.
+        config (dict): The config dictionary.
+        bin_sample_accession (str): The accession number of the bin sample.
+        bin_coverage (float): The coverage of the bin.
+        verbose (int, optional): Verbosity level. Defaults to 1.
+
+    Returns:
+        str: The path to the manifest file.
     """
     
     # Stage the fasta file
@@ -676,6 +776,23 @@ def submit_bins(config: dict,
                 test: bool = True,
                 submit: bool = True) -> tuple:
     """
+    Submits all metagenomic bins to the ENA
+
+    Args:
+        config (dict): The config dictionary.
+        upload_taxonomy_data (dict): A dictionary with the taxid and scientific
+            name for each bin.
+        staging_dir (str): Path to the staging directory.
+        logging_dir (str): Path to the logging directory.
+        depth_files (list): A list of paths to the depth files.
+        threads (int, optional): Number of threads to use for samtools. Defaults to 4.
+        verbose (int, optional): Verbosity level. Defaults to 1.
+        test (bool, optional): If True, use the test dropbox. Defaults to True.
+        submit (bool, optional): If True, submit the bins. Defaults to True.
+
+    Returns:
+        tuple: A tuple with the receipt paths and the accession numbers of the
+            bins.
     """
 
     if test:
