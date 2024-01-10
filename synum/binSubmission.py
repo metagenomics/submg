@@ -69,7 +69,16 @@ def query_ena_taxonomy(level: str,
     # If we know the genus get a "<genus> sp." name
     elif level == 'genus':
         query = f"{classification} sp."
-    # If we know only something higher then we get
+    # If we only know the domain, we get "<uncultured> domain"
+    elif level == 'domain':
+        if domain == 'Archaea':
+            query = 'uncultured archaeon'
+        elif domain == 'Bacteria':
+            query = 'uncultured bacterium'
+        else:
+            print(f"\nERROR: Encountered unknown domain {domain} for a mag bin. Please check your NCBI taxonomy files.")
+            exit(1)
+    # If we know only something between domain and genus then we get
     # "<classification> bacterium" / "<classification> archeon"
     else:
         if domain == 'Archaea':
@@ -183,7 +192,8 @@ def __read_ncbi_taxonomy(ncbi_taxonomy_file: str) -> dict:
     return result
 
 
-def __best_classifications(ncbi_classifications: dict) -> dict:
+def __best_classifications(ncbi_classifications: dict,
+                           verbose: int = 1) -> dict:
     """
     For each bin, find the best classification string. This is the classification
     string on the lowest level that is not empty.
@@ -198,20 +208,46 @@ def __best_classifications(ncbi_classifications: dict) -> dict:
     result = {}
     levels = staticConfig.taxonomic_levels.split(';')
     for mag_bin, clist in ncbi_classifications.items():
-        # Iterate through classification strings until we find a valid one
-        for cstring, level in zip(reversed(clist), levels):
-            if len(cstring) < 4: # no classification on this level
-                continue
-            break
-        result[mag_bin] = {
-            'level': level, 
-            'classification': cstring[3:],
-            'domain': clist[0][3:]
-        }
+        # Check if we have an "unclassified" bin here
+        if len(clist) == 1:
+            clasf = clist[0]
+            if clasf == 'Unclassified Bacteria':
+                result[mag_bin] = {
+                    'level': 'domain',
+                    'classification': 'Bacteria',
+                    'domain': 'Bacteria',
+                }
+            elif clasf == 'Unclassified Archaea':
+                result[mag_bin] = {
+                    'level': 'domain',
+                    'classification': 'Archaea',
+                    'domain': 'Archaea',
+                }
+            else:
+                print(f"\nERROR: Found unclassified bin {mag_bin} with unknown classification {clasf}. Please check your NCBI taxonomy files.")
+                exit(1)
+            if verbose>1:
+                print(f">INFO: Bin {mag_bin} does not have a proper classification ({clasf})")
+        else:
+            # Iterate through classification strings until we find a valid one
+            for cstring, level in zip(reversed(clist), levels):
+                if len(cstring) < 4: # no classification on this level
+                    continue
+                break
+            # If this is unclassified we need to include some padding
+            if cstring.startswith('Unclassified'):
+                cstring = '___'+cstring
+                clist[0] = '___'+clist[0]
+            result[mag_bin] = {
+                'level': level, 
+                'classification': cstring[3:],
+                'domain': clist[0][3:]
+            }
     return result
 
 
-def __taxonomic_classification(ncbi_taxonomy_files: list) -> dict:
+def __taxonomic_classification(ncbi_taxonomy_files: list,
+                               verbose: int = 1) -> dict:
     """
     Read the output of GTDB-TKs 'gtdb_to_ncbi_majority_vote.py' script and
     return a dictionary with a taxid and a scientific name for each genome.
@@ -227,7 +263,8 @@ def __taxonomic_classification(ncbi_taxonomy_files: list) -> dict:
     all_classifications = {}
     for f in ncbi_taxonomy_files:
         ncbi_classifications = __read_ncbi_taxonomy(f)
-        best_ncbi_classifications = __best_classifications(ncbi_classifications)
+        best_ncbi_classifications = __best_classifications(ncbi_classifications,
+                                                           verbose)
         all_classifications.update(best_ncbi_classifications)
     return all_classifications
 
@@ -274,6 +311,8 @@ def get_bin_taxonomy(config,
     Returns:
         dict: A dictionary with the taxid and scientific name for each bin.
     """
+    if verbose>0:
+        print(">Reading in bin taxonomy data")
     # Extract data from config
     ncbi_taxonomy_files = utility.optional_from_config(config, 'BINS', 'NCBI_TAXONOMY_FILES')
     if ncbi_taxonomy_files == '': # Key not found in config
@@ -300,16 +339,25 @@ def get_bin_taxonomy(config,
     except:
         manual_taxonomy_file = 'manual_taxonomy_file_doesnt_exist'
     if os.path.exists(manual_taxonomy_file):
-        upload_taxonomy_data = __read_manual_taxonomy_file(manual_taxonomy_file, verbose)
+        if not manual_taxonomy_file == 'manual_taxonomy_file_doesnt_exist':
+            upload_taxonomy_data = __read_manual_taxonomy_file(manual_taxonomy_file, verbose)
 
     # Make a dictionary for the taxonomies based on the taxonomy files
-    annotated_bin_taxonomies = __taxonomic_classification(ncbi_taxonomy_files)
+    annotated_bin_taxonomies = __taxonomic_classification(ncbi_taxonomy_files,
+                                                          verbose)
 
     # Make sure that for each bin showing up in the taxonomy files we have a 
     # corresponding fasta file in bin_files
     from_taxonomies = set(upload_taxonomy_data.keys())
     from_taxonomies.update(set(annotated_bin_taxonomies.keys()))
-    only_taxonomies = set(bin_basenames) - from_taxonomies
+    bin_basenames_set = set(bin_basenames)
+    only_bin_basenames = bin_basenames_set.difference(from_taxonomies)
+    only_taxonomies = from_taxonomies.difference(bin_basenames_set)
+    if len(only_bin_basenames) > 0:
+        print(f"\nERROR: The following bins were found in the bins directory but not in the taxonomy files:")
+        for b in only_bin_basenames:
+            print(f"\t{b}")
+        exit(1)
     if len(only_taxonomies) > 0:
         print(f"\nERROR: The following bins were found in the taxonomy files but not in the bins directory:")
         for b in only_taxonomies:
@@ -347,6 +395,7 @@ def get_bin_taxonomy(config,
                                                        taxonomy['classification'],
                                                        filtered=False,
                                                        verbose=verbose)
+
             issues.append({
                 'mag_bin': bin_name,
                 'level': taxonomy['level'],
@@ -357,6 +406,12 @@ def get_bin_taxonomy(config,
     # Add any bins that only show up in the files to the issues as unclassified
     for basename in bin_basenames:
         if not basename in upload_taxonomy_data:
+            is_issue = False
+            for i in issues:
+                if i['mag_bin'] == basename:
+                    is_issue = True
+            if is_issue:
+                continue
             issues.append({
                 'mag_bin': basename,
                 'level': 'unclassified',
@@ -391,7 +446,6 @@ def get_bin_quality(config, verbose) -> dict:
         basename = utility.is_fasta(os.path.join(bins_directory, f))
         if basename:
             bin_basenames.add(basename)
-    
     # Get quality scores
     quality_file = utility.from_config(config, 'BINS', 'BINS_QUALITY_FILE')
     result = {}
@@ -415,6 +469,8 @@ def get_bin_quality(config, verbose) -> dict:
         print(f"\nERROR: The following bins were found in the quality file but not in the bins directory:")
         for b in only_in_quality:
             print(f"\t{b}")
+        print(f"Quality file: {os.path.abspath(quality_file)}")
+        print(f"Bins directory: {os.path.abspath(bins_directory)}")
         exit(1)
     only_in_directory = bin_basenames - set(result.keys())
     if len(only_in_directory) > 0:
@@ -428,8 +484,8 @@ def get_bin_quality(config, verbose) -> dict:
     return result
 
 
-
 def __prep_bins_samplesheet(config: dict,
+                            assembly_sample_accession: str,
                             samples_submission_dir: str,
                             upload_taxonomy_data: dict,
                             verbose: int = 1) -> str:
@@ -488,10 +544,7 @@ def __prep_bins_samplesheet(config: dict,
     
     #env_medium = utility.optional_from_config(config, 'ASSEMBLY', 'ENVIRONMENTAL_MEDIUM')
     
-    sample_refs = utility.from_config(config, 'ASSEMBLY', 'SAMPLE_REFS')
-    if type(sample_refs) == list:
-        sample_refs = ','.join(sample_refs)
-    sample_derived_from = sample_refs
+    sample_derived_from = assembly_sample_accession
     
     metagenomic_source = utility.from_config(config, 'ASSEMBLY', 'SPECIES_SCIENTIFIC_NAME')
 
@@ -768,6 +821,7 @@ def __stage_bin_submission(staging_directory: str,
 
 def submit_bins(config: dict,
                 upload_taxonomy_data: dict,
+                assembly_sample_accession: str,
                 staging_dir: str,
                 logging_dir: str,
                 depth_files: str,
@@ -819,10 +873,12 @@ def submit_bins(config: dict,
         print(">Calculating coverage for each bin.")
     bin_coverages = {}
     for f in tqdm(bin_files, leave=False):
+        bin_name = utility.is_fasta(os.path.join(bins_directory, f))
+        if bin_name is None:
+            if verbose > -1:
+                print(f"\t...skipping {f} because it does not seem to be a fasta file.")
+            continue
         bin_file = os.path.join(bins_directory, f)
-        bin_name = f.split('.')[:-1]
-        assert len(bin_name) == 1
-        bin_name = bin_name[0]
         coverage = __calculate_bin_coverage(bin_file,
                                             depth_files,
                                             threads=threads,
@@ -833,6 +889,7 @@ def submit_bins(config: dict,
     samples_submission_dir = os.path.join(staging_dir, 'bin_samplesheet')
     os.makedirs(samples_submission_dir, exist_ok=False)
     samplesheet = __prep_bins_samplesheet(config,
+                                          assembly_sample_accession,
                                           samples_submission_dir,
                                           upload_taxonomy_data,
                                           verbose)
@@ -877,7 +934,7 @@ def submit_bins(config: dict,
 
     # Upload the bins
     if verbose>0:
-        print(f">Using ENA webin-cli to submit bins.\n")
+        print(f">Using ENA Webin-CLI to submit bins.\n")
     usr, pwd = utility.get_login()
     bin_receipts = {}
     bin_accessions = {}
@@ -913,4 +970,4 @@ def submit_bins(config: dict,
         for bin_name, accession in bin_accessions.items():
             writer.writerow([bin_name, accession])
 
-    print(f">The preliminary(!) accessions of your bins have been written to {bin_to_accession_file}.")
+    print(f">The preliminary(!) accessions of your bins have been written to {os.path.abspath(bin_to_accession_file)}.")

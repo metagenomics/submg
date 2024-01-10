@@ -208,7 +208,10 @@ def submit_assembly(config: dict,
         staticConfig (staticConfig, optional): The static configuration object. Defaults to staticConfig.
 
     Returns:
-        Tuple[str, str]: The sample accession and the assembly accession.
+        Tuple[str, str]: The assembly sample accession and the assembly
+        analysis accession. The sample succession will refer to a biological
+        sample in case of a non-co-assembly and to a virtual sample in case of
+        a co-assembly. 
     """
 
     if test:
@@ -216,6 +219,8 @@ def submit_assembly(config: dict,
     else:
         url = staticConfig.ena_dropbox_url
 
+    if verbose > 1:
+        print(f">Preparing assembly submission directory")
     assembly_submission_dir = os.path.join(staging_dir, "assembly_submission")
     os.makedirs(assembly_submission_dir, exist_ok=False)
 
@@ -224,6 +229,9 @@ def submit_assembly(config: dict,
     origin_samples = from_config(config, 'ASSEMBLY', 'SAMPLE_REFS')
     assert type(origin_samples) is list
     if len(origin_samples) > 1:
+        if verbose > 0:
+            print(f">Multiple SAMPLE_REFS in the config file mean this is a co-assembly")
+            print(">For a co-assembly, a virtual sample objects will be created in ENA")
         ## make a directory for the samplesheet submission
         sample_submission_dir = os.path.join(assembly_submission_dir, "co_assembly_sample")
         os.makedirs(sample_submission_dir, exist_ok=False)
@@ -231,8 +239,7 @@ def submit_assembly(config: dict,
         sample_logging_dir = os.path.join(logging_dir, "co_assembly_sample")
         os.makedirs(sample_logging_dir, exist_ok=False)
         ## make xml and submit
-        if verbose > 0:
-            print(f"\tMultiple SAMPLE_REFS in the config file ({','.join(origin_samples)}) mean this is a co-assembly.")
+
         samplesheet_path = __prep_coassembly_samplesheet(config,
                                                          sample_submission_dir,
                                                          verbose)
@@ -248,11 +255,14 @@ def submit_assembly(config: dict,
     ## make a directory and stage the fasta file
     fasta_submission_dir = os.path.join(assembly_submission_dir, "fasta")
     os.makedirs(fasta_submission_dir, exist_ok=False)
+
     fasta_path, gzipped = utility.check_fasta(from_config(config, 'ASSEMBLY', 'FASTA_FILE'))
     gzipped_fasta_path = os.path.join(fasta_submission_dir, f"assembly_upload{staticConfig.zipped_fasta_extension}")
     if not gzipped:
+        if verbose > 0:
+            print(f">Gzipping assembly fasta file")
         with open(fasta_path, 'rb') as f_in:
-            with gzip.open(gzipped_fasta_path, 'wb') as f_out:
+            with gzip.open(gzipped_fasta_path, 'wb', compresslevel=5) as f_out:
                 f_out.writelines(f_in)
     else:
         shutil.copyfile(fasta_path, gzipped_fasta_path)
@@ -269,7 +279,7 @@ def submit_assembly(config: dict,
                                              verbose=verbose)
 
     if verbose>0:
-        print(f">Using ENA webin-cli to submit assembly.\n\n")
+        print(f">Using ENA Webin-CLI to submit assembly.\n")
     assembly_name = utility.from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
     usr, pwd = utility.get_login()
     receipt, accession = webin_cli(manifest=manifest_path,
@@ -289,8 +299,7 @@ def submit_assembly(config: dict,
     with open(assembly_accession_file, 'w') as f:
         f.write(assembly_fasta_accession)
 
-    print(f"\n>The preliminary assembly accession has been written to {assembly_accession_file}\n")
-
+    print(f"\n>The preliminary(!) assembly accession has been written to {os.path.abspath(assembly_accession_file)}\n")
 
     return assembly_sample_accession, assembly_fasta_accession
 

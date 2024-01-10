@@ -43,13 +43,13 @@ Be aware that the [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/l
 # Usage
 
 ## Prerequisites
-Before you can upload assemblies and bins with synum, you need to have a `Study` object in your ENA account. Before using Synum, you also need to upload all reads and create objects for all biological samples. For instructions on these steps see the [ENA documentation](https://ena-docs.readthedocs.io/en/latest/).
+Before you can upload assemblies and bins with synum, you need to have a `Study` object in your ENA account. You also need to upload all reads and create objects for all biological samples before you start with the metagenome and bin uploads. For instructions on these steps see the [ENA documentation](https://ena-docs.readthedocs.io/en/latest/).
 
 ## ENA Development Test Server
-ENA provides a [test service](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/interactive.html) to trial your submission. We strongly suggest submitting to the production server only after a test submission with identical parameters was successful. Otherweise, you might end up with incomplete or incorrect submissions, with no ability to correct or remove them. Unless `--devtest 0` is specified, synum will always submit to the test server.
+ENA provides a [test service](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/interactive.html) to trial your submission. We strongly suggest submitting to the production server only after a test submission with identical parameters was successful. Otherwise, you might end up with incomplete or incorrect submissions, with no ability to correct or remove them. Unless `--devtest 0` is specified, synum will always submit to the test server.
 
 ## The Config File
-A lot of (meta)data is required for a submission. To use synum, you need to provide metadata and the locations of your files in a YAML document. We recommend filling out the fields in `exampleConfig.yaml`, which also contains comments with explanations for each field. The file is divided into sections. Which sections you need to fill out depends on the type of your submission and is explained in the comments of `exampleConfig.yaml`. You may consult the config files in the `./tests` directory to see more examples. If you are unsure of how to fill out certain fields, you can ask in the [github discussions page](https://github.com/ttubb/synum/discussions) of this project.
+A lot of (meta)data is required for a submission. To use synum, you need to provide metadata and the locations of your files in a YAML document. `emptyConfig.yaml` contains comments with explanations for each field. The file is divided into sections. Which sections you need to fill out depends on the type of your submission and is explained in the comments of `emptyConfig.yaml`. You may consult `exampleConfig.yaml`as well as the config files in the `./tests` directory to see more examples. If you are unsure of how to fill out certain fields, you can ask in the [github discussions page](https://github.com/ttubb/synum/discussions) of this project.
 
 ## Arguments
 ```
@@ -87,7 +87,7 @@ python3 ./synum.py \
     --submit_assembly 
 ```
 
-An example of a config file for this specific use case can be found in `./tests/test4_config.yaml`. In the samplesheet, you have to provide the accessions of the biological sample the assembly is based on. If you provided one sample accession the tool will:
+An example of a config file for this specific use case can be found in `./tests/test4_config.yaml`. In the samplesheet, you have to provide the accessions of the biological sample which the assembly is based on. If you provided one sample accession the tool will:
 - Parse the `.bam` files you have provided to calculate coverage
 - Create a manifest and stage it together with the `.fasta`file, then start an upload with ENA's Webin-CLI tool
 
@@ -105,9 +105,9 @@ python3 ./synum.py \
     --logging_dir /path/to/your/logging_dir \
     --submit_bins 
 ```
-An example of a config file for this specific use case can be found in `./tests/test1_config.yaml`. The tool will:
+An example of a config file for this specific use case can be found in `./tests/test5_config.yaml`. The tool will:
 - Try to determine valid taxonomies for each bin, based on the `NCBI_TAXONOMY_FILES` and `MANUAL_TAXONOMY_FILE` you have provided in the config
-    - In some cases, automatic assignment of taxonomy is not possible. If that is the case, consult the section on [taxonomy assignment](#taxonomy-assignment) below.
+    - In some cases, automatic assignment of taxonomy is not possible for every bin. In that case, please consult the section on [taxonomy assignment](#taxonomy-assignment) below.
 - Parse the `.bam` files you have provided to calculate coverage
 - Create a samplesheet with one entry for each bin and upload it
 - Based on the accession assigned to the individual samples, create a manifest for each bin and stage it together with the `.fasta` files
@@ -128,17 +128,17 @@ An example of a config file for this specific use case can be found in `./tests/
 # Taxonomy Assignment
 Assemblies and bins need a valid NCBI taxonomy (scientific name and taxonomic identifier) for submission. If you did taxonomic annotation of bins based on [GTDB](https://gtdb.ecogenomic.org/), you can use the `gtdb_to_ncbi_majority_vote.py` script of the [GTDB-Toolkit](https://github.com/Ecogenomics/GTDBTk) to translate your results to NCBI taxonomy.
 
-If you provide a tables with NCBI taxonomy information for each bin (see `./tests/bacteria_taxonomy.tsv` for an example - the output of `gtdb_to_ncbi_majority_vote.py` has the correct format already). Synum will use ENAs [suggest-for-submission-sendpoint](https://ena-docs.readthedocs.io/en/latest/retrieval/programmatic-access/taxon-api.html) to derive taxids that follow the [rules for bin taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html).
+You can provide tables with NCBI taxonomy information for each bin (see `./tests/bacteria_taxonomy.tsv` for an example - the output of `gtdb_to_ncbi_majority_vote.py` has the correct format already). Synum will use ENAs [suggest-for-submission-sendpoint](https://ena-docs.readthedocs.io/en/latest/retrieval/programmatic-access/taxon-api.html) to derive taxids that follow the [rules for bin taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html).
 
-You can also provide specific taxids and scientific names for each bin in a document and specify it in the `MANUAL_TAXONOMY` field of your config file. An example of such a document can be found in `./tests/manual_taxonomy_3bins.tsv`. If a bin is present in this document, the taxonomic data from other tables will be ignored.
+Either in addition to those files, or as an alternative you can provide a `MANUAL_TAXONOMY` table. This should specify the correct taxids and scientific names for bins. An example of such a document can be found in `./tests/manual_taxonomy_3bins.tsv`. If a bin is present in this document, the taxonomic data from the NCBI taxonomy tables will be ignored.
 
 In some cases synum will be unable to assign a valid taxonomy to a bin. The submission will be aborted and you will be informed which bins are causing problems. In such cases you have to determine the correct scientific name and taxid for the bin and specify it in the `MANUAL_TAXONOMY` field of your config file. Sometimes the reason for a failed taxonomic assignment is that no proper taxid exists yet. You can [create a taxon request](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy_requests.html) in the ENA Webin Portal to register the taxon.
 
 # Dereplication
-If your bins are the result of dereplicating data from a single assembly you can use synum as described above. If your bins are the result of dereplicating data from multiple different assemblies, you need to split them based on which assembly they belong to. You can then start synum seperately for each assembly (and corresponding set of bins).
+If your bins are the result of dereplicating data from a single assembly you can use synum as described above. If your bins are the result of dereplicating data from multiple different assemblies, you need to split them based on which assembly they belong to. You then run synum seperately for each assembly (together with the corresponding set of bins).
 
 # Bin Contamination above 100 percent
-When calculating completeness and contamination of a bin with e.g. CheckM, contamination values above 100% can occur. [This is not an error](https://github.com/Ecogenomics/CheckM/issues/107). However, the ENA API will refuse to accept bins with contamination values above 100%. This issue is unrelated to synum, but to avoid partial submissions synum will refuse to submit data if it detects such a bin. If you have bins with contamination values above 100%, you can either leave them out by removing them from you dataset or manually set the contamination value to 100% in the `BINS_QUALITY_FILE` file you provide to synum.
+When calculating completeness and contamination of a bin with tools like [CheckM](https://github.com/Ecogenomics/CheckM), contamination values above 100% can occur. [Usually, this is not an error](https://github.com/Ecogenomics/CheckM/issues/107). However, the ENA API will refuse to accept bins with contamination values above 100%. This issue is unrelated to synum, but to avoid partial submissions synum will refuse to work if such a bin is present in the dataset. If you have bins with contamination values above 100%, you can either leave them out by removing them from your datasetn or manually set the contamination value to 100% in the `BINS_QUALITY_FILE` file you provide to synum.
 
 # Support
 Synum is being actively developed. Please use the github issue tracker to report problems. A discussions page is available for questions, comments or suggestions. 

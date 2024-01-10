@@ -121,12 +121,11 @@ def __webin_cli_submit(manifest,
     
     if test:
         if verbose>0:
-            print("Using Webin-CLI to submit to test submission service")
+            print("           Submitting to test/dev service through Webin-CLI")
         cmd.append('-test')
     else:
         if verbose>0:
-            print("Using Webin-CLI to submit to PRODUCTION submission service")
-    
+            print("           Submitting to PRODUCTION service through Webin-CLI")    
     try:
         process = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,

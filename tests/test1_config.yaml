@@ -14,7 +14,7 @@ BAM_FILES:
   - './tests/data/mapping/2.sorted.bam'
   
 ASSEMBLY:
-  ASSEMBLY_NAME: 'mock assembly of test_1_8'
+  ASSEMBLY_NAME: 'mock assembly of test_1_2'
   ISOLATION_SOURCE: 'biogas plant anaerobic digester'
   PLATFORM:
     - 'Illumina HiSeq 1500'

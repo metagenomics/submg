@@ -127,33 +127,6 @@ def __check_config(args: argparse.Namespace,
     # Do the taxonomy files cover every bin in the bins directory?
     # TODO
 
-
-def __construct_depth_files(args: argparse.Namespace,
-                            config: dict,
-                            verbose: int) -> dict:
-    """
-    Construct depth files from bam files.
-
-    Args:
-        args:    The command line arguments.
-        config:  The config file as a dictionary.
-        verbose: The verbosity level.
-    """
-    if verbose:
-        print(f">Constructing depth files from bam files using {args.threads} threads. This might be stuck at 0% for a while.")
-    depth_files = []
-    depth_directory = os.path.join(args.staging_dir, 'depth')
-    os.makedirs(depth_directory)
-    bam_files = utility.from_config(config, 'BAM_FILES')
-    if not type(bam_files) == list:
-        bam_files = [bam_files]
-    for bam_file in tqdm(bam_files, leave=False):
-        depth_file = utility.make_depth_file(bam_file,
-                                             depth_directory,
-                                             num_threads=args.threads)
-        depth_files.append(depth_file)
-    return depth_files
-
 def __preflight_checks(args: argparse.Namespace,
                        verbose: int) -> None:
     """
@@ -231,9 +204,9 @@ def main():
     if verbose>0:
         print(f">Running synum version {staticConfig.synum_version}")
         if args.devtest == 1:
-            print(">Making a test submission to the ENA dev server.")
+            print(">Initializing a test submission to the ENA dev server.")
         else:
-            print(">Making a LIVE SUBMISSION to the ENA production server.")
+            print(">Initializing a LIVE SUBMISSION to the ENA production server.")
             time.sleep(3)
 
     config = __preflight_checks(args, verbose)
@@ -252,21 +225,24 @@ def main():
                 exit(1)
         bin_taxonomy = get_bin_taxonomy(config, verbose)
        
-    depth_files = __construct_depth_files(args, config, verbose)
-
+    depth_files = utility.construct_depth_files(args.staging_dir,
+                                                args.threads,
+                                                config,
+                                                verbose)
    
     if args.submit_assembly:
-        submit_assembly(config,
-                        args.staging_dir,
-                        args.logging_dir,
-                        depth_files,
-                        threads=args.threads,
-                        verbose=verbose)
+        assembly_sample_accession, assembly_fasta_accession = submit_assembly(config,
+                                                                              args.staging_dir,
+                                                                              args.logging_dir,
+                                                                              depth_files,
+                                                                              threads=args.threads,
+                                                                              verbose=verbose)
         
     # Bin submision
     if args.submit_bins:
         submit_bins(config,
                     bin_taxonomy,
+                    assembly_sample_accession,
                     args.staging_dir,
                     args.logging_dir,
                     depth_files,

@@ -12,6 +12,79 @@ from yaspin import yaspin
 
 from synum.statConf import staticConfig
 
+
+def construct_depth_files(staging_dir: str, threads: int, config: dict, verbose: int) -> dict:
+    """
+    Construct depth files from bam files.
+
+    Args:
+        staging_dir: The staging directory.
+        threads: The total number of threads to use.
+        config:  The config file as a dictionary.
+        verbose: The verbosity level.
+    """
+    if verbose>0:
+        print(f">Constructing depth files from bam files. This might take a while.")
+    
+    depth_directory = os.path.join(staging_dir, 'depth')
+    os.makedirs(depth_directory, exist_ok=True)
+    
+    bam_files = from_config(config, 'BAM_FILES')
+    if not isinstance(bam_files, list):
+        bam_files = [bam_files]
+
+    threads_per_file = max(1, threads // len(bam_files))
+    max_workers = min(threads, len(bam_files))
+
+
+    with yaspin(text=f"Processing {len(bam_files)} bam files with {threads_per_file} threads each...\t", color="yellow") as spinner:
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                future_to_depth_file = {
+                    executor.submit(make_depth_file, bam_file, depth_directory, num_threads=threads_per_file): bam_file
+                    for bam_file in bam_files
+                }
+                depth_files = []
+
+                for future in concurrent.futures.as_completed(future_to_depth_file):
+                    bam_file = future_to_depth_file[future]
+                    try:
+                        depth_file = future.result()
+                        depth_files.append(depth_file)
+                    except Exception as exc:
+                        if verbose:
+                            print(f"{bam_file} generated an exception: {exc}")
+
+    return depth_files
+
+# def construct_depth_files(staging_dir: str,
+#                           threads: int,
+#                           config: dict,
+#                           verbose: int) -> dict:
+#     """
+#     Construct depth files from bam files.
+
+#     Args:
+#         staging_dir: The staging directory.
+#         threads: The number of threads to use.
+#         config:  The config file as a dictionary.
+#         verbose: The verbosity level.
+#     """
+#     if verbose:
+#         print(f">Constructing depth files from bam files using {threads} threads. This might be stuck at 0% for a while.")
+#     depth_files = []
+#     depth_directory = os.path.join(staging_dir, 'depth')
+#     os.makedirs(depth_directory)
+#     bam_files = from_config(config, 'BAM_FILES')
+#     if not type(bam_files) == list:
+#         bam_files = [bam_files]
+#     for bam_file in tqdm(bam_files, leave=False):
+#         depth_file = make_depth_file(bam_file,
+#                                              depth_directory,
+#                                              num_threads=threads)
+#         depth_files.append(depth_file)
+#     return depth_files
+
 def build_sample_submission_xml(outpath: str,
                                   hold_until_date: str = None,
                                   verbose: int = 1):
@@ -171,7 +244,8 @@ def is_fasta(filepath, extensions=staticConfig.fasta_extensions.split(';')) -> s
         filepath = filepath[:-3]
     if not filepath.endswith(tuple(extensions)):
         return None
-    basename = filepath.split('/')[-1].split('.')[0]
+    filename = os.path.basename(filepath)
+    basename = filename.rsplit('.', 1)[0]
     return basename
 
 def check_fasta(fasta_path) -> tuple:
@@ -255,7 +329,7 @@ def make_depth_file(bam_file, outdir, num_threads=4):
     sorted_bam_file = check_bam(bam_file, num_threads=num_threads)
     filename = os.path.basename(sorted_bam_file) + '.depth'
     outfile = os.path.join(outdir, filename)
-    pysam.depth("-a", sorted_bam_file, "-o", outfile, "-@", str(num_threads))
+    pysam.depth("-@", str(num_threads), "-a", sorted_bam_file, "-o", outfile)
     return outfile
 
 def contigs_coverage(depth_file):
@@ -331,8 +405,8 @@ def calculate_coverage(depth_files: list,
 
         average_coverage = total_coverage / total_length if total_length > 0 else 0
 
-    if verbose > 0:
-        print(f"\t...all depth files processed, coverage is {str(average_coverage)}")
+    if verbose > 1:
+        print(f"\t...coverage is {str(average_coverage)}")
 
     return average_coverage
 
