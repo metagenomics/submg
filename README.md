@@ -11,7 +11,7 @@
 
 
 # synum
-Synum aids in the submission of (co-)metagenome assemblies as well es MAG bins to the European Nucleotide Archive (ENA). After you enter your (meta)data in single YAML form, Synum derives additional information where required, creates all samplesheets and manifests and uploads everything to your ENA account. The tool will not work for non-metagenome submissions.
+Synum aids in the submission of metagenome assemblies (including co-assemblies) as well es MAG bins to the European Nucleotide Archive (ENA). After you enter your (meta)data in single YAML form, Synum derives additional information where required, creates all samplesheets and manifests and uploads everything to your ENA account. The tool will not work for non-metagenome submissions.
 
 Be aware that the [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenome bin and that bins should be submitted before MAGs. We plan to support MAG upload in the future. In case you intend to upload assemblies assembled from third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
 

@@ -6,7 +6,7 @@ from setuptools.command.install import install
 class CustomInstall(install):
     def run(self):
         install.run(self)
-        print("\nIMPORTANT: Please run webin_downloader.py before using synum.")
+        print("\nIMPORTANT: Please also run webin_downloader.py before using synum.")
 
 setup(
     name='synum',
