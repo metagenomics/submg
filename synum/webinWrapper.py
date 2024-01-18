@@ -3,6 +3,8 @@ import os
 import glob
 import signal
 
+from synum.statConf import staticConfig
+
 def find_webin_cli_jar():
     """ Find the Webin CLI JAR file in the parent directory of this script.
     """
@@ -135,7 +137,12 @@ def __webin_cli_submit(manifest,
         process.send_signal(signal.SIGINT)
     
     accession = None
-    accession_line = 'The following analysis accession was assigned to the submission'
+    if context == 'genome':
+        accession_line = staticConfig.webin_analysis_accession_line
+    elif context == 'reads':
+        accession_line = staticConfig.webin_run_accessions_line
+    else:
+        raise ValueError(f"ERROR: Invalid context {context}")
     for line in iter(process.stdout.readline, ''):
         if accession_line in line:
             accession = line.strip().split(' ')[-1]
@@ -185,7 +192,7 @@ def webin_cli(manifest,
                                         context,
                                         jar,
                                         verbose)
-        receipt = os.path.join(outputdir, 'genome', subdir_name.replace(' ','_'), 'submit', 'receipt.xml')
+        receipt = os.path.join(outputdir, context, subdir_name.replace(' ','_'), 'submit', 'receipt.xml')
         if accession is None:
             print(f"ERROR: Submission failed for {inputdir}")
             print(f"Please check the webin-cli report at {receipt}")

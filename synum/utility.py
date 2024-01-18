@@ -13,14 +13,17 @@ from yaspin import yaspin
 from synum.statConf import staticConfig
 
 
-def construct_depth_files(staging_dir: str, threads: int, config: dict, verbose: int) -> dict:
+def construct_depth_files(staging_dir: str,
+                          threads: int,
+                          bam_files: list,
+                          verbose: int) -> dict:
     """
     Construct depth files from bam files.
 
     Args:
         staging_dir: The staging directory.
         threads: The total number of threads to use.
-        config:  The config file as a dictionary.
+        bam_files: The list of bam files.
         verbose: The verbosity level.
     """
     if verbose>0:
@@ -29,13 +32,8 @@ def construct_depth_files(staging_dir: str, threads: int, config: dict, verbose:
     depth_directory = os.path.join(staging_dir, 'depth')
     os.makedirs(depth_directory, exist_ok=True)
     
-    bam_files = from_config(config, 'BAM_FILES')
-    if not isinstance(bam_files, list):
-        bam_files = [bam_files]
-
     threads_per_file = max(1, threads // len(bam_files))
     max_workers = min(threads, len(bam_files))
-
 
     with yaspin(text=f"Processing {len(bam_files)} bam files with {threads_per_file} threads each...\t", color="yellow") as spinner:
 
@@ -171,7 +169,7 @@ def read_yaml(file_path):
         print(f"\nERROR: An error occurred while reading {yaml}, error is: {e}")
         return None
     
-def from_config(config, key, subkey=None, supress_errors=False):
+def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
     """
     Extracts a value from the dict that was created based on the
     config YAML file.
@@ -193,6 +191,16 @@ def from_config(config, key, subkey=None, supress_errors=False):
             if not supress_errors:
                 print(f"\nERROR: The field '{key}|{subkey}' is empty in the config YAML file.")
             exit(1)
+        if subsubkey:
+            if not subsubkey in config[key][subkey]:
+                if not supress_errors:
+                    print(f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is missing from the config YAML file.")
+                exit(1)
+            if not config[key][subkey][subsubkey]:
+                if not supress_errors:
+                    print(f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is empty in the config YAML file.")
+                exit(1)
+            return config[key][subkey][subsubkey]
         return config[key][subkey]
     return config[key]
 

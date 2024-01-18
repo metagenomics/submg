@@ -3,180 +3,15 @@
 import argparse
 import os
 import time
-from tqdm import tqdm
-from datetime import datetime
 
-from synum import utility
+from synum import utility, preflight, configGen
 from synum.statConf import staticConfig
-from synum.webinWrapper import find_webin_cli_jar
+
+from synum.sampleSubmission import submit_samples
+from synum.readSubmission import submit_reads
 from synum.assemblySubmission import submit_assembly
-from synum.binSubmission import submit_bins, get_bin_taxonomy, query_ena_taxonomy, get_bin_quality
+from synum.binSubmission import submit_bins, get_bin_taxonomy, get_bin_quality
 
-def __check_date(date: str,
-                 verbose: int = 1) -> None:
-    """
-    Check if the input is an ISO compliant date string.
-
-    Args:
-        date:    The date string to check.
-        verbose: The verbosity level.
-
-    Raises:
-
-    """
-    valid_formats = [
-        "%Y",                   # Year only
-        "%Y-%m",                # Year-month
-        "%Y-%m-%d",             # Year-month-day
-        "%Y-%m-%dT%H",          # Year-month-day hour
-        "%Y-%m-%dT%H:%M",       # Year-month-day hour:minute
-        "%Y-%m-%dT%H:%M:%S",    # Year-month-day hour:minute:second
-    ]
-    valid = False
-    for fmt in valid_formats:
-        try:
-            # Try parsing with the current format
-            datetime.strptime(date, fmt)
-            valid = True
-        except ValueError:
-            continue
-
-    if not valid:
-        print(f"\nERROR: The date '{date}' is not a valid ISO date string.")
-        exit(1)
-
-def __check_config(args: argparse.Namespace,
-                   config: dict,
-                   verbose: int) -> None:
-    """
-    Does a superficial check of the config file.
-
-    Args:
-        args:    The command line arguments.
-        config:  The config file as a dictionary.
-        verbose: The verbosity level.
-    """
-    if verbose>1:
-        print(f">Checking config file at {args.config}")
-
-    # Check if everything in the bins directory looks like a fasta file
-    if args.submit_bins:
-        bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')
-        bin_files = os.listdir(bins_directory)
-        for bin_file in bin_files:
-            extension = '.' + bin_file.split('.')[-1]
-            if not extension in staticConfig.fasta_extensions.split(';'):
-                if verbose > -1:
-                    print("#####")
-                    print(f"WARNING: File {bin_file} in the bins directory does not end in {staticConfig.fasta_extensions} and will be skipped.")
-                    print("#####")
-    if args.submit_assembly:
-        # Check if assembly fasta file looks correct
-        fasta_path = utility.from_config(config, 'ASSEMBLY', 'FASTA_FILE')
-        utility.check_fasta(fasta_path)
-        # Is the molecule type valid?
-        molecule_type = utility.from_config(config, 'ASSEMBLY', 'MOLECULE_TYPE')
-        if not molecule_type in staticConfig.molecule_types:
-            print(f"\nERROR: Molecule type '{molecule_type}' is not valid. Valid molecule types are: {', '.join(staticConfig.molecule_types)}")
-            exit(1)
-        if not molecule_type.startswith('genomic'):
-            if verbose > -1:
-                print("#####")
-                print(f"WARNING: Molecule type is set to '{molecule_type}' - is this a mistake?")
-                print("#####")
-        # Is the assembly date valid?
-        __check_date(utility.from_config(config, 'ASSEMBLY', 'DATE'), verbose)
-
-    # Check if the assembly taxid is valid and matches the scientific name
-    if args.submit_assembly:
-        if verbose > 1:
-            print(">Checking if assembly taxid is valid")
-        assembly_taxid = utility.from_config(config, 'ASSEMBLY', 'TAXID')
-        assembly_scientific_name = utility.from_config(config, 'ASSEMBLY', 'SPECIES_SCIENTIFIC_NAME')
-
-        taxdata = query_ena_taxonomy(level="metagenome",
-                                    domain="metagenome",
-                                    classification=assembly_scientific_name,
-                                    filtered=True,
-                                    verbose=verbose)
-        if len(taxdata) == 0 or len(taxdata) > 1:
-            print(f"\nERROR: The scientific name '{assembly_scientific_name}' is not valid.")
-            exit(1)
-        taxdata = taxdata[0]
-        if not taxdata['tax_id'] == assembly_taxid:
-            print(f"\nERROR: The taxid '{assembly_taxid}' does not match the scientific name '{assembly_scientific_name}'.")
-            exit(1)
-        
-    # Check if the BAM files exist and are indexed/sorted
-    for bam_file in utility.from_config(config, 'BAM_FILES'):
-        if not os.path.isfile(bam_file):
-            print(f"\nERROR: BAM file {bam_file} does not exist.")
-            exit(1)
-        extension = '.' + bam_file.split('.')[-1]
-        if not extension in staticConfig.bam_extensions.split(';'):
-            print(f"\nERROR: BAM file {bam_file} has an invalid extension {extension}. Valid extensions are {staticConfig.bam_extensions}.")
-            exit(1)
-
-    # Query ENA to check if the various accessions (assembly, run_refs,
-    # sample_refs) are valid
-    # TODO
-
-    # Test if the taxonomy files exist and look like taxonomy files.
-    # TODO
-
-    # Do the taxonomy files cover every bin in the bins directory?
-    # TODO
-
-def __preflight_checks(args: argparse.Namespace,
-                       verbose: int) -> None:
-    """
-    Check if everything looks like we can start.
-
-    Args:
-        args:    The command line arguments.
-        verbose: The verbosity level.
-
-    Returns:
-        The config file as a dictionary.
-    """
-    # Check if config file exists
-    if not os.path.isfile(args.config):
-        print(f"\nERROR: The config file '{args.config}' does not exist.")
-        return
-    
-    # Read data from the YAML config file
-    config = utility.read_yaml(args.config)
-
-    # Do a superficial check of the config
-    __check_config(args, config, verbose)
-
-    # Check if webin-cli can be found
-    if verbose>1:
-        print(">Checking if webin-cli can be found")
-    find_webin_cli_jar()
-
-    # Check for login data
-    utility.get_login()
-
-    # Create staging dir if it doesn't exist
-    if not os.path.exists(args.staging_dir):
-        os.makedirs(args.staging_dir)
-
-    # Check if staging dir is empty
-    if os.listdir(args.staging_dir):
-        print(f"\nERROR: Staging directory is not empty: {args.staging_dir}")
-        exit(1)
-
-    # Create logging dir if it doesn't exist
-    if not os.path.exists(args.logging_dir):
-        os.makedirs(args.logging_dir)
-
-    # Check if logging dir is empty
-    if os.listdir(args.logging_dir):
-        print(f"\nERROR: Logging directory is not empty: {args.logging_dir}")
-        exit(1)
-
-    return config
 
 def main():
     """
@@ -186,78 +21,175 @@ def main():
     # Parsing command line input
     parser = argparse.ArgumentParser(description="""Tool for submitting metagenome bins to the European Nucleotide Archive.
                                      Environment variables ENA_USER and ENA_PASSWORD must be set for ENA upload.""")
-    parser.add_argument("-x", "--config",           required=True,          help="Path to the YAML file containing metadata and filepaths. Mandatory")
-    parser.add_argument("-s", "--staging_dir",      required=True,          help="Directory where files will be staged for upload. Must be empty. May use up a lot of disk space. Mandatory.")
-    parser.add_argument("-l", "--logging_dir",      required=True,          help="Directory where log files will be stored. Must be empty. Mandatory.")
-    parser.add_argument("-a", "--submit_assembly",  action="store_true",    help="Submit a primary metagenome assembly.")
-    parser.add_argument("-b", "--submit_bins",      action="store_true",    help="Submit metagenome bins (note that bins are different from MAGs in the ENA definition).")
-    parser.add_argument("-y", "--verbosity",        type=int, choices=[0, 1, 2], default=1, help="Control the amount of logging to stdout. [default 1]")
-    parser.add_argument("-d", "--devtest",          type=int, choices=[0, 1], default=1, help="Make submissions to the ENA dev test server. [default 1/true]")
-    parser.add_argument("-t", "--threads",          type=int, default=4, help="Number of threads used to process .bam files. [default 4]")
-    parser.add_argument("-k", "--keep_depth_files", action="store_true",    help="Do not delete depth files after running. [default false]")
     parser.add_argument("-v", "--version",          action="version", version=f"%(prog)s {staticConfig.synum_version}")
+    
+
+    subparsers = parser.add_subparsers(dest='mode')
+
+    
+    parser_submit = subparsers.add_parser('submit', help='Stage your data and submit it to either the ENA development or production server')
+    parser_submit.add_argument("-x", "--config",           required=True,          help="Path to the YAML file containing metadata and filepaths. Mandatory")
+    parser_submit.add_argument("-s", "--staging_dir",      required=True,          help="Directory where files will be staged for upload. Must be empty. May use up a lot of disk space. Mandatory.")
+    parser_submit.add_argument("-l", "--logging_dir",      required=True,          help="Directory where log files will be stored. Must be empty. Mandatory.")
+    parser_submit.add_argument("-y", "--verbosity",        type=int, choices=[0, 1, 2], default=1, help="Control the amount of logging to stdout. [default 1]")
+    parser_submit.add_argument("-d", "--devtest",          type=int, choices=[0, 1], default=1, help="Make submissions to the ENA dev test server. [default 1/true]")
+    parser_submit.add_argument("-t", "--threads",          type=int, default=4, help="Number of threads used to process .bam files. [default 4]")
+    parser_submit.add_argument("--keep_depth_files", action="store_true",    help="Do not delete depth files after running. [default false]")
+    parser_submit.add_argument("-r", "--submit_reads",    action="store_true", default=False,    help="Use if you want to submit reads.")
+    parser_submit.add_argument("-p", "--submit_samples",  action="store_true", default=False,    help="Use if you want to submit (biological) sample objects.")
+    parser_submit.add_argument("-a", "--submit_assembly",action="store_true", default=False,     help="Use if you want to submit one assembly. To submit multiple assemblies, you need to use the tool multiple times.")
+    parser_submit.add_argument("-b", "--submit_bins",    action="store_true", default=False,    help="Use if you want to submit metagenome bins (note that bins are different from MAGs in the ENA definition).")
+    parser_submit.add_argument("-m", "--submit_mags",    action="store_true", default=False,    help="Use if you want to submit metagenome-assembled genomes (MAGs).")
+
+    parser_makecfg = subparsers.add_parser('makecfg', help='Create a .yml file containing the fields you need to fill out prior to submission')
+    parser_makecfg.add_argument("-o", "--outfile",           required=True,          help="Path to the empty config that will be generated.")
+    parser_makecfg.add_argument("-s", "--submit_samples", type=int, default=0,     help="If you want to submit (biological) sample objects, specify how many.")    
+    parser_makecfg.add_argument("-rs", "--submit_single_reads",   type=int, default=0,     help="If you want to submit non-paired read files, specify how many.")
+    parser_makecfg.add_argument("-rp", "--submit_paired_end_reads",   type=int, default=0,     help="If you want to submit paired-end read files, specify how many.")
+    parser_makecfg.add_argument("-b", "--submit_bins",    action="store_true", default=False,    help="Use if you want to submit metagenome bins (note that bins are different from MAGs in the ENA definition).")
+    parser_makecfg.add_argument("-m", "--submit_mags",    action="store_true", default=False,    help="Use if you want to submit metagenome-assembled genomes (MAGs).")
+    parser_makecfg.add_argument("-a", "--submit_assembly",action="store_true", default=False,     help="Use if you want to submit one assembly. To submit multiple assemblies, you need to use the tool multiple times.")
+
+    coverage_group = parser_makecfg.add_mutually_exclusive_group(required=True)
+    coverage_group.add_argument("--coverage_from_bam", action="store_true", help="Coverages will be calculated from a list of .bam files that you provide.")
+    coverage_group.add_argument("--known_coverage", action="store_true", help="Coverages are already known and you provide them as a .bam file.")
+
+
     args = parser.parse_args()
 
-    verbose = args.verbosity
+    if args.mode == 'makecfg':
+        configGen.make_config(outpath=args.outfile,
+                              submit_samples=args.submit_samples,
+                              submit_single_reads=args.submit_single_reads,
+                              submit_paired_end_reads=args.submit_paired_end_reads,
+                              coverage_from_bam=args.coverage_from_bam,
+                              known_coverage=args.known_coverage,
+                              submit_assembly=args.submit_assembly,
+                              submit_bins=args.submit_bins,
+                              submit_mags=args.submit_mags)
 
-    # Print version
-    if verbose>0:
-        print(f">Running synum version {staticConfig.synum_version}")
-        if args.devtest == 1:
-            print(">Initializing a test submission to the ENA dev server.")
-        else:
-            print(">Initializing a LIVE SUBMISSION to the ENA production server.")
-            time.sleep(3)
 
-    config = __preflight_checks(args, verbose)
+    elif args.mode == 'submit':
 
-    # If we are submitting bins, get the quality scores and the
-    # taxonomic information.
-    # We do this early so we notice issues before we start staging files.
-    if args.submit_bins:
-        bin_quality = get_bin_quality(config, verbose=0)
-        # Test if there are bins which are too contaminated
-        for name in bin_quality.keys():
-            contamination = bin_quality[name]['contamination']
-            if contamination > staticConfig.max_contamination:
-                print(f"\nERROR: Bin {name} has a contamination score of {contamination} which is higher than {staticConfig.max_contamination}")
-                print(f"ENA will reject the submission of this bin. Consult the 'Contamination above 100%' of README.md for more information.")
-                exit(1)
-        bin_taxonomy = get_bin_taxonomy(config, verbose)
-       
-    depth_files = utility.construct_depth_files(args.staging_dir,
-                                                args.threads,
-                                                config,
-                                                verbose)
-   
-    if args.submit_assembly:
-        assembly_sample_accession, assembly_fasta_accession = submit_assembly(config,
-                                                                              args.staging_dir,
-                                                                              args.logging_dir,
-                                                                              depth_files,
-                                                                              threads=args.threads,
-                                                                              verbose=verbose)
-        
-    # Bin submision
-    if args.submit_bins:
-        submit_bins(config,
-                    bin_taxonomy,
-                    assembly_sample_accession,
-                    args.staging_dir,
-                    args.logging_dir,
-                    depth_files,
-                    threads=args.threads,
-                    verbose=verbose)
+        verbose = args.verbosity
 
-    print(">You will receive final accessions once your submission has been processed by ENA.")
-    print(">ENA will send those final accession by email to the contact adress of your ENA account.")
-
-    # Cleanup
-    if not args.keep_depth_files:
+        # Print version
         if verbose>0:
-            print(">Deleting depth files to free up disk space.")
-        for depth_file in depth_files:
-            os.remove(depth_file)
+            print(f">Running synum version {staticConfig.synum_version}")
+            if args.devtest == 1:
+                print(">Initializing a test submission to the ENA dev server.")
+            else:
+                print(">Initializing a LIVE SUBMISSION to the ENA production server.")
+                time.sleep(3)
+
+        config = preflight.preflight_checks(args, verbose)
+
+        # If we are submitting bins, get the quality scores and the
+        # taxonomic information.
+        # We do this early so we notice issues before we start staging files.
+        if args.submit_bins or args.submit_mags:
+            bin_quality = get_bin_quality(config, verbose=0)
+            # Test if there are bins which are too contaminated
+            for name in bin_quality.keys():
+                contamination = bin_quality[name]['contamination']
+                if contamination > staticConfig.max_contamination:
+                    print(f"\nERROR: Bin {name} has a contamination score of {contamination} which is higher than {staticConfig.max_contamination}")
+                    print(f"ENA will reject the submission of this bin. Consult the 'Contamination above 100%' of README.md for more information.")
+                    exit(1)
+            bin_taxonomy = get_bin_taxonomy(config, verbose)
+        
+        # Construct depth files if there are .bam files in the config
+        if 'BAM_FILES' in config.keys():
+            bam_files = utility.from_config(config, 'BAM_FILES')
+            if not isinstance(bam_files, list):
+                bam_files = [bam_files]
+            depth_files = utility.construct_depth_files(args.staging_dir,
+                                                        args.threads,
+                                                        bam_files,
+                                                        verbose)
+            bin_coverage_files = None
+        else:
+            if args.submit_bins:
+                bin_coverage_files = utility.from_config(config, 'BINS', 'COVERAGE_FILES')
+                if not isinstance(bin_coverage_files, list):
+                    bin_coverage_files = [bin_coverage_files]
+            depth_files = None
+
+        if args.submit_samples:
+            sample_accession_data = submit_samples(config,
+                                               args.staging_dir,
+                                               args.logging_dir,
+                                               verbose=verbose,
+                                               test=args.devtest)
+        else:
+            sample_accessions = utility.from_config(config, 'SAMPLE_ACCESSIONS')
+            if not isinstance(sample_accessions, list):
+                sample_accessions = [sample_accessions]
+            sample_accession_data = []
+            for acc in sample_accessions:
+                sample_accession_data.append({
+                    'accession': acc,
+                    'external_accession': 'unk',
+                    'alias': 'unk',
+                })
+            
+        if args.submit_reads:
+            run_accessions = submit_reads(config,
+                                          args.staging_dir,
+                                          args.logging_dir,
+                                          verbose=verbose,
+                                          test=args.devtest)
+        else:
+            run_accessions = utility.from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS')
+            if not isinstance(run_accessions, list):
+                run_accessions = [run_accessions]
+
+
+    
+        if args.submit_assembly:
+            assembly_sample_accession, assembly_fasta_accession = submit_assembly(config,
+                                                                                  args.staging_dir,
+                                                                                  args.logging_dir,
+                                                                                  depth_files,
+                                                                                  sample_accession_data,
+                                                                                  run_accessions,
+                                                                                  threads=args.threads,
+                                                                                  verbose=verbose,
+                                                                                  test=args.devtest)
+            
+
+        # Bin submision
+        if args.submit_bins:
+            submit_bins(config,
+                        bin_taxonomy,
+                        assembly_sample_accession,
+                        args.staging_dir,
+                        args.logging_dir,
+                        depth_files,
+                        threads=args.threads,
+                        verbose=verbose,
+                        test=args.devtest)
+
+        print(">You will receive final accessions once your submission has been processed by ENA.")
+        print(">ENA will send those final accession by email to the contact adress of your ENA account.")
+
+
+        # EVERYTHING BELOW HAS TO BE REWORKED
+        exit(1)
+
+
+        # MAG submission
+        # TODO
+
+        # Cleanup
+        if not args.keep_depth_files:
+            if verbose>0:
+                print(">Deleting depth files to free up disk space.")
+            for depth_file in depth_files:
+                os.remove(depth_file)
+
+    else:
+        parser.print_help()
 
 if __name__ == "__main__":
     main()

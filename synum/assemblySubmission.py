@@ -13,8 +13,8 @@ from synum.webinWrapper import webin_cli
 
 def __prep_coassembly_samplesheet(config: dict,
                                   outdir: str,
-                                  verbose: int = 1,
-                                  staticConfig=staticConfig) -> str:
+                                  origin_samples: list,
+                                  verbose: int = 1) -> str:
     """
     Prepares the samplesheet for a co-assembly.
 
@@ -27,8 +27,6 @@ def __prep_coassembly_samplesheet(config: dict,
     Returns:
         str: The path to the samplesheet.
     """
-    checklist = staticConfig.co_assembly_checklist
-
     if verbose > 0:
         print(f">Preparing assembly samplesheet...")
 
@@ -43,19 +41,24 @@ def __prep_coassembly_samplesheet(config: dict,
 
     sample_name = ET.SubElement(sample, "SAMPLE_NAME")
     taxon_id = ET.SubElement(sample_name, "TAXON_ID")
-    taxon_id.text = from_config(config, 'ASSEMBLY', 'TAXID')
+    taxon_id.text = from_config(config, 'METAGENOME_TAXID')
     scientific_name = ET.SubElement(sample_name, "SCIENTIFIC_NAME")
-    scientific_name.text = from_config(config, 'ASSEMBLY', 'SPECIES_SCIENTIFIC_NAME')
+    scientific_name.text = from_config(config, 'METAGENOME_SCIENTIFIC_NAME')
 
 
     sample_attributes = ET.SubElement(sample, "SAMPLE_ATTRIBUTES")
     # Create SAMPLE_ATTRIBUTE elements
     attributes_data = [
-        ("collection date", str(from_config(config, 'ASSEMBLY', 'DATE'))),
-        ("geographic location (country and/or sea)", from_config(config, 'ASSEMBLY', 'LOCATION')),
-        ("ENA-CHECKLIST", checklist),
-        ("sample composed of", ','.join(from_config(config, 'ASSEMBLY', 'SAMPLE_REFS'))),
+        ("collection date", str(from_config(config, 'ASSEMBLY', 'collection_date'))),
+        ("geographic location (country and/or sea)", from_config(config, 'ASSEMBLY', 'geographic location (country and/or sea)')),
+        ("sample composed of", ','.join(origin_samples)),
     ]
+
+    assembly_dict = from_config(config, 'ASSEMBLY')
+    if 'ADDITIONAL_SAMPLESHEET_FIELDS' in assembly_dict:
+        if not assembly_dict['ADDITIONAL_SAMPLESHEET_FIELDS'] is None:
+            for key, value in assembly_dict['ADDITIONAL_SAMPLESHEET_FIELDS'].items():
+                attributes_data.append([key, value])
 
     for tag, value in attributes_data:
         sample_attribute = ET.SubElement(sample_attributes, "SAMPLE_ATTRIBUTE")
@@ -125,6 +128,7 @@ def __submit_coassembly_samplesheet(sample_xml: str,
 def __prep_assembly_manifest(config: dict,
                              outdir: str,
                              depth_files,
+                             run_accessions,
                              sample_accession: str,
                              fasta_path: str,
                              threads=4,
@@ -148,19 +152,20 @@ def __prep_assembly_manifest(config: dict,
         print(f">Preparing assembly manifest file")
     
     # Determine coverage
-
-    # Determine coverage from depth files
-    COVERAGE = utility.calculate_coverage(depth_files,
-                                          threads=threads,
-                                          verbose=verbose)
+    if depth_files is None:
+        COVERAGE = utility.from_config(config, 'ASSEMBLY', 'COVERAGE_VALUE')
+    else:
+        COVERAGE = utility.calculate_coverage(depth_files,
+                                            threads=threads,
+                                            verbose=verbose)
 
     # Write manifest
-    PLATFORM = utility.from_config(config, 'ASSEMBLY', 'PLATFORM')
+    PLATFORM = utility.from_config(config, 'SEQUENCING_PLATFORMS')
     if isinstance(PLATFORM, list):
         PLATFORM = ",".join(PLATFORM)
-    RUN_REFS = utility.from_config(config, 'ASSEMBLY', 'RUN_REFS')
-    if isinstance(RUN_REFS, list):
-        RUN_REFS = ",".join(RUN_REFS)
+
+    assert type(run_accessions) is list
+    run_accessions = ",".join(run_accessions)
 
     rows = [
         [ 'STUDY', utility.from_config(config, 'STUDY') ],
@@ -168,13 +173,18 @@ def __prep_assembly_manifest(config: dict,
         [ 'ASSEMBLYNAME', utility.from_config(config, 'ASSEMBLY','ASSEMBLY_NAME') ],
         [ 'ASSEMBLY_TYPE', staticConfig.sequence_assembly_type ],
         [ 'COVERAGE', COVERAGE ],
-        [ 'PROGRAM', utility.from_config(config, 'ASSEMBLY','PROGRAM') ],
+        [ 'PROGRAM', utility.from_config(config, 'ASSEMBLY','ASSEMBLY_SOFTWARE') ],
         [ 'PLATFORM', PLATFORM ],
-        [ 'MOLECULETYPE', utility.from_config(config, 'ASSEMBLY','MOLECULE_TYPE')],
-        # [ 'DESCRIPTION', utility.from_config(config, 'ASSEMBLY','DESCRIPTION')],
-        [ 'RUN_REF', RUN_REFS ],
+        [ 'MOLECULETYPE', staticConfig.assembly_molecule_type],
+        [ 'RUN_REF', run_accessions ],
         [ 'FASTA', os.path.basename(fasta_path)],   
     ]
+
+    assembly_dict = from_config(config, 'ASSEMBLY')
+    if 'ADDITIONAL_MANIFEST_FIELDS' in assembly_dict:
+        if not assembly_dict['ADDITIONAL_MANIFEST_FIELDS'] is None:
+            for key, value in assembly_dict['ADDITIONAL_MANIFEST_FIELDS'].items():
+                rows.append([key, value])
 
     manifest_path = os.path.join(outdir, "MANIFEST")
     with open(manifest_path, 'w') as f:
@@ -188,6 +198,8 @@ def submit_assembly(config: dict,
                     staging_dir: str,
                     logging_dir: str,
                     depth_files: str,
+                    sample_accessions_data,
+                    run_accessions,
                     threads: int = 4,
                     verbose: int = 1,
                     test: bool = True,
@@ -197,15 +209,6 @@ def submit_assembly(config: dict,
     Submits the assembly to ENA.
 
     Args:
-        config (dict): The configuration dictionary.
-        staging_dir (str): The staging directory.
-        logging_dir (str): The logging directory.
-        depth_files (str): The path to the depth files.
-        threads (int, optional): The number of threads to use. Defaults to 4.
-        verbose (int, optional): The verbosity level. Defaults to 1.
-        test (bool, optional): Whether to use the test server. Defaults to True.
-        submit (bool, optional): Whether to submit the assembly. Defaults to True.
-        staticConfig (staticConfig, optional): The static configuration object. Defaults to staticConfig.
 
     Returns:
         Tuple[str, str]: The assembly sample accession and the assembly
@@ -226,7 +229,7 @@ def submit_assembly(config: dict,
 
     # If there is multiple samples referenced, then this is a co-assembly
     # and we need to create a samplesheet and upload it
-    origin_samples = from_config(config, 'ASSEMBLY', 'SAMPLE_REFS')
+    origin_samples = [x['accession'] for x in sample_accessions_data]
     assert type(origin_samples) is list
     if len(origin_samples) > 1:
         if verbose > 0:
@@ -242,6 +245,7 @@ def submit_assembly(config: dict,
 
         samplesheet_path = __prep_coassembly_samplesheet(config,
                                                          sample_submission_dir,
+                                                         origin_samples,
                                                          verbose)
         assembly_sample_accession = __submit_coassembly_samplesheet(samplesheet_path,
                                                            sample_submission_dir,
@@ -273,6 +277,7 @@ def submit_assembly(config: dict,
     manifest_path = __prep_assembly_manifest(config,
                                              fasta_submission_dir,
                                              depth_files,
+                                             run_accessions,
                                              assembly_sample_accession,
                                              gzipped_fasta_path,
                                              threads=threads,

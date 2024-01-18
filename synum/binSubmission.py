@@ -691,7 +691,7 @@ def __submit_bins_samplesheet(sample_xml: str,
     usr, pwd = utility.get_login()
 
     if verbose > 0:
-        print(f">Trying to submit samplesheet through ENA API.")
+        print(f">Submitting bins samplesheet through ENA API.")
 
     response = requests.post(url,
                 files={
@@ -716,7 +716,7 @@ def __prep_bin_manifest(config: dict,
                         bin_coverage: float,
                         bin_sample_accession: str,
                         gzipped_fasta_path: str,
-                        verbose: int = 1) -> str:
+                        verbose: int =   1) -> str:
     """
     Creates a manifest file for a single bin inside the staging directory.
 
@@ -803,7 +803,7 @@ def __stage_bin_submission(staging_directory: str,
         shutil.copyfile(bin_fasta, gzipped_fasta_path)
     else:
         with open(bin_fasta, 'rb') as f_in:
-            with gzip.open(gzipped_fasta_path, 'wb') as f_out:
+            with gzip.open(gzipped_fasta_path, 'wb', compresslevel=5) as f_out:
                 f_out.writelines(f_in)
 
     # Make the MANIFEST file
@@ -970,4 +970,5 @@ def submit_bins(config: dict,
         for bin_name, accession in bin_accessions.items():
             writer.writerow([bin_name, accession])
 
-    print(f">The preliminary(!) accessions of your bins have been written to {os.path.abspath(bin_to_accession_file)}.")
+    if verbose>0:
+        print(f">The preliminary(!) accessions of your bins have been written to {os.path.abspath(bin_to_accession_file)}.")

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import subprocess
 import requests
 import sys
@@ -27,11 +28,13 @@ def check_java():
 def download_webin_cli(version):
     """ Downloads the webin-cli .jar file from the ENA website.
     """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    jar_path = os.path.join(script_dir, f"webin-cli-{version}.jar")
     url = f"https://github.com/enasequence/webin-cli/releases/download/{version}/webin-cli-{version}.jar"
     print(f">Trying to download Webin-CLI from {url}")
     response = requests.get(url)
     if response.status_code == 200:
-        with open(f"webin-cli-{version}.jar", 'wb') as file:
+        with open(jar_path, 'wb') as file:
             file.write(response.content)
         print(">Webin-CLI downloaded successfully.")
     else:
