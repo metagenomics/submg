@@ -10,13 +10,13 @@ import concurrent.futures
 from tqdm import tqdm
 from yaspin import yaspin
 
+from synum import logging
 from synum.statConf import staticConfig
 
 
 def construct_depth_files(staging_dir: str,
                           threads: int,
-                          bam_files: list,
-                          verbose: int) -> dict:
+                          bam_files: list) -> dict:
     """
     Construct depth files from bam files.
 
@@ -24,10 +24,8 @@ def construct_depth_files(staging_dir: str,
         staging_dir: The staging directory.
         threads: The total number of threads to use.
         bam_files: The list of bam files.
-        verbose: The verbosity level.
     """
-    if verbose>0:
-        print(f">Constructing depth files from bam files. This might take a while.")
+    logging.message(">Constructing depth files from bam files. This might take a while.", threshold=0)
     
     depth_directory = os.path.join(staging_dir, 'depth')
     os.makedirs(depth_directory, exist_ok=True)
@@ -50,15 +48,13 @@ def construct_depth_files(staging_dir: str,
                         depth_file = future.result()
                         depth_files.append(depth_file)
                     except Exception as exc:
-                        if verbose:
-                            print(f"{bam_file} generated an exception: {exc}")
+                        logging.message(f"{bam_file} generated an exception: {exc}", threshold=-1)
 
     return depth_files
 
 # def construct_depth_files(staging_dir: str,
 #                           threads: int,
-#                           config: dict,
-#                           verbose: int) -> dict:
+#                           config: dict) -> dict:
 #     """
 #     Construct depth files from bam files.
 
@@ -66,10 +62,8 @@ def construct_depth_files(staging_dir: str,
 #         staging_dir: The staging directory.
 #         threads: The number of threads to use.
 #         config:  The config file as a dictionary.
-#         verbose: The verbosity level.
 #     """
-#     if verbose:
-#         print(f">Constructing depth files from bam files using {threads} threads. This might be stuck at 0% for a while.")
+#     logging.message(f">Constructing depth files from bam files using {threads} threads. This might be stuck at 0% for a while.", threshold=0)
 #     depth_files = []
 #     depth_directory = os.path.join(staging_dir, 'depth')
 #     os.makedirs(depth_directory)
@@ -84,17 +78,15 @@ def construct_depth_files(staging_dir: str,
 #     return depth_files
 
 def build_sample_submission_xml(outpath: str,
-                                  hold_until_date: str = None,
-                                  verbose: int = 1):
+                                  hold_until_date: str = None):
     """
     Build an ENA submission XML file for uploading sample data.
 
     Args:
         outpath (str): The output path for the submission.xml file.
-        verbose (int, optional): Verbosity level. Defaults to 1.
     """
-    if verbose > 0:
-        print(f">Building sample submission.xml file...")
+    logging.message(f">Building sample submission.xml file...", threshold=0)
+
     root = ET.Element("SUBMISSION")
     actions = ET.SubElement(root, "ACTIONS")
     action = ET.SubElement(actions, "ACTION")
@@ -111,8 +103,8 @@ def build_sample_submission_xml(outpath: str,
     with open(outpath, "wb") as f:
         tree.write(f, encoding="utf-8", xml_declaration=True)
     
-    if verbose > 0:
-        print(f"\t...written to {os.path.abspath(outpath)}")
+    logging.message(f"\t...written to {os.path.abspath(outpath)}", threshold=0)
+
 
 def api_response_check(response: requests.Response):
     if response.status_code == 403:
@@ -369,7 +361,7 @@ def contigs_coverage(depth_file):
 def calculate_coverage(depth_files: list,
                        target_contigs: set = None,
                        threads=4,
-                       verbose=1):
+                       silent=False):
     """
     Calculate the average coverage of an assembly based on multiple depth files using parallel processing.
 
@@ -399,8 +391,12 @@ def calculate_coverage(depth_files: list,
                 local_length += contig_length[contig]
             return local_coverage, local_length
 
-    if verbose > 0:
-        print(f">Calculating coverage from depth files. This might take a while.")
+    if silent:
+        threshold = 3
+    else:
+        threshold = 0
+    logging.message(">Calculating coverage from depth files. This might take a while.", threshold)
+
 
     inuse = min(threads, len(depth_files))
     with yaspin(text=f"Processing with {inuse} threads...\t", color="yellow") as spinner:
@@ -413,15 +409,14 @@ def calculate_coverage(depth_files: list,
 
         average_coverage = total_coverage / total_length if total_length > 0 else 0
 
-    if verbose > 1:
-        print(f"\t...coverage is {str(average_coverage)}")
+    if not silent:
+        logging.message(f"\t...coverage is {str(average_coverage)}", threshold+1)
 
     return average_coverage
 
 # def calculate_coverage(depth_files: list,
 #                        target_contigs: str = None,
-#                        threads=4,
-#                        verbose=1):
+#                        threads=4):
 #     """
 #     Calculate the average coverage of an assembly based on multiple depth files.
 
@@ -435,8 +430,7 @@ def calculate_coverage(depth_files: list,
 #     total_coverage = 0.0
 #     total_length = 0.0
 
-#     if verbose>0:
-#         print(">Calculating coverage from depth files. This might be stuck at 0% for a while.")
+#     logging.message(">Calculating coverage from depth files. This might take a while.", threshold=0)
 
 #     for depth_file in tqdm(depth_files, leave=False):
 #         with open(depth_file, 'r') as depth:
@@ -450,13 +444,12 @@ def calculate_coverage(depth_files: list,
 
 #     average_coverage = total_coverage / total_length
 
-#     if verbose>0:
-#         print(f"\t...all depth files processed, coverage is {str(average_coverage)}")
+#     logging.message(f"\t...all depth files processed, coverage is {str(average_coverage)}", threshold=0)
 
 #     return average_coverage
 
 '''
-def calculate_coverage(bam_files, fasta_file, verbose=1, num_threads=4):
+def calculate_coverage(bam_files, fasta_file, num_threads=4):
     """
     Calculate the average coverage of an assembly based on multiple .BAM files.
 
@@ -513,7 +506,7 @@ def calculate_coverage(bam_files, fasta_file, verbose=1, num_threads=4):
 '''
 
 
-def read_receipt(receipt_path: str, verbose=1) -> str:
+def read_receipt(receipt_path: str) -> str:
     """
     Extract success status and appropriate accession (ANALYSIS or SAMPLE) from receipt file.
     
@@ -534,18 +527,15 @@ def read_receipt(receipt_path: str, verbose=1) -> str:
     analysis_element = root.find('.//ANALYSIS')
     if analysis_element is not None:
         accession = analysis_element.attrib['accession']
-        #if verbose > 0:
-        #    print(f"\n>...analysis submission successful, accession is {accession}\n\n")
         return accession
 
     # Check for SAMPLE receipt
     sample_element = root.find('.//SAMPLE')
     if sample_element is not None:
         accession = sample_element.attrib['accession']
-        #if verbose > 0:
-        #    print(f"\t...sample submission successful, accession is {accession}")
         return accession
 
     # If neither, print error message
-    print("\nERROR: Unknown receipt type. Cannot extract accession.")
+    logging.message(f"\nERROR: Unknown receipt type. Cannot extract accession.", threshold=-1)
+
     return None

@@ -1,7 +1,7 @@
 import os
 import csv
 
-from synum import utility
+from synum import utility, logging
 from synum.utility import from_config
 from synum.statConf import staticConfig
 from synum.webinWrapper import webin_cli
@@ -72,8 +72,7 @@ def __zipcopy(input: str,
 def __stage_reads_submission(config: dict,
                              data: dict,
                              staging_dir: str,
-                             logging_dir: str,
-                             verbose: int=1) -> str:
+                             logging_dir: str) -> str:
     """
     """
   
@@ -96,14 +95,12 @@ def __stage_reads_submission(config: dict,
                                      staging_dir,
                                      gzipped_fastq1_path,
                                      gzipped_fastq2_path)
-    
     return manifest
     
 
 def submit_reads(config,
                  staging_dir,
                  logging_dir,
-                 verbose=1,
                  test=True):
     """
     Submits the specified reads to ENA.
@@ -112,7 +109,6 @@ def submit_reads(config,
         config (dict): The configuration dictionary.
         staging_dir (str): The directory where the reads will be staged.
         logging_dir (str): The directory where the submission logs will be written.
-        verbose (int, optional): The verbosity level (default is 1).
         test (bool, optional): If True, use the Webin test submission service (default is True).
 
     Returns:
@@ -122,8 +118,7 @@ def submit_reads(config,
 
     counter = 0
     if 'PAIRED_END_READS' in config.keys():
-        if verbose > 0:
-            print(">Staging paired-end reads for submission. This might take a while.")
+        logging.message(">Staging paired-end reads for submission. This might take a while.", threshold=0)
         for i, data in enumerate(from_config(config, 'PAIRED_END_READS')):
             name = from_config(data, 'NAME').replace(' ', '_')
             read_set_staging_dir = os.path.join(staging_dir, f"reads_{name}")
@@ -133,15 +128,13 @@ def submit_reads(config,
             manifest = __stage_reads_submission(config,
                                                 data,
                                                 read_set_staging_dir,
-                                                read_set_logging_dir,
-                                                verbose=verbose)                                                
+                                                read_set_logging_dir)                                                
             if not name in read_manifests:
                 read_manifests[name] = manifest  
             counter = i + 1
 
     if 'SINGLE_END_READS' in config.keys():
-        if verbose > 0:
-            print(">Staging single-end reads for submission")
+        logging.message(">Staging single-end reads for submission. This might take a while.", threshold=0)
         for j, data in enumerate(from_config(config, 'SINGLE_END_READS')):
             i = counter + j
             name = from_config(data, 'NAME').replace(' ', '_')
@@ -152,22 +145,18 @@ def submit_reads(config,
             manifest = __stage_reads_submission(config,
                                                 data,
                                                 read_set_staging_dir,
-                                                read_set_logging_dir,
-                                                verbose=verbose)         
+                                                read_set_logging_dir)         
             
             if not name in read_manifests:
                 read_manifests[name] = manifest                                       
 
-
     # Upload the reads
-    if verbose>0:
-        print(f">Using ENA Webin-CLI to submit reads.\n")
+    logging.message(-f">Using ENA Webin-CLI to submit reads.\n", threshold=0)
     usr, pwd = utility.get_login()
     read_receipts = {}
     read_accessions = {}
     for name, manifest in read_manifests.items():
-        if verbose>1:
-            print(f">Submitting file at {manifest}")
+        logging.message(f">Submitting file at {manifest}", threshold=1)
         read_set_logging_dir = os.path.join(logging_dir, f"reads_{name}")
 
         read_receipts[name], read_accessions[name] = webin_cli(manifest=manifest,
@@ -178,16 +167,12 @@ def submit_reads(config,
                                                                subdir_name=name,
                                                                submit=True,
                                                                test=test,
-                                                               verbose=verbose,
                                                                context='reads')
-        print("")
         
-    if verbose>0:
-        print("\n>Read submission completed!")
-    if verbose>1:
-        print(f">Read receipt paths are:")
-        for name, receipt in read_receipts.items():
-            print(f"\t{name}: {receipt}")
+    logging.message(">Read submission completed!", threshold=0)
+    logging.message(">Read receipt paths are:", threshold=1)
+    for name, receipt in read_receipts.items():
+        logging.message(f"\t{name}: {receipt}", threshold=1)
 
     read_to_accession_file = os.path.join(logging_dir, 'read_to_preliminary_accession.tsv')
     with open(read_to_accession_file, 'w') as f:
@@ -196,7 +181,7 @@ def submit_reads(config,
             writer.writerow([name, accession])
 
 
-    if verbose>0:
-        print(f">The preliminary(!) accessions of your reads have been written to {os.path.abspath(read_to_accession_file)}.")            
+    logging.message(f">The preliminary(!) accessions of your reads have been written to {os.path.abspath(read_to_accession_file)}.", threshold=0)
+      
 
     return list(read_accessions.values())

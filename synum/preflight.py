@@ -3,19 +3,17 @@ import argparse
 
 from datetime import datetime
 
-from synum import utility
+from synum import utility, logging
 from synum.statConf import staticConfig
 from synum.webinWrapper import find_webin_cli_jar
 from synum.binSubmission import query_ena_taxonomy
 
-def __check_date(date: str,
-                 verbose: int = 1) -> None:
+def __check_date(date: str) -> None:
     """
     Check if the input is an ISO compliant date string.
 
     Args:
         date:    The date string to check.
-        verbose: The verbosity level.
 
     Raises:
 
@@ -38,23 +36,21 @@ def __check_date(date: str,
             continue
 
     if not valid:
-        print(f"\nERROR: The date '{date}' is not a valid ISO date string.")
+        err = f"\nERROR: The date '{date}' is not a valid ISO date string."
+        logging.message(err, threshold=-1)
         exit(1)
 
 def __check_config(args: argparse.Namespace,
-                   config: dict,
-                   verbose: int) -> None:
+                   config: dict) -> None:
     """
     Does a superficial check of the config file.
 
     Args:
         args:    The command line arguments.
         config:  The config file as a dictionary.
-        verbose: The verbosity level.
     """
     return # THIS NEEDS TO BE REWORKED
-    if verbose>1:
-        print(f">Checking config file at {args.config}")
+    logging.message(f">Checking config file at {args.config}", threshold=1)
 
     # Check if everything in the bins directory looks like a fasta file
     if args.submit_bins:
@@ -63,10 +59,7 @@ def __check_config(args: argparse.Namespace,
         for bin_file in bin_files:
             extension = '.' + bin_file.split('.')[-1]
             if not extension in staticConfig.fasta_extensions.split(';'):
-                if verbose > -1:
-                    print("#####")
-                    print(f"WARNING: File {bin_file} in the bins directory does not end in {staticConfig.fasta_extensions} and will be skipped.")
-                    print("#####")
+                logging.message(f"WARNING: File {bin_file} in the bins directory does not end in {staticConfig.fasta_extensions} and will be skipped.", threshold=-1)
     if args.submit_assembly:
         # Check if assembly fasta file looks correct
         fasta_path = utility.from_config(config, 'ASSEMBLY', 'FASTA_FILE')
@@ -77,42 +70,42 @@ def __check_config(args: argparse.Namespace,
         #    print(f"\nERROR: Molecule type '{molecule_type}' is not valid. Valid molecule types are: {', '.join(staticConfig.molecule_types)}")
         #    exit(1)
         #if not molecule_type.startswith('genomic'):
-        #    if verbose > -1:
-        #        print("#####")
-        #        print(f"WARNING: Molecule type is set to '{molecule_type}' - is this a mistake?")
-        #        print("#####")
+        #logging.message(f"WARNING: Molecule type is set to '{molecule_type}' - is this a mistake?", threshold=0)
+
         
         ## Is the assembly date valid?
-        #__check_date(utility.from_config(config, 'ASSEMBLY', 'DATE'), verbose)
+        #__check_date(utility.from_config(config, 'ASSEMBLY', 'DATE'))
 
     # Check if the assembly taxid is valid and matches the scientific name
     if args.submit_assembly:
-        if verbose > 1:
-            print(">Checking if assembly taxid is valid")
+        logging.message(f">Checking if assembly taxid is valid", threshold=1)
         assembly_taxid = utility.from_config(config, 'ASSEMBLY', 'TAXID')
         assembly_scientific_name = utility.from_config(config, 'ASSEMBLY', 'SPECIES_SCIENTIFIC_NAME')
 
         taxdata = query_ena_taxonomy(level="metagenome",
                                     domain="metagenome",
                                     classification=assembly_scientific_name,
-                                    filtered=True,
-                                    verbose=verbose)
+                                    filtered=True)
         if len(taxdata) == 0 or len(taxdata) > 1:
-            print(f"\nERROR: The scientific name '{assembly_scientific_name}' is not valid.")
+            err = f"\nERROR: The scientific name '{assembly_scientific_name}' is not valid."
+            logging.message(err, threshold=-1)
             exit(1)
         taxdata = taxdata[0]
         if not taxdata['tax_id'] == assembly_taxid:
-            print(f"\nERROR: The taxid '{assembly_taxid}' does not match the scientific name '{assembly_scientific_name}'.")
+            err = f"\nERROR: The taxid '{assembly_taxid}' does not match the scientific name '{assembly_scientific_name}'."
+            logging.message(err, threshold=-1)
             exit(1)
         
     # Check if the BAM files exist and are indexed/sorted
     for bam_file in utility.from_config(config, 'BAM_FILES'):
         if not os.path.isfile(bam_file):
-            print(f"\nERROR: BAM file {bam_file} does not exist.")
+            err = f"\nERROR: BAM file {bam_file} does not exist."
+            logging.message(err, threshold=-1)
             exit(1)
         extension = '.' + bam_file.split('.')[-1]
         if not extension in staticConfig.bam_extensions.split(';'):
-            print(f"\nERROR: BAM file {bam_file} has an invalid extension {extension}. Valid extensions are {staticConfig.bam_extensions}.")
+            err = f"\nERROR: BAM file {bam_file} has an invalid extension {extension}. Valid extensions are {staticConfig.bam_extensions}."
+            logging.message(err, threshold=-1)
             exit(1)
 
     # Query ENA to check if the various accessions (assembly, run_refs,
@@ -140,39 +133,49 @@ def __check_config(args: argparse.Namespace,
 
     # If are not submitting an assembly, can we query the neccessary data?
             
+    # Passen die Assembly accessions? siehe diese message
+    print("""\nSince you chose not to submit an assembly, we assume that it is
+          already present in the ENA database. If this previously submitted
+          assembly is a co-assembly, fill out the field
+          \tEXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION
+          in the config file. If the assembly is based on a single sample,
+          fill out the field
+          \tEXISTING_ASSEMBLY_ANALYSIS_ACCESSION
+          in the config file.
+          Only fill out one of these fields an leave the other empty.""")
+            
     # The logging dir CANNOT be the same as the staging dir
     if args.logging_dir == args.staging_dir:
-        print(f"\nERROR: The logging directory cannot be the same as the staging directory.")
+        err = f"\nERROR: The logging directory cannot be the same as the staging directory."
+        logging.message(err, threshold=-1)
         exit(1)
             
 
 
-def preflight_checks(args: argparse.Namespace,
-                       verbose: int) -> None:
+def preflight_checks(args: argparse.Namespace) -> None:
     """
     Check if everything looks like we can start.
 
     Args:
         args:    The command line arguments.
-        verbose: The verbosity level.
 
     Returns:
         The config file as a dictionary.
     """
     # Check if config file exists
     if not os.path.isfile(args.config):
-        print(f"\nERROR: The config file '{args.config}' does not exist.")
-        return
+        err = f"\nERROR: The config file '{args.config}' does not exist."
+        logging.message(err, threshold=-1)
+        exit(1)
     
     # Read data from the YAML config file
     config = utility.read_yaml(args.config)
 
     # Do a superficial check of the config
-    __check_config(args, config, verbose)
+    __check_config(args, config)
 
     # Check if webin-cli can be found
-    if verbose>1:
-        print(">Checking if webin-cli can be found")
+    logging.message(f">Checking if webin-cli can be found", threshold=1)
     find_webin_cli_jar()
 
     # Check for login data
@@ -184,16 +187,10 @@ def preflight_checks(args: argparse.Namespace,
 
     # Check if staging dir is empty
     if os.listdir(args.staging_dir):
-        print(f"\nERROR: Staging directory is not empty: {args.staging_dir}")
+        err = f"\nERROR: Staging directory is not empty: {args.staging_dir}"
+        logging.message(err, threshold=-1)
         exit(1)
 
-    # Create logging dir if it doesn't exist
-    if not os.path.exists(args.logging_dir):
-        os.makedirs(args.logging_dir)
 
-    # Check if logging dir is empty
-    if os.listdir(args.logging_dir):
-        print(f"\nERROR: Logging directory is not empty: {args.logging_dir}")
-        exit(1)
 
     return config

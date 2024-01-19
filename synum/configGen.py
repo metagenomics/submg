@@ -1,33 +1,81 @@
 import os
 import yaml
 
-def __write_config(config: dict,
-                   outpath: str) -> None:
-    """
-    Write the config to file.
+from synum.statConf import staticConfig, YAMLCOMMENTS, YAMLEXAMPLES
 
-    Args:
-        config (dict): The config dictionary
-        outpath (str): The path where the config should be written
-    """
+# def __write_config(config: dict,
+#                    outpath: str) -> None:
+#     """
+#     Write the config to file.
+
+#     Args:
+#         config (dict): The config dictionary
+#         outpath (str): The path where the config should be written
+#     """
   
-    def represent_none(self, _):
-        """
-        We need this to write fields without values to the YAML file.
-        """
-        return self.represent_scalar('tag:yaml.org,2002:null', '')
+#     def represent_none(self, _):
+#         """
+#         We need this to write fields without values to the YAML file.
+#         """
+#         return self.represent_scalar('tag:yaml.org,2002:null', '')
     
-    yaml.add_representer(type(None), represent_none)
+#     yaml.add_representer(type(None), represent_none)
 
+#     outpath = os.path.abspath(outpath)
+#     if os.path.exists(outpath):
+#         print(f"\nERROR: The file '{outpath}' already exists.")
+#         exit(1)
+
+#     with open(outpath, 'w') as outfile:
+#         yaml.dump(config, outfile, default_flow_style=False)
+
+#     print(f">Config with empty fields written to {outpath}")
+
+def __write_yaml(data: dict,
+                 outpath: str,
+                 no_comments: bool = False,
+                 comments: dict = YAMLCOMMENTS,
+                 examples: dict = YAMLEXAMPLES) -> None:
+
+
+    # Function to handle None values, representing them as empty fields
+    def represent_none(self, _):
+        return self.represent_scalar('tag:yaml.org,2002:null', '')
+    yaml.add_representer(type(None), represent_none)
+    
+    # Serialize the data dictionary to a YAML-formatted string and split
+    yaml_str = yaml.dump(data, default_flow_style=False, sort_keys=False)
+    lines = yaml_str.split('\n')
+    
+    # Create lines with comments
+    output_lines = []
+    for line in lines:
+        next_line = line
+        if not no_comments:        
+            stripped_line = line.strip()
+            if ':' in stripped_line:
+                key = stripped_line.split(':')[0].strip()
+                if key in comments:
+                    next_line += '  # ' + comments[key]
+                    if key in examples:
+                        next_line += f" >>EXAMPLE: {examples[key]}"
+        output_lines.append(next_line)
+
+    final_output = '\n'.join(output_lines)
     outpath = os.path.abspath(outpath)
+    
+    # Check if file exists
     if os.path.exists(outpath):
         print(f"\nERROR: The file '{outpath}' already exists.")
         exit(1)
-
-    with open(outpath, 'w') as outfile:
-        yaml.dump(config, outfile, default_flow_style=False)
-
+    
+    # Write the string with comments and handle empty fields to the specified file
+    with open(outpath, 'w') as file:
+        file.write(final_output)
+    
     print(f">Config with empty fields written to {outpath}")
+           
+
 
 
 def __check_parameters(outpath: str,
@@ -61,20 +109,23 @@ def __check_parameters(outpath: str,
         exit(1)
 
     # The valid submission modes we support are 
-    submission_modes = """The following modes of submission are supported:
-	# Samples > Reads > Assembly > Bins > MAGs
-    # Samples > Reads > Assembly > Bins
-    # Samples > Reads > Assembly
-    # Reads > Assembly > Bins > MAGs
-    # Reads > Assembly > Bins
-    # Reads > Assembly
-    # Assembly > Bins > MAGs
-    # Assembly > Bins
-    # Assembly
-    # Bins > MAGs
-    # Bins
-    # MAGs
-    # Submitting single and paired reads at the same time works.
+    submission_modes = """
+    The following modes of submission are supported:
+
+      Samples + Reads + Assembly + Bins + MAGs
+      Samples + Reads + Assembly + Bins
+      Samples + Reads + Assembly
+                Reads + Assembly + Bins + MAGs
+                Reads + Assembly + Bins
+                Reads + Assembly
+                        Assembly + Bins + MAGs
+                        Assembly + Bins
+                        Assembly
+                                   Bins + MAGs
+                                   Bins
+                                          MAGs
+    
+    Submitting single and paired reads at the same time works.
     """
 
     # Do we lack coverage data or have redundancy
@@ -135,52 +186,53 @@ def __make_config_dict(submit_samples: int,
     """
 
     # Create the config dictionary. We always need a 'STUDY' field
-    config = {'STUDY': ""}
+    config = {'STUDY': None}
 
     # Metagenome taxonomy
     # We need the scientific & taxid name for everything except reads
     # If the assembly was already submitted, we can derive the taxonomy from the assembly
     if submit_assembly:
-        config['METAGENOME_SCIENTIFIC_NAME'] = ""
-        config['METAGENOME_TAXID'] = ""
+        config['METAGENOME_SCIENTIFIC_NAME'] = None
+        config['METAGENOME_TAXID'] = None
 
     # Platform - needed for assembly and bins
     if submit_assembly or submit_bins or submit_mags:
-        config['SEQUENCING_PLATFORMS'] = [""]
+        config['SEQUENCING_PLATFORMS'] = []
 
     # Make the SAMPLE section
     samples = []
     for _ in range(submit_samples):
-        entry = {'TITLE': "",
-                 'collection date': "",
-                 'geographic location (country and/or sea)': "",
-                 'ADDITIONAL_SAMPLESHEET_FIELDS': None}
+        entry = {'TITLE': None,
+                 'collection date': None,
+                 'geographic location (country and/or sea)': None,
+                 'ADDITIONAL_SAMPLESHEET_FIELDS': {}
+        }
         if submit_mags: # MAGs require location, so we might as well ask for them here
-            entry['ADDITIONAL_SAMPLESHEET_FIELDS']['geographic location (latitude)'] = ""
-            entry['ADDITIONAL_SAMPLESHEET_FIELDS']['geographic location (longitude)'] = ""
-            entry['ADDITIONAL_SAMPLESHEET_FIELDS']['broad-scale environmental context'] = ""
-            entry['ADDITIONAL_SAMPLESHEET_FIELDS']['local environmental context'] = ""
-            entry['ADDITIONAL_SAMPLESHEET_FIELDS']['environmental medium'] = ""
+            entry['ADDITIONAL_SAMPLESHEET_FIELDS']['geographic location (latitude)'] = None
+            entry['ADDITIONAL_SAMPLESHEET_FIELDS']['geographic location (longitude)'] = None
+            entry['ADDITIONAL_SAMPLESHEET_FIELDS']['broad-scale environmental context'] = None
+            entry['ADDITIONAL_SAMPLESHEET_FIELDS']['local environmental context'] = None
+            entry['ADDITIONAL_SAMPLESHEET_FIELDS']['environmental medium'] = None
         samples.append(entry)
     if len(samples) > 0:
         config['NEW_SAMPLES'] = samples
     else:
-        config['SAMPLE_ACCESSIONS'] = [""]
+        config['SAMPLE_ACCESSIONS'] = []
 
     # Make the SINGLE READ section
     reads = []
     for _ in range(submit_single_reads):
-        entry = {'NAME': "",
-                 'SEQUENCING_INSTRUMENT': "",
-                 'LIBRARY_SOURCE': "",
-                 'LIBRARY_SELECTION': "",
-                 'LIBRARY_STRATEGY': "",
-                 'FASTQ_FILE': ""}
+        entry = {'NAME': None,
+                 'SEQUENCING_INSTRUMENT': None,
+                 'LIBRARY_SOURCE': None,
+                 'LIBRARY_SELECTION': None,
+                 'LIBRARY_STRATEGY': None,
+                 'FASTQ_FILE': None}
         if submit_samples > 0:
-            entry['RELATED_SAMPLE_TITLE'] = ""
+            entry['RELATED_SAMPLE_TITLE'] = None
         else:
-            entry['RELATED_SAMPLE_ACCESSION'] = ""
-        reads['ADDITIONAL_MANIFEST_FIELDS'] = None
+            entry['RELATED_SAMPLE_ACCESSION'] = None
+        entry['ADDITIONAL_MANIFEST_FIELDS'] = list()
         reads.append(entry)
     if len(reads) > 0:
         config['SINGLE_READS'] = reads
@@ -188,78 +240,78 @@ def __make_config_dict(submit_samples: int,
     # Make the PAIRED-END READ section
     reads = []
     for _ in range(submit_paired_end_reads):
-        entry = {'NAME': "",
-                 'SEQUENCING_INSTRUMENT': "",
-                 'LIBRARY_SOURCE': "",
-                 'LIBRARY_SELECTION': "",
-                 'LIBRARY_STRATEGY': "",
-                 'INSERT_SIZE': "",
-                 'FASTQ1_FILE': "",
-                 'FASTQ2_FILE': ""}
+        entry = {'NAME': None,
+                 'SEQUENCING_INSTRUMENT': None,
+                 'LIBRARY_SOURCE': None,
+                 'LIBRARY_SELECTION': None,
+                 'LIBRARY_STRATEGY': None,
+                 'INSERT_SIZE': None,
+                 'FASTQ1_FILE': None,
+                 'FASTQ2_FILE': None}
         if submit_samples > 0:
-            entry['RELATED_SAMPLE_TITLE'] = ""
+            entry['RELATED_SAMPLE_TITLE'] = None
         else:
-            entry['RELATED_SAMPLE_ACCESSION'] = ""
-        entry['ADDITIONAL_MANIFEST_FIELDS'] = None
+            entry['RELATED_SAMPLE_ACCESSION'] = None
+        entry['ADDITIONAL_MANIFEST_FIELDS'] = list()
         reads.append(entry)
     if len(reads) > 0:
         config['PAIRED_END_READS'] = reads
 
     # Make the ASSEMBLY section
     assembly = {
-        'ASSEMBLY_NAME': "",
+        'ASSEMBLY_NAME': None,
     }
     if not submit_assembly:
-        assembly['ASSEMBLY_ACCESSION'] = ""
+        assembly['EXISTING_ASSEMBLY_ANALYSIS_ACCESSION'] = None
+        assembly['EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION'] = None
     else:
-        assembly['ASSEMBLY_SOFTWARE'] = ""
-        assembly['ISOLATION_SOURCE'] = ""
-        assembly['geographic location (country and/or sea)'] = ""
-        assembly['collection_date'] = ""
-        assembly['FASTA_FILE'] = ""
-        assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = None
-        assembly['ADDITIONAL_MANIFEST_FIELDS'] = None
+        assembly['ASSEMBLY_SOFTWARE'] = None
+        assembly['ISOLATION_SOURCE'] = None
+        assembly['FASTA_FILE'] = None
+        assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = list()
+        assembly['ADDITIONAL_MANIFEST_FIELDS'] = list()
+    if submit_bins or submit_mags or submit_assembly:
+        assembly['ASSEMBLY_SOFTWARE'] = None
+        assembly['collection date'] = None
+        assembly['geographic location (country and/or sea)'] = None
     if (submit_single_reads + submit_paired_end_reads) == 0: # We need the accessions of the reads
-        assembly['RUN_ACCESSIONS'] = [""]
+        assembly['RUN_ACCESSIONS'] = list()
     if submit_mags: # Since we need this for MAGs, we might as well ask for it here
         assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = {
-            'broad-scale environmental context': "",
-            'local environmental context': "",
-            'environmental medium': "",
-            'geographic location (latitude)': "",
-            'geographic location (longitude)': "",
+            'broad-scale environmental context': None,
+            'local environmental context': None,
+            'environmental medium': None,
+            'geographic location (latitude)': None,
+            'geographic location (longitude)': None,
         }
     config['ASSEMBLY'] = assembly
 
     # Make the BINS section
     if submit_bins or submit_mags:
         bins = {
-            'BINS_DIRECTORY': "",
-            'COMPLETENESS_SOFTWARE': "",
-            'BIN_QUALITY_FILE': "",
-            'BIN_NCBI_TAXONOMY_FILES': [""],
-            'MANUAL_TAXONOMY_FILE': "",
-            'BINNING_SOFTWARE': "",
-            'ADDITIONAL_SAMPLESHEET_FIELDS': None,
-            'ADDITIONAL_MANIFEST_FIELDS': None
+            'BINS_DIRECTORY': None,
+            'COMPLETENESS_SOFTWARE': None,
+            'QUALITY_FILE': None,
+            'NCBI_TAXONOMY_FILES': [],
+            'MANUAL_TAXONOMY_FILE': None,
+            'BINNING_SOFTWARE': None,
+            'ADDITIONAL_SAMPLESHEET_FIELDS': {},
+            'ADDITIONAL_MANIFEST_FIELDS': {},
         }
         if submit_mags: # Since we need this for MAGs, we might as well ask for it here
             bins['ADDITIONAL_SAMPLESHEET_FIELDS'] = {
-                'binning parameters': "",
-                'taxonomic identity marker': "",
+                'binning parameters': None,
+                'taxonomic identity marker': None,
             }
         config['BINS'] = bins
 
     # Make the MAGs section (and add fields to the BINS section)
     if submit_mags:
         mags = {
-            'MAG_NAMES_FILE': "",
-            'MAG_QUALITY_FILE': "",
-            'MAG_NCBI_TAXONOMY_FILES': [""],
-            'MANUAL_TAXONOMY_FILE': "",
-            'MAGS_SOFTWARE': "",
-            'ADDITIONAL_SAMPLESHEET_FIELDS': None,
-            'ADDITIONAL_MANIFEST_FIELDS': None
+            'MAG_NAMES_FILE': None,
+            'MAG_QCATEGORY_FILE': None,
+            'ADDITIONAL_SAMPLESHEET_FIELDS': {},
+            'ADDITIONAL_MANIFEST_FIELDS': {},
         }
         bins['MAGS'] = mags
 
@@ -267,13 +319,13 @@ def __make_config_dict(submit_samples: int,
     if submit_assembly or submit_bins or submit_mags:
         if coverage_from_bam:
             assert known_coverage == False
-            config['BAM_FILES'] = [""]
+            config['BAM_FILES'] = list()
         elif known_coverage:
             assert coverage_from_bam == False
             if submit_assembly:
-                config['ASSEMBLY']['COVERAGE_VALUE'] = ""
+                config['ASSEMBLY']['COVERAGE_VALUE'] = None
             if submit_bins:
-                config['BINS']['COVERAGES_FILE'] = ""
+                config['BINS']['COVERAGE_FILE'] = None
         else:
             raise ValueError("Either coverage_from_bam or known_coverage must be set to True")
         
@@ -287,7 +339,8 @@ def make_config(outpath: str,
                 known_coverage: bool,
                 submit_assembly: bool,
                 submit_bins: bool,
-                submit_mags: bool) -> None:
+                submit_mags: bool,
+                no_comments: bool) -> None:
     """
     Write an empty YAML config file which holds the keys (but not the values)
     which the user needs.
@@ -325,13 +378,21 @@ def make_config(outpath: str,
                                        submit_mags)
     
     # Write to file
-    __write_config(config_fields,
-                   outpath)
+    __write_yaml(config_fields,
+                 outpath,
+                 no_comments)
     
-#make_config("/mnt/mega/testing_colpymag/config/test.yaml", 2, 4, True, False)
-
-
-
+    if not submit_assembly:
+        print("""\nSince you chose not to submit an assembly, we assume that it is
+            already present in the ENA database. If this previously submitted
+            assembly is a co-assembly, fill out the field
+            \tEXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION
+            in the config file. If the assembly is based on a single sample,
+            fill out the field
+            \tEXISTING_ASSEMBLY_ANALYSIS_ACCESSION
+            in the config file.
+            Only fill out one of these fields and leave the other empty.""")
+          
     
 # def __LEOLD_make_config_dict(submit_samples: int,
 #                        submit_single_reads: int,

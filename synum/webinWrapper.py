@@ -3,6 +3,7 @@ import os
 import glob
 import signal
 
+from synum  import logging
 from synum.statConf import staticConfig
 
 def find_webin_cli_jar():
@@ -29,8 +30,7 @@ def __webin_cli_validate(manifest,
                          password,
                          test,
                          context,
-                         jar,
-                         verbose=1):
+                         jar):
     cmd = [
         'java',
         '-jar',
@@ -43,60 +43,43 @@ def __webin_cli_validate(manifest,
         f'-context={context}',
         f'-manifest={manifest}'
     ]
-    
     try:
-        if verbose<1:
-            subprocess.run(cmd,
-                           stdout = subprocess.DEVNULL,
-                           stderr = subprocess.DEVNULL,
-                           check=True)
-        else:
-            subprocess.run(cmd,
-                           check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"\nERROR: Validation failed with error: {e}") 
+        # Run the subprocess and capture stdout and stderr
+        result = subprocess.run(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                text=True,  # Ensures the output is in string format
+                                check=True)
 
-# def __webin_cli_submit(manifest,
-#                        inputdir,
-#                        outputdir,
-#                        username,
-#                        password,
-#                        test,
-#                        context,
-#                        jar,
-#                        verbose=1):
-#     cmd = [
-#         'java',
-#         '-jar',
-#         jar,
-#         '-submit',
-#         f'-username={username}',
-#         f'-password={password}',
-#         f'-inputdir={inputdir}',
-#         f'-outputdir={outputdir}',
-#         f'-context={context}',
-#         f'-manifest={manifest}'
-#     ]
-    
-#     if test:
-#         if verbose>0:
-#             print("Using test submission service")
-#         cmd.append('-test')
-#     else:
-#         if verbose>0:
-#             print("Using production submission service")
-    
-#     try:
-#         if verbose<1:
-#             subprocess.run(cmd,
-#                            stdout = subprocess.DEVNULL,
-#                            stderr = subprocess.DEVNULL,
-#                            check=True)
-#         else:
-#             subprocess.run(cmd,
-#                            check=True)
-#     except subprocess.CalledProcessError as e:
-#         print(f"\nERROR: Submission failed with error: {e}")
+        # Log the stdout if any
+        if result.stdout:
+            logging.message(result.stdout.strip(), threshold=0)
+
+        # Log the stderr if any
+        if result.stderr:
+            logging.message(result.stderr.strip(), threshold=0)
+
+    except subprocess.CalledProcessError as e:
+        # Even if the subprocess fails, it may produce output or errors, so capture and log them
+        if e.stdout:
+            logging.message(e.stdout.strip(), threshold=-1)
+        if e.stderr:
+            logging.message(e.stderr.strip(), threshold=-1)
+
+        # Finally, log the exception itself
+        logging.message(f"\nERROR: Validation failed with error: {e}", threshold=-1)
+
+#    try:
+#        if verbose<1:
+#            subprocess.run(cmd,
+#                           stdout = subprocess.DEVNULL,
+#                           stderr = subprocess.DEVNULL,
+#                           check=True)
+#        else:
+#            subprocess.run(cmd,
+#                           check=True)
+#    except subprocess.CalledProcessError as e:
+#        print(f"\nERROR: Validation failed with error: {e}") 
 
         
 def __webin_cli_submit(manifest,
@@ -106,8 +89,7 @@ def __webin_cli_submit(manifest,
                        password,
                        test,
                        context,
-                       jar,
-                       verbose=1):
+                       jar):
     cmd = [
         'java',
         '-jar',
@@ -122,12 +104,10 @@ def __webin_cli_submit(manifest,
     ]
     
     if test:
-        if verbose>0:
-            print("           Submitting to test/dev service through Webin-CLI")
+        logging.message("           Submitting to test/dev service through Webin-CLI", threshold=0)
         cmd.append('-test')
     else:
-        if verbose>0:
-            print("           Submitting to PRODUCTION service through Webin-CLI")    
+        logging.message("           Submitting to PRODUCTION service through Webin-CLI", threshold=0)
     try:
         process = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
@@ -146,10 +126,10 @@ def __webin_cli_submit(manifest,
     for line in iter(process.stdout.readline, ''):
         if accession_line in line:
             accession = line.strip().split(' ')[-1]
-        if verbose>0:
-            if line.startswith('INFO : '):
-                line = line[7:]
-            print(f"Webin-CLI: {line}", end='')
+
+        if line.startswith('INFO : '):
+            line = line[7:]
+        logging.message(f"Webin-CLI: {line}", threshold=0)
 
     process.wait()
 
@@ -164,8 +144,7 @@ def webin_cli(manifest,
               subdir_name,
               submit=False,
               test=True,
-              context='genome',
-              verbose=1):
+              context='genome'):
     """
     Submit or validate data to/from the Webin submission system.
 
@@ -181,8 +160,7 @@ def webin_cli(manifest,
     """
     jar = find_webin_cli_jar()
     if submit:
-        if verbose>1:
-            print(f"Submitting {subdir_name} to ENA through webin-cli")
+        logging.message(f">Using ENA Webin-CLI to submit {subdir_name}", threshold=1)
         accession = __webin_cli_submit(manifest,
                                         inputdir,
                                         outputdir,
@@ -190,16 +168,14 @@ def webin_cli(manifest,
                                         password,
                                         test,
                                         context,
-                                        jar,
-                                        verbose)
+                                        jar)
         receipt = os.path.join(outputdir, context, subdir_name.replace(' ','_'), 'submit', 'receipt.xml')
         if accession is None:
             print(f"ERROR: Submission failed for {inputdir}")
             print(f"Please check the webin-cli report at {receipt}")
             exit(1)
     else:
-        if verbose>1:
-            print(f"Validating {subdir_name} for ENA submission using webin-cli")
+        logging.message(f">Validating {subdir_name} for ENA submission using webin-cli", threshold=1)
         __webin_cli_validate(manifest,
                              inputdir,
                              outputdir,
@@ -207,8 +183,7 @@ def webin_cli(manifest,
                              password,
                              test,
                              context,
-                             jar,
-                             verbose)
+                             jar)
         receipt = None
 
     return receipt, accession

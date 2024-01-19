@@ -6,29 +6,26 @@ import shutil
 import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
 
-from synum import utility
+from synum import utility, logging
 from synum.utility import from_config
 from synum.statConf import staticConfig
 from synum.webinWrapper import webin_cli
 
 def __prep_coassembly_samplesheet(config: dict,
                                   outdir: str,
-                                  origin_samples: list,
-                                  verbose: int = 1) -> str:
+                                  origin_samples: list) -> str:
     """
     Prepares the samplesheet for a co-assembly.
 
     Args:
         config (dict): The configuration dictionary.
         outdir (str): The directory where the samplesheet will be written.
-        verbose (int, optional): The verbosity level. Defaults to 1.
         staticConfig (staticConfig, optional): The static configuration object. Defaults to staticConfig.
 
     Returns:
         str: The path to the samplesheet.
     """
-    if verbose > 0:
-        print(f">Preparing assembly samplesheet...")
+    logging.message(f">Preparing assembly samplesheet...", threshold=0)
 
     sample_alias = from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
 
@@ -49,7 +46,7 @@ def __prep_coassembly_samplesheet(config: dict,
     sample_attributes = ET.SubElement(sample, "SAMPLE_ATTRIBUTES")
     # Create SAMPLE_ATTRIBUTE elements
     attributes_data = [
-        ("collection date", str(from_config(config, 'ASSEMBLY', 'collection_date'))),
+        ("collection date", str(from_config(config, 'ASSEMBLY', ''))),
         ("geographic location (country and/or sea)", from_config(config, 'ASSEMBLY', 'geographic location (country and/or sea)')),
         ("sample composed of", ','.join(origin_samples)),
     ]
@@ -73,8 +70,7 @@ def __prep_coassembly_samplesheet(config: dict,
     with open(outpath, "wb") as f:
         tree.write(f, encoding="utf-8", xml_declaration=False)
 
-    if verbose > 0:
-        print(f"\t...written to {os.path.abspath(outpath)}")
+    logging.message(f"\t...written to {os.path.abspath(outpath)}", threshold=0)
 
     return outpath
 
@@ -82,8 +78,7 @@ def __prep_coassembly_samplesheet(config: dict,
 def __submit_coassembly_samplesheet(sample_xml: str,
                                     staging_dir: str,
                                     logging_dir: str,
-                                    url,
-                                    verbose=1):
+                                    url):
     """
     Uploads the samplesheet to ENA.
 
@@ -92,7 +87,6 @@ def __submit_coassembly_samplesheet(sample_xml: str,
         staging_dir (str): The staging directory.
         logging_dir (str): The logging directory.
         url (str): The ENA API URL.
-        verbose (int, optional): The verbosity level. Defaults to 1.
 
     Returns:
         str: The accession number of the uploaded sample.
@@ -100,27 +94,23 @@ def __submit_coassembly_samplesheet(sample_xml: str,
 
     submission_xml = os.path.join(staging_dir, "co_assembly_samplesheet_submission.xml")
     utility.build_sample_submission_xml(submission_xml,
-                                hold_until_date=None,
-                                verbose=verbose)
+                                hold_until_date=None)
 
     receipt_path = os.path.join(logging_dir, "assembly_samplesheet_receipt.xml")
     usr, pwd = utility.get_login()
 
-    if verbose > 0:
-        print(f">Trying to submit samplesheet through ENA API.")
+    logging.message(f">Trying to submit samplesheet through ENA API.", threshold=0)
     response = requests.post(url,
                 files={
                     'SUBMISSION': open(submission_xml, "rb"),
                     'SAMPLE': open(sample_xml, "rb"),
                 }, auth=HTTPBasicAuth(usr, pwd))
-    if verbose>1:
-        print("\tHTTP status: "+str(response.status_code))
-
+    logging.message("\tHTTP status: "+str(response.status_code), threshold=1)
     utility.api_response_check(response)
 
     with open(receipt_path, 'w') as f:
         f.write(response.text)
-    accession = utility.read_receipt(receipt_path, verbose)
+    accession = utility.read_receipt(receipt_path)
 
     return accession
 
@@ -131,8 +121,7 @@ def __prep_assembly_manifest(config: dict,
                              run_accessions,
                              sample_accession: str,
                              fasta_path: str,
-                             threads=4,
-                             verbose: int = 1) -> str:
+                             threads=4) -> str:
     """
     Prepares the assembly manifest.
 
@@ -143,21 +132,18 @@ def __prep_assembly_manifest(config: dict,
         sample_accession (str): The accession number of the sample.
         fasta_path (str): The path to the fasta file.
         threads (int, optional): The number of threads to use. Defaults to 4.
-        verbose (int, optional): The verbosity level. Defaults to 1.
         
     Returns:
         Tuple[str, str]: The upload directory and the path to the manifest file.
     """
-    if verbose > 0:
-        print(f">Preparing assembly manifest file")
+    logging.message(f">Preparing assembly manifest file", threshold=0)
     
     # Determine coverage
     if depth_files is None:
         COVERAGE = utility.from_config(config, 'ASSEMBLY', 'COVERAGE_VALUE')
     else:
         COVERAGE = utility.calculate_coverage(depth_files,
-                                            threads=threads,
-                                            verbose=verbose)
+                                            threads=threads)
 
     # Write manifest
     PLATFORM = utility.from_config(config, 'SEQUENCING_PLATFORMS')
@@ -201,7 +187,6 @@ def submit_assembly(config: dict,
                     sample_accessions_data,
                     run_accessions,
                     threads: int = 4,
-                    verbose: int = 1,
                     test: bool = True,
                     submit: bool = True,
                     staticConfig=staticConfig):
@@ -222,8 +207,7 @@ def submit_assembly(config: dict,
     else:
         url = staticConfig.ena_dropbox_url
 
-    if verbose > 1:
-        print(f">Preparing assembly submission directory")
+    logging.message(f">Preparing assembly submission directory", threshold=1)
     assembly_submission_dir = os.path.join(staging_dir, "assembly_submission")
     os.makedirs(assembly_submission_dir, exist_ok=False)
 
@@ -232,9 +216,8 @@ def submit_assembly(config: dict,
     origin_samples = [x['accession'] for x in sample_accessions_data]
     assert type(origin_samples) is list
     if len(origin_samples) > 1:
-        if verbose > 0:
-            print(f">Multiple SAMPLE_REFS in the config file mean this is a co-assembly")
-            print(">For a co-assembly, a virtual sample objects will be created in ENA")
+        logging.message(f">Multiple SAMPLE_REFS in the config file mean this is a co-assembly", threshold=0)
+        logging.message(f">For a co-assembly, a virtual sample object will be created in ENA", threshold=0)
         ## make a directory for the samplesheet submission
         sample_submission_dir = os.path.join(assembly_submission_dir, "co_assembly_sample")
         os.makedirs(sample_submission_dir, exist_ok=False)
@@ -245,13 +228,11 @@ def submit_assembly(config: dict,
 
         samplesheet_path = __prep_coassembly_samplesheet(config,
                                                          sample_submission_dir,
-                                                         origin_samples,
-                                                         verbose)
+                                                         origin_samples)
         assembly_sample_accession = __submit_coassembly_samplesheet(samplesheet_path,
                                                            sample_submission_dir,
                                                            sample_logging_dir,
-                                                           url,
-                                                           verbose)
+                                                           url)
     else:
         assembly_sample_accession = origin_samples[0]
 
@@ -263,8 +244,7 @@ def submit_assembly(config: dict,
     fasta_path, gzipped = utility.check_fasta(from_config(config, 'ASSEMBLY', 'FASTA_FILE'))
     gzipped_fasta_path = os.path.join(fasta_submission_dir, f"assembly_upload{staticConfig.zipped_fasta_extension}")
     if not gzipped:
-        if verbose > 0:
-            print(f">Gzipping assembly fasta file")
+        logging.message(f">Gzipping assembly fasta file", threshold=0)
         with open(fasta_path, 'rb') as f_in:
             with gzip.open(gzipped_fasta_path, 'wb', compresslevel=5) as f_out:
                 f_out.writelines(f_in)
@@ -280,11 +260,9 @@ def submit_assembly(config: dict,
                                              run_accessions,
                                              assembly_sample_accession,
                                              gzipped_fasta_path,
-                                             threads=threads,
-                                             verbose=verbose)
+                                             threads=threads)
 
-    if verbose>0:
-        print(f">Using ENA Webin-CLI to submit assembly.\n")
+    logging.message(f">Using ENA Webin-CLI to submit assembly.", threshold=0)
     assembly_name = utility.from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
     usr, pwd = utility.get_login()
     receipt, accession = webin_cli(manifest=manifest_path,
@@ -294,11 +272,10 @@ def submit_assembly(config: dict,
                                    password=pwd,
                                    subdir_name=assembly_name,
                                    submit=submit,
-                                   test=test,
-                                   verbose=verbose)
+                                   test=test)
     
     # Parse the receipt
-    assembly_fasta_accession = utility.read_receipt(receipt, verbose)
+    assembly_fasta_accession = utility.read_receipt(receipt)
 
     assembly_accession_file = os.path.join(logging_dir, "assembly_preliminary_accession.txt")
     with open(assembly_accession_file, 'w') as f:

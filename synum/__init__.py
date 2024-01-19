@@ -9,3 +9,4 @@ from . import readSubmission
 from . import assemblySubmission
 from . import binSubmission
 from . import webinWrapper
+from . import logging

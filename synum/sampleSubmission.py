@@ -1,6 +1,6 @@
 import os
 
-from synum import utility
+from synum import utility, logging
 from synum.utility import from_config
 from synum.statConf import staticConfig
 
@@ -9,15 +9,13 @@ import requests
 import xml.etree.ElementTree as ET
 
 def __prep_samplesheet(config: dict,
-                       staging_dir: str,
-                       verbose: int = 1) -> str:
+                       staging_dir: str) -> str:
     """
     Prepares an XML file with the samplesheet for the biological samples.
 
     Args:
         config: The configuration dictionary.
         submission_dir: The directory where the samplesheet will be written.
-        verbose: The verbosity level.
 
     Returns:
         The path to the samplesheet.
@@ -58,14 +56,12 @@ def __prep_samplesheet(config: dict,
     with open(outpath, 'wb') as f:
         tree.write(f, encoding='UTF-8', xml_declaration=False)
 
-    if verbose > 0:
-        print(f"\t...written samplesheet for biological samples to {os.path.abspath(outpath)}")
+    logging.message(f"\t...written samplesheet for biological samples to {os.path.abspath(outpath)}", threshold=0)
 
     return outpath
 
 
-def __read_samplesheet_receipt(receipt_path: str,
-                               verbose: int = 1) -> list:
+def __read_samplesheet_receipt(receipt_path: str) -> list:
     tree = ET.parse(receipt_path)
     tree_root = tree.getroot()
 
@@ -73,8 +69,7 @@ def __read_samplesheet_receipt(receipt_path: str,
     if success != 'true':
         print(f"\nERROR: The submission of the biological samples failed. Consult the receipt file at {os.path.abspath(receipt_path)} for more information.")
         exit(1)
-    if verbose>1:
-        print("...samplesheet upload was successful.")
+    logging.message(f"\t...samplesheet upload was successful.", threshold=1)
 
     sample_accessions = []
     for sample in tree_root.iterfind('.//SAMPLE'):
@@ -98,41 +93,36 @@ def __read_samplesheet_receipt(receipt_path: str,
 def __submit_samplesheet(samplesheet: str,
                          staging_dir: str,
                          logging_dir: str,
-                         url: str,
-                         verbose: int = 1) -> list:
+                         url: str) -> list:
     """
     """
     
     # Make the submission xml
     submission_xml = os.path.join(staging_dir, 'submission.xml')
     utility.build_sample_submission_xml(submission_xml,
-                                        hold_until_date=None,
-                                        verbose=verbose)
+                                        hold_until_date=None)
     
     # Submit
     receipt_path = os.path.join(logging_dir, 'submission_receipt.xml')
     usr, pwd = utility.get_login()
 
-    if verbose > 0:
-        print(f">Submitting biological samples samplesheet through ENA API")
+    logging.message(">Submitting biological samples samplesheet through ENA API", threshold=1)
 
     response = requests.post(url,
                              files={
                                 'SUBMISSION': open(submission_xml, 'rb'),
                                 'SAMPLE': open(samplesheet, 'rb'),},
                              auth=requests.auth.HTTPBasicAuth(usr, pwd))
-    if verbose>1:
-        print("\t...HTTP status: "+str(response.status_code))
+    logging.message(f"\t...HTTP status: {response.status_code}", threshold=1)
     utility.api_response_check(response)
 
     # Write receipt
     with open(receipt_path, 'w') as f:
         f.write(response.text)
-    if verbose > 1:
-        print(f"\t...written submission receipt to {os.path.abspath(receipt_path)}")
+    logging.message(f"\t...written submission receipt to {os.path.abspath(receipt_path)}", threshold=1)
 
     # Get the accessions
-    accessions = __read_samplesheet_receipt(receipt_path, verbose=verbose)
+    accessions = __read_samplesheet_receipt(receipt_path)
 
     return accessions
 
@@ -140,7 +130,6 @@ def __submit_samplesheet(samplesheet: str,
 def submit_samples(config: dict,
                    staging_dir: str,
                    logging_dir: str,
-                   verbose: int = 1,
                    test: bool  = True) -> list:
     """
     Submits the specified samples to ENA.
@@ -155,8 +144,7 @@ def submit_samples(config: dict,
     sample_staging_dir = os.path.join(staging_dir, 'biological_samples')
     os.makedirs(sample_staging_dir, exist_ok=False)
     samplesheet = __prep_samplesheet(config,
-                                     sample_staging_dir,
-                                     verbose=verbose)
+                                     sample_staging_dir)
         
     # Upload the samplesheet
     sample_logging_dir = os.path.join(logging_dir, 'biological_samples')
@@ -164,7 +152,6 @@ def submit_samples(config: dict,
     sample_accessions = __submit_samplesheet(samplesheet,
                                      sample_staging_dir,
                                      sample_logging_dir,
-                                     url=url,
-                                     verbose=verbose,)
+                                     url=url)
 
     return sample_accessions
