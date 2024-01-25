@@ -3,7 +3,7 @@ import argparse
 
 from datetime import datetime
 
-from synum import utility, logging
+from synum import loggingC, utility
 from synum.statConf import staticConfig
 from synum.webinWrapper import find_webin_cli_jar
 from synum.binSubmission import query_ena_taxonomy
@@ -37,7 +37,7 @@ def __check_date(date: str) -> None:
 
     if not valid:
         err = f"\nERROR: The date '{date}' is not a valid ISO date string."
-        logging.message(err, threshold=-1)
+        loggingC.message(err, threshold=-1)
         exit(1)
 
 def __check_config(args: argparse.Namespace,
@@ -50,7 +50,7 @@ def __check_config(args: argparse.Namespace,
         config:  The config file as a dictionary.
     """
     return # THIS NEEDS TO BE REWORKED
-    logging.message(f">Checking config file at {args.config}", threshold=1)
+    loggingC.message(f">Checking config file at {args.config}", threshold=1)
 
     # Check if everything in the bins directory looks like a fasta file
     if args.submit_bins:
@@ -59,7 +59,7 @@ def __check_config(args: argparse.Namespace,
         for bin_file in bin_files:
             extension = '.' + bin_file.split('.')[-1]
             if not extension in staticConfig.fasta_extensions.split(';'):
-                logging.message(f"WARNING: File {bin_file} in the bins directory does not end in {staticConfig.fasta_extensions} and will be skipped.", threshold=-1)
+                loggingC.message(f"WARNING: File {bin_file} in the bins directory does not end in {staticConfig.fasta_extensions} and will be skipped.", threshold=-1)
     if args.submit_assembly:
         # Check if assembly fasta file looks correct
         fasta_path = utility.from_config(config, 'ASSEMBLY', 'FASTA_FILE')
@@ -70,7 +70,7 @@ def __check_config(args: argparse.Namespace,
         #    print(f"\nERROR: Molecule type '{molecule_type}' is not valid. Valid molecule types are: {', '.join(staticConfig.molecule_types)}")
         #    exit(1)
         #if not molecule_type.startswith('genomic'):
-        #logging.message(f"WARNING: Molecule type is set to '{molecule_type}' - is this a mistake?", threshold=0)
+        #loggingC.message(f"WARNING: Molecule type is set to '{molecule_type}' - is this a mistake?", threshold=0)
 
         
         ## Is the assembly date valid?
@@ -78,7 +78,7 @@ def __check_config(args: argparse.Namespace,
 
     # Check if the assembly taxid is valid and matches the scientific name
     if args.submit_assembly:
-        logging.message(f">Checking if assembly taxid is valid", threshold=1)
+        loggingC.message(f">Checking if assembly taxid is valid", threshold=1)
         assembly_taxid = utility.from_config(config, 'ASSEMBLY', 'TAXID')
         assembly_scientific_name = utility.from_config(config, 'ASSEMBLY', 'SPECIES_SCIENTIFIC_NAME')
 
@@ -88,24 +88,24 @@ def __check_config(args: argparse.Namespace,
                                     filtered=True)
         if len(taxdata) == 0 or len(taxdata) > 1:
             err = f"\nERROR: The scientific name '{assembly_scientific_name}' is not valid."
-            logging.message(err, threshold=-1)
+            loggingC.message(err, threshold=-1)
             exit(1)
         taxdata = taxdata[0]
         if not taxdata['tax_id'] == assembly_taxid:
             err = f"\nERROR: The taxid '{assembly_taxid}' does not match the scientific name '{assembly_scientific_name}'."
-            logging.message(err, threshold=-1)
+            loggingC.message(err, threshold=-1)
             exit(1)
         
     # Check if the BAM files exist and are indexed/sorted
     for bam_file in utility.from_config(config, 'BAM_FILES'):
         if not os.path.isfile(bam_file):
             err = f"\nERROR: BAM file {bam_file} does not exist."
-            logging.message(err, threshold=-1)
+            loggingC.message(err, threshold=-1)
             exit(1)
         extension = '.' + bam_file.split('.')[-1]
         if not extension in staticConfig.bam_extensions.split(';'):
             err = f"\nERROR: BAM file {bam_file} has an invalid extension {extension}. Valid extensions are {staticConfig.bam_extensions}."
-            logging.message(err, threshold=-1)
+            loggingC.message(err, threshold=-1)
             exit(1)
 
     # Query ENA to check if the various accessions (assembly, run_refs,
@@ -147,7 +147,7 @@ def __check_config(args: argparse.Namespace,
     # The logging dir CANNOT be the same as the staging dir
     if args.logging_dir == args.staging_dir:
         err = f"\nERROR: The logging directory cannot be the same as the staging directory."
-        logging.message(err, threshold=-1)
+        loggingC.message(err, threshold=-1)
         exit(1)
             
 
@@ -165,7 +165,7 @@ def preflight_checks(args: argparse.Namespace) -> None:
     # Check if config file exists
     if not os.path.isfile(args.config):
         err = f"\nERROR: The config file '{args.config}' does not exist."
-        logging.message(err, threshold=-1)
+        loggingC.message(err, threshold=-1)
         exit(1)
     
     # Read data from the YAML config file
@@ -175,7 +175,7 @@ def preflight_checks(args: argparse.Namespace) -> None:
     __check_config(args, config)
 
     # Check if webin-cli can be found
-    logging.message(f">Checking if webin-cli can be found", threshold=1)
+    loggingC.message(f">Checking if webin-cli can be found", threshold=1)
     find_webin_cli_jar()
 
     # Check for login data
@@ -188,7 +188,7 @@ def preflight_checks(args: argparse.Namespace) -> None:
     # Check if staging dir is empty
     if os.listdir(args.staging_dir):
         err = f"\nERROR: Staging directory is not empty: {args.staging_dir}"
-        logging.message(err, threshold=-1)
+        loggingC.message(err, threshold=-1)
         exit(1)
 
 

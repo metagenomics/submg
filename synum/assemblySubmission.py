@@ -6,7 +6,7 @@ import shutil
 import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
 
-from synum import utility, logging
+from synum import utility, loggingC
 from synum.utility import from_config
 from synum.statConf import staticConfig
 from synum.webinWrapper import webin_cli
@@ -25,7 +25,7 @@ def __prep_coassembly_samplesheet(config: dict,
     Returns:
         str: The path to the samplesheet.
     """
-    logging.message(f">Preparing assembly samplesheet...", threshold=0)
+    loggingC.message(f">Preparing assembly samplesheet...", threshold=0)
 
     sample_alias = from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
 
@@ -70,7 +70,7 @@ def __prep_coassembly_samplesheet(config: dict,
     with open(outpath, "wb") as f:
         tree.write(f, encoding="utf-8", xml_declaration=False)
 
-    logging.message(f"\t...written to {os.path.abspath(outpath)}", threshold=0)
+    loggingC.message(f"\t...written to {os.path.abspath(outpath)}", threshold=0)
 
     return outpath
 
@@ -99,13 +99,13 @@ def __submit_coassembly_samplesheet(sample_xml: str,
     receipt_path = os.path.join(logging_dir, "assembly_samplesheet_receipt.xml")
     usr, pwd = utility.get_login()
 
-    logging.message(f">Trying to submit samplesheet through ENA API.", threshold=0)
+    loggingC.message(f">Trying to submit samplesheet through ENA API.", threshold=0)
     response = requests.post(url,
                 files={
                     'SUBMISSION': open(submission_xml, "rb"),
                     'SAMPLE': open(sample_xml, "rb"),
                 }, auth=HTTPBasicAuth(usr, pwd))
-    logging.message("\tHTTP status: "+str(response.status_code), threshold=1)
+    loggingC.message("\tHTTP status: "+str(response.status_code), threshold=1)
     utility.api_response_check(response)
 
     with open(receipt_path, 'w') as f:
@@ -136,7 +136,7 @@ def __prep_assembly_manifest(config: dict,
     Returns:
         Tuple[str, str]: The upload directory and the path to the manifest file.
     """
-    logging.message(f">Preparing assembly manifest file", threshold=0)
+    loggingC.message(f">Preparing assembly manifest file", threshold=0)
     
     # Determine coverage
     if depth_files is None:
@@ -207,7 +207,7 @@ def submit_assembly(config: dict,
     else:
         url = staticConfig.ena_dropbox_url
 
-    logging.message(f">Preparing assembly submission directory", threshold=1)
+    loggingC.message(f">Preparing assembly submission directory", threshold=1)
     assembly_submission_dir = os.path.join(staging_dir, "assembly_submission")
     os.makedirs(assembly_submission_dir, exist_ok=False)
 
@@ -216,8 +216,8 @@ def submit_assembly(config: dict,
     origin_samples = [x['accession'] for x in sample_accessions_data]
     assert type(origin_samples) is list
     if len(origin_samples) > 1:
-        logging.message(f">Multiple SAMPLE_REFS in the config file mean this is a co-assembly", threshold=0)
-        logging.message(f">For a co-assembly, a virtual sample object will be created in ENA", threshold=0)
+        loggingC.message(f">Multiple SAMPLE_REFS in the config file mean this is a co-assembly", threshold=0)
+        loggingC.message(f">For a co-assembly, a virtual sample object will be created in ENA", threshold=0)
         ## make a directory for the samplesheet submission
         sample_submission_dir = os.path.join(assembly_submission_dir, "co_assembly_sample")
         os.makedirs(sample_submission_dir, exist_ok=False)
@@ -244,7 +244,7 @@ def submit_assembly(config: dict,
     fasta_path, gzipped = utility.check_fasta(from_config(config, 'ASSEMBLY', 'FASTA_FILE'))
     gzipped_fasta_path = os.path.join(fasta_submission_dir, f"assembly_upload{staticConfig.zipped_fasta_extension}")
     if not gzipped:
-        logging.message(f">Gzipping assembly fasta file", threshold=0)
+        loggingC.message(f">Gzipping assembly fasta file", threshold=0)
         with open(fasta_path, 'rb') as f_in:
             with gzip.open(gzipped_fasta_path, 'wb', compresslevel=5) as f_out:
                 f_out.writelines(f_in)
@@ -262,7 +262,7 @@ def submit_assembly(config: dict,
                                              gzipped_fasta_path,
                                              threads=threads)
 
-    logging.message(f">Using ENA Webin-CLI to submit assembly.", threshold=0)
+    loggingC.message(f">Using ENA Webin-CLI to submit assembly.", threshold=0)
     assembly_name = utility.from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
     usr, pwd = utility.get_login()
     receipt, accession = webin_cli(manifest=manifest_path,

@@ -10,7 +10,7 @@ import concurrent.futures
 from tqdm import tqdm
 from yaspin import yaspin
 
-from synum import logging
+from synum import loggingC
 from synum.statConf import staticConfig
 
 
@@ -25,7 +25,7 @@ def construct_depth_files(staging_dir: str,
         threads: The total number of threads to use.
         bam_files: The list of bam files.
     """
-    logging.message(">Constructing depth files from bam files. This might take a while.", threshold=0)
+    loggingC.message(">Constructing depth files from bam files. This might take a while.", threshold=0)
     
     depth_directory = os.path.join(staging_dir, 'depth')
     os.makedirs(depth_directory, exist_ok=True)
@@ -48,7 +48,7 @@ def construct_depth_files(staging_dir: str,
                         depth_file = future.result()
                         depth_files.append(depth_file)
                     except Exception as exc:
-                        logging.message(f"{bam_file} generated an exception: {exc}", threshold=-1)
+                        loggingC.message(f"{bam_file} generated an exception: {exc}", threshold=-1)
 
     return depth_files
 
@@ -63,7 +63,7 @@ def construct_depth_files(staging_dir: str,
 #         threads: The number of threads to use.
 #         config:  The config file as a dictionary.
 #     """
-#     logging.message(f">Constructing depth files from bam files using {threads} threads. This might be stuck at 0% for a while.", threshold=0)
+#     loggingC.message(f">Constructing depth files from bam files using {threads} threads. This might be stuck at 0% for a while.", threshold=0)
 #     depth_files = []
 #     depth_directory = os.path.join(staging_dir, 'depth')
 #     os.makedirs(depth_directory)
@@ -85,7 +85,7 @@ def build_sample_submission_xml(outpath: str,
     Args:
         outpath (str): The output path for the submission.xml file.
     """
-    logging.message(f">Building sample submission.xml file...", threshold=0)
+    loggingC.message(f">Building sample submission.xml file...", threshold=0)
 
     root = ET.Element("SUBMISSION")
     actions = ET.SubElement(root, "ACTIONS")
@@ -103,7 +103,7 @@ def build_sample_submission_xml(outpath: str,
     with open(outpath, "wb") as f:
         tree.write(f, encoding="utf-8", xml_declaration=True)
     
-    logging.message(f"\t...written to {os.path.abspath(outpath)}", threshold=0)
+    loggingC.message(f"\t...written to {os.path.abspath(outpath)}", threshold=0)
 
 
 def api_response_check(response: requests.Response):
@@ -395,7 +395,7 @@ def calculate_coverage(depth_files: list,
         threshold = 3
     else:
         threshold = 0
-    logging.message(">Calculating coverage from depth files. This might take a while.", threshold)
+    loggingC.message(">Calculating coverage from depth files. This might take a while.", threshold)
 
 
     inuse = min(threads, len(depth_files))
@@ -410,7 +410,7 @@ def calculate_coverage(depth_files: list,
         average_coverage = total_coverage / total_length if total_length > 0 else 0
 
     if not silent:
-        logging.message(f"\t...coverage is {str(average_coverage)}", threshold+1)
+        loggingC.message(f"\t...coverage is {str(average_coverage)}", threshold+1)
 
     return average_coverage
 
@@ -430,7 +430,7 @@ def calculate_coverage(depth_files: list,
 #     total_coverage = 0.0
 #     total_length = 0.0
 
-#     logging.message(">Calculating coverage from depth files. This might take a while.", threshold=0)
+#     loggingC.message(">Calculating coverage from depth files. This might take a while.", threshold=0)
 
 #     for depth_file in tqdm(depth_files, leave=False):
 #         with open(depth_file, 'r') as depth:
@@ -444,7 +444,7 @@ def calculate_coverage(depth_files: list,
 
 #     average_coverage = total_coverage / total_length
 
-#     logging.message(f"\t...all depth files processed, coverage is {str(average_coverage)}", threshold=0)
+#     loggingC.message(f"\t...all depth files processed, coverage is {str(average_coverage)}", threshold=0)
 
 #     return average_coverage
 
@@ -536,6 +536,6 @@ def read_receipt(receipt_path: str) -> str:
         return accession
 
     # If neither, print error message
-    logging.message(f"\nERROR: Unknown receipt type. Cannot extract accession.", threshold=-1)
+    loggingC.message(f"\nERROR: Unknown receipt type. Cannot extract accession.", threshold=-1)
 
     return None

@@ -46,6 +46,9 @@ def __write_yaml(data: dict,
     # Serialize the data dictionary to a YAML-formatted string and split
     yaml_str = yaml.dump(data, default_flow_style=False, sort_keys=False)
     lines = yaml_str.split('\n')
+    for line in lines:
+        print(line)
+    exit(1)
     
     # Create lines with comments
     output_lines = []
@@ -150,7 +153,7 @@ def __check_parameters(outpath: str,
     if (submit_assembly and submit_bins and not submit_samples and not submit_reads): # Mode 7-9
         is_valid = True
     if (submit_bins and submit_mags and not submit_assembly and not submit_samples and not submit_reads): # Mode 10
-        is_valid = True
+        is_valid = True 
     if ((submit_bins or submit_mags) and not submit_assembly and not submit_samples and not submit_reads): # Mode 11
         is_valid = True
 
@@ -198,6 +201,9 @@ def __make_config_dict(submit_samples: int,
     # Platform - needed for assembly and bins
     if submit_assembly or submit_bins or submit_mags:
         config['SEQUENCING_PLATFORMS'] = []
+
+    if submit_mags:
+        config['PROJECT_NAME'] = None
 
     # Make the SAMPLE section
     samples = []
@@ -268,8 +274,6 @@ def __make_config_dict(submit_samples: int,
         assembly['ASSEMBLY_SOFTWARE'] = None
         assembly['ISOLATION_SOURCE'] = None
         assembly['FASTA_FILE'] = None
-        assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = list()
-        assembly['ADDITIONAL_MANIFEST_FIELDS'] = list()
     if submit_bins or submit_mags or submit_assembly:
         assembly['ASSEMBLY_SOFTWARE'] = None
         assembly['collection date'] = None
@@ -284,6 +288,11 @@ def __make_config_dict(submit_samples: int,
             'geographic location (latitude)': None,
             'geographic location (longitude)': None,
         }
+    if submit_assembly:
+        if known_coverage:
+            assembly['COVERAGE_VALUE'] = None
+        assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = list()
+        assembly['ADDITIONAL_MANIFEST_FIELDS'] = list()
     config['ASSEMBLY'] = assembly
 
     # Make the BINS section
@@ -303,13 +312,16 @@ def __make_config_dict(submit_samples: int,
                 'binning parameters': None,
                 'taxonomic identity marker': None,
             }
+        if known_coverage:
+            bins['COVERAGE_FILE'] = None
         config['BINS'] = bins
 
     # Make the MAGs section (and add fields to the BINS section)
     if submit_mags:
         mags = {
-            'MAG_NAMES_FILE': None,
-            'MAG_QCATEGORY_FILE': None,
+            'MAG_METADATA_FILE': None,
+#           'BIN_TO_FF_FILE': None,
+#           'MAG_QCATEGORY_FILE': None,
             'ADDITIONAL_SAMPLESHEET_FIELDS': {},
             'ADDITIONAL_MANIFEST_FIELDS': {},
         }
@@ -322,10 +334,6 @@ def __make_config_dict(submit_samples: int,
             config['BAM_FILES'] = list()
         elif known_coverage:
             assert coverage_from_bam == False
-            if submit_assembly:
-                config['ASSEMBLY']['COVERAGE_VALUE'] = None
-            if submit_bins:
-                config['BINS']['COVERAGE_FILE'] = None
         else:
             raise ValueError("Either coverage_from_bam or known_coverage must be set to True")
         

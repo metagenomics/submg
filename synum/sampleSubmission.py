@@ -1,6 +1,6 @@
 import os
 
-from synum import utility, logging
+from synum import loggingC, utility
 from synum.utility import from_config
 from synum.statConf import staticConfig
 
@@ -56,7 +56,7 @@ def __prep_samplesheet(config: dict,
     with open(outpath, 'wb') as f:
         tree.write(f, encoding='UTF-8', xml_declaration=False)
 
-    logging.message(f"\t...written samplesheet for biological samples to {os.path.abspath(outpath)}", threshold=0)
+    loggingC.message(f"\t...written samplesheet for biological samples to {os.path.abspath(outpath)}", threshold=0)
 
     return outpath
 
@@ -69,7 +69,7 @@ def __read_samplesheet_receipt(receipt_path: str) -> list:
     if success != 'true':
         print(f"\nERROR: The submission of the biological samples failed. Consult the receipt file at {os.path.abspath(receipt_path)} for more information.")
         exit(1)
-    logging.message(f"\t...samplesheet upload was successful.", threshold=1)
+    loggingC.message(f"\t...samplesheet upload was successful.", threshold=1)
 
     sample_accessions = []
     for sample in tree_root.iterfind('.//SAMPLE'):
@@ -106,20 +106,20 @@ def __submit_samplesheet(samplesheet: str,
     receipt_path = os.path.join(logging_dir, 'submission_receipt.xml')
     usr, pwd = utility.get_login()
 
-    logging.message(">Submitting biological samples samplesheet through ENA API", threshold=1)
+    loggingC.message(">Submitting biological samples samplesheet through ENA API", threshold=1)
 
     response = requests.post(url,
                              files={
                                 'SUBMISSION': open(submission_xml, 'rb'),
                                 'SAMPLE': open(samplesheet, 'rb'),},
                              auth=requests.auth.HTTPBasicAuth(usr, pwd))
-    logging.message(f"\t...HTTP status: {response.status_code}", threshold=1)
+    loggingC.message(f"\t...HTTP status: {response.status_code}", threshold=1)
     utility.api_response_check(response)
 
     # Write receipt
     with open(receipt_path, 'w') as f:
         f.write(response.text)
-    logging.message(f"\t...written submission receipt to {os.path.abspath(receipt_path)}", threshold=1)
+    loggingC.message(f"\t...written submission receipt to {os.path.abspath(receipt_path)}", threshold=1)
 
     # Get the accessions
     accessions = __read_samplesheet_receipt(receipt_path)

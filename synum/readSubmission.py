@@ -1,7 +1,7 @@
 import os
 import csv
 
-from synum import utility, logging
+from synum import loggingC, utility
 from synum.utility import from_config
 from synum.statConf import staticConfig
 from synum.webinWrapper import webin_cli
@@ -118,7 +118,7 @@ def submit_reads(config,
 
     counter = 0
     if 'PAIRED_END_READS' in config.keys():
-        logging.message(">Staging paired-end reads for submission. This might take a while.", threshold=0)
+        loggingC.message(">Staging paired-end reads for submission. This might take a while.", threshold=0)
         for i, data in enumerate(from_config(config, 'PAIRED_END_READS')):
             name = from_config(data, 'NAME').replace(' ', '_')
             read_set_staging_dir = os.path.join(staging_dir, f"reads_{name}")
@@ -134,7 +134,7 @@ def submit_reads(config,
             counter = i + 1
 
     if 'SINGLE_END_READS' in config.keys():
-        logging.message(">Staging single-end reads for submission. This might take a while.", threshold=0)
+        loggingC.message(">Staging single-end reads for submission. This might take a while.", threshold=0)
         for j, data in enumerate(from_config(config, 'SINGLE_END_READS')):
             i = counter + j
             name = from_config(data, 'NAME').replace(' ', '_')
@@ -151,12 +151,12 @@ def submit_reads(config,
                 read_manifests[name] = manifest                                       
 
     # Upload the reads
-    logging.message(-f">Using ENA Webin-CLI to submit reads.\n", threshold=0)
+    loggingC.message(-f">Using ENA Webin-CLI to submit reads.\n", threshold=0)
     usr, pwd = utility.get_login()
     read_receipts = {}
     read_accessions = {}
     for name, manifest in read_manifests.items():
-        logging.message(f">Submitting file at {manifest}", threshold=1)
+        loggingC.message(f">Submitting file at {manifest}", threshold=1)
         read_set_logging_dir = os.path.join(logging_dir, f"reads_{name}")
 
         read_receipts[name], read_accessions[name] = webin_cli(manifest=manifest,
@@ -169,10 +169,10 @@ def submit_reads(config,
                                                                test=test,
                                                                context='reads')
         
-    logging.message(">Read submission completed!", threshold=0)
-    logging.message(">Read receipt paths are:", threshold=1)
+    loggingC.message(">Read submission completed!", threshold=0)
+    loggingC.message(">Read receipt paths are:", threshold=1)
     for name, receipt in read_receipts.items():
-        logging.message(f"\t{name}: {receipt}", threshold=1)
+        loggingC.message(f"\t{name}: {receipt}", threshold=1)
 
     read_to_accession_file = os.path.join(logging_dir, 'read_to_preliminary_accession.tsv')
     with open(read_to_accession_file, 'w') as f:
@@ -181,7 +181,7 @@ def submit_reads(config,
             writer.writerow([name, accession])
 
 
-    logging.message(f">The preliminary(!) accessions of your reads have been written to {os.path.abspath(read_to_accession_file)}.", threshold=0)
+    loggingC.message(f">The preliminary(!) accessions of your reads have been written to {os.path.abspath(read_to_accession_file)}.", threshold=0)
       
 
     return list(read_accessions.values())

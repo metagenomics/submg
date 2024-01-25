@@ -4,13 +4,14 @@ import argparse
 import os
 import time
 
-from synum import utility, preflight, configGen, enaSearching, logging
+from synum import loggingC, utility, preflight, configGen, enaSearching
 from synum.statConf import staticConfig
 
 from synum.sampleSubmission import submit_samples
 from synum.readSubmission import submit_reads
 from synum.assemblySubmission import submit_assembly
 from synum.binSubmission import submit_bins, get_bin_taxonomy, get_bin_quality
+from synum.magSubmission import submit_mags
 
 
 def main():
@@ -73,16 +74,16 @@ def main():
 
     elif args.mode == 'submit':
 
-        logging.set_up_logging(args.logging_dir, args.verbosity)        
+        loggingC.set_up_logging(args.logging_dir, args.verbosity)        
 
         # Print version
         sver = staticConfig.synum_version
         wver = staticConfig.webin_cli_version
-        logging.message(f">Running synum {sver} with webin-cli {wver}", 0)
+        loggingC.message(f">Running synum {sver} with webin-cli {wver}", 0)
         if args.devtest == 1:
-            logging.message(">Initializing a test submission to the ENA dev server.", 0)
+            loggingC.message(">Initializing a test submission to the ENA dev server.", 0)
         else:
-            logging.message(">Initializing a LIVE SUBMISSION to the ENA production server.", 0)
+            loggingC.message(">Initializing a LIVE SUBMISSION to the ENA production server.", 0)
             time.sleep(5)
 
 
@@ -189,16 +190,25 @@ def main():
         print(">ENA will send those final accession by email to the contact adress of your ENA account.")
 
 
-        # EVERYTHING BELOW HAS TO BE REWORKED
-        exit(1)
-
-
         # MAG submission
-        # TODO
+        if args.submit_mags:
+            single_assembly = True
+            submit_mags(single_assembly,
+                        config,
+                        assembly_sample_accession,
+                        sample_accession_data,
+                        run_accessions,
+                        bin_taxonomy,
+                        args.staging_dir,
+                        args.logging_dir,
+                        depth_files
+                        bin_coverage_file,
+                        threads=args.threads,
+                        test=args.devtest)
 
         # Cleanup
         if not args.keep_depth_files:
-            logging.message(">Deleting depth files to free up disk space.", threshold=0)
+            loggingC.message(">Deleting depth files to free up disk space.", threshold=0)
             for depth_file in depth_files:
                 os.remove(depth_file)
 
