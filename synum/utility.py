@@ -108,26 +108,31 @@ def build_sample_submission_xml(outpath: str,
 
 def api_response_check(response: requests.Response):
     if response.status_code == 403:
-        print("""\nERROR: Submission failed. ENA API returned status code 403.
-                 This indicates incorrect ENA login credentials. Please test your credentials
-                 by logging in to the ENA submission web interface. Make sure the environment variables
-                 ENA_USER and ENA_PASSWORD contain these credentials.""")
+        err = """\nERROR: Submission failed. ENA API returned status code 403.
+                    This indicates incorrect ENA login credentials. Please test your credentials
+                    by logging in to the ENA submission web interface. Make sure the environment variables
+                    ENA_USER and ENA_PASSWORD contain these credentials."""
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     if response.status_code == 400:
-        print("\nERROR: Submission failed. ENA API returned status code 400. This indicates a bad request.")
+        err = "\nERROR: Submission failed. ENA API returned status code 400. This indicates a bad request.")
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     if response.status_code == 408:
-        print("\nERROR: Submission failed. ENA API returned status code 408. This indicates a timeout.")
+        err = "\nERROR: Submission failed. ENA API returned status code 408. This indicates a timeout.")
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     if response.status_code != 200:
-        print(f"\nERROR: Submission failed. ENA API returned status code {response.status_code}.")
+        err = f"\nERROR: Submission failed. ENA API returned status code {response.status_code}."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     if response.text == "":
-        print("\nERROR: Submission failed, received an empty response from API endpoint.")
+        err = "\nERROR: Submission failed, received an empty response from API endpoint."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
 def calculate_md5(fname):
@@ -142,10 +147,12 @@ def get_login():
     Reads ENA login credentials from environmental variables and returns them.
     """
     if not 'ENA_USER' in os.environ:
-        print("\nERROR: ENA_USER environmental variable not set. Please export your ENA username and password as environmental variables ENA_USER and ENA_PASSWORD.")
+        err = "\nERROR: ENA_USER environmental variable not set. Please export your ENA username and password as environmental variables ENA_USER and ENA_PASSWORD."
+        loggingC.message(err, threshold=-1)
         exit(1)
     if not 'ENA_PASSWORD' in os.environ:
-        print("\nERROR: ENA_PASSWORD environmental variable not set. Please export your ENA username and password as environmental variables ENA_USER and ENA_PASSWORD.")
+        err = "\nERROR: ENA_PASSWORD environmental variable not set. Please export your ENA username and password as environmental variables ENA_USER and ENA_PASSWORD."
+        loggingC.message(err, threshold=-1)
         exit(1)
     return os.environ['ENA_USER'], os.environ['ENA_PASSWORD']
 
@@ -155,11 +162,14 @@ def read_yaml(file_path):
             data = yaml.safe_load(yaml_file)
             return data
     except FileNotFoundError:
-        print(f"ERROR: YAML file not found at: {file_path}")
-        return None
+        err = f"\nERROR: YAML file not found at: {file_path}"
+        loggingC.message(err, threshold=-1)
+        exit(1)
     except Exception as e:
-        print(f"\nERROR: An error occurred while reading {yaml}, error is: {e}")
-        return None
+        err = f"\nERROR: An error occurred while reading {file_path}, error is: {e}"
+        loggingC.message(err, threshold=-1)
+        exit(1)
+
     
 def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
     """
@@ -168,30 +178,36 @@ def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
     """
     if not key in config:
         if not supress_errors:
-            print(f"\nERROR: The field '{key}' is missing from the config YAML file.")
-        exit(1)
+            err = f"\nERROR: The field '{key}' is missing from the config YAML file."
+            loggingC.message(err, threshold=-1)
+            exit(1)
     if not config[key]:
         if not supress_errors:
-            print(f"\nERROR: The field '{key}' is empty in the config YAML file.")
-        exit(1)
+            err = f"\nERROR: The field '{key}' is empty in the config YAML file."
+            loggingC.message(err, threshold=-1)
+            exit(1)
     if subkey:
         if not subkey in config[key]:
             if not supress_errors:
-                print(f"\nERROR: The field '{key}|{subkey}' is missing from the config YAML file.")
-            exit(1)
+                err = f"\nERROR: The field '{key}|{subkey}' is missing from the config YAML file."
+                loggingC.message(err, threshold=-1)
+                exit(1)
         if not config[key][subkey]:
             if not supress_errors:
-                print(f"\nERROR: The field '{key}|{subkey}' is empty in the config YAML file.")
-            exit(1)
+                err = f"\nERROR: The field '{key}|{subkey}' is empty in the config YAML file."
+                loggingC.message(err, threshold=-1)
+                exit(1)
         if subsubkey:
             if not subsubkey in config[key][subkey]:
                 if not supress_errors:
-                    print(f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is missing from the config YAML file.")
-                exit(1)
+                    err = f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is missing from the config YAML file."
+                    loggingC.message(err, threshold=-1)
+                    exit(1)
             if not config[key][subkey][subsubkey]:
                 if not supress_errors:
-                    print(f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is empty in the config YAML file.")
-                exit(1)
+                    err = f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is empty in the config YAML file."
+                    loggingC.message(err, threshold=-1)
+                    exit(1)
             return config[key][subkey][subsubkey]
         return config[key][subkey]
     return config[key]
@@ -260,10 +276,12 @@ def check_fasta(fasta_path) -> tuple:
         Tuple[str, bool]: The path to the fasta file and whether it is gzipped.
     """
     if fasta_path is None or fasta_path is False or fasta_path == "":
-        print("\nERROR: Trying to submit assembly, but no FASTA file is provided in the description.")
+        err = "\nERROR: Trying to submit assembly, but no FASTA file is provided in the description."
+        loggingC.message(err, threshold=-1)
         exit(1)
     elif not os.path.isfile(fasta_path):
-        print(f"\nERROR: Trying to submit assembly, but the FASTA file {fasta_path} does not exist.")
+        err = f"\nERROR: Trying to submit assembly, but the FASTA file {fasta_path} does not exist."
+        loggingC.message(err, threshold=-1)
         exit(1)
     extension = fasta_path.split('.')[-1]
     gzipped = False
@@ -271,7 +289,8 @@ def check_fasta(fasta_path) -> tuple:
         gzipped = True
         extension = fasta_path.split('.')[-2]
     if not extension in staticConfig.fasta_extensions:
-        print(f"\nERROR: fasta file at {fasta_path} has an unknown file extension ({extension}). Allowed extensions are {staticConfig.fasta_extensions} (+.gz).")
+        err = f"\nERROR: fasta file at {fasta_path} has an unknown file extension ({extension}). Allowed extensions are {staticConfig.fasta_extensions} (+.gz)."
+        loggingC.message(err, threshold=-1)
         exit(1)
     return fasta_path, gzipped
 
@@ -296,7 +315,8 @@ def check_bam(bam_file,
         file_ending = '.bam'
     else:
         ext = bam_file.split('.')[-1]
-        print(f"\nERROR: The file {bam_file} has the unexpected extension {ext} (expected .bam or .BAM).   ")
+        err = f"\nERROR: The file {bam_file} has the unexpected extension {ext} (expected .bam or .BAM)."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     # Check if BAM file is sorted, sort it if not. This will also index the file.
@@ -305,7 +325,8 @@ def check_bam(bam_file,
         pysam.index(sorted_bam_file)
     except:  # This might mean the bam file is not sorted, so we try that
         time.sleep(1)
-        print(f"WARNING: Cannot read {bam_file}. The file might be unsorted, trying to sort...")
+        warn = f"WARNING: Cannot read {bam_file}. The file might be unsorted, trying to sort..."
+        loggingC.message(warn, threshold=0)
         sorted_bam_file = bam_file[:len(bam_file) - len(file_ending)] + '.tmp.sorted' + file_ending
         pysam.sort("-o", sorted_bam_file, bam_file, "-@", str(num_threads))      
         time.sleep(1)
@@ -520,7 +541,8 @@ def read_receipt(receipt_path: str) -> str:
     success = root.attrib['success']
 
     if success != 'true':
-        print(f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information.")
+        err = f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     # Check for ANALYSIS receipt

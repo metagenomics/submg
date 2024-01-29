@@ -46,14 +46,11 @@ def __write_yaml(data: dict,
     # Serialize the data dictionary to a YAML-formatted string and split
     yaml_str = yaml.dump(data, default_flow_style=False, sort_keys=False)
     lines = yaml_str.split('\n')
-    for line in lines:
-        print(line)
-    exit(1)
-    
+
     # Create lines with comments
     output_lines = []
     for line in lines:
-        next_line = line
+        next_line = line.ljust(50)
         if not no_comments:        
             stripped_line = line.strip()
             if ':' in stripped_line:

@@ -87,7 +87,7 @@ def main():
             time.sleep(5)
 
 
-        config = preflight.preflight_checks(args)
+        config = preflight.preflight_checks(vars(args))
 
         # If we are submitting bins, get the quality scores and the
         # taxonomic information.
@@ -171,7 +171,8 @@ def main():
                 if 'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION' in assembly_dict.keys():
                     if not assembly_dict['EXISTING_ASSEMBLY_ANALYSIS_ACCESSION'] is None:
                         assembly_analysis_accession = assembly_dict['EXISTING_ASSEMBLY_ANALYSIS_ACCESSION']
-                        assembly_sample_accession = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession)
+                        assembly_sample_accession = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession,
+                                                                                                     args.devtest)
 
         # Bin submision
         if args.submit_bins:
@@ -201,7 +202,7 @@ def main():
                         bin_taxonomy,
                         args.staging_dir,
                         args.logging_dir,
-                        depth_files
+                        depth_files,
                         bin_coverage_file,
                         threads=args.threads,
                         test=args.devtest)

@@ -64,7 +64,8 @@ def __prep_mags_samplesheet(config: dict,
                             mag_metadata: dict,
                             bin_taxonomy_data: dict,
                             assembly_sample_accession: str,
-                            samples_submission_dir: str) -> str:
+                            samples_submission_dir: str,
+                            devtest: bool) -> str:
     """
     Prepares an XML samplesheet for all MAG samples assume all MAGs are derived
     from the same assembly.
@@ -108,7 +109,8 @@ def __prep_mags_samplesheet(config: dict,
     env_context_local = utility.from_config(config, 'ASSEMBLY', 'local environmental context')
     env_medium = utility.from_config(config, 'ASSEMBLY', 'environmental medium')
     assembly_name = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
-    metagenomic_source = enaSearching.search_scientific_name_by_sample(assembly_sample_accession)
+    metagenomic_source = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
+                                                                       devtest)
     derived_from = ",".join([x['accession'] for x in sample_accession_data])
 
 
@@ -368,7 +370,8 @@ def submit_mags(single_assembly: bool,
                                           mag_metadata,
                                           bin_taxonomy_data,
                                           assembly_sample_accession,
-                                          samples_submission_dir)
+                                          samples_submission_dir,
+                                          test)
 
 
     # Upload the samplesheet
