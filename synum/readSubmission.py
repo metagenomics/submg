@@ -151,7 +151,7 @@ def submit_reads(config,
                 read_manifests[name] = manifest                                       
 
     # Upload the reads
-    loggingC.message(-f">Using ENA Webin-CLI to submit reads.\n", threshold=0)
+    loggingC.message(f">Using ENA Webin-CLI to submit reads.\n", threshold=0)
     usr, pwd = utility.get_login()
     read_receipts = {}
     read_accessions = {}

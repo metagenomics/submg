@@ -33,7 +33,7 @@ def main():
     parser_submit.add_argument("-g", "--staging_dir",      required=True,          help="Directory where files will be staged for upload. Must be empty. May use up a lot of disk space. Mandatory.")
     parser_submit.add_argument("-l", "--logging_dir",      required=True,          help="Directory where log files will be stored. Must be empty. Mandatory.")
     parser_submit.add_argument("-y", "--verbosity",        type=int, choices=[0, 1, 2], default=1, help="Control the amount of logging to stdout. [default 1]")
-    parser_submit.add_argument("-d", "--devtest",          type=int, choices=[0, 1], default=1, help="Make submissions to the ENA dev test server. [default 1/true]")
+    parser_submit.add_argument("-d", "--development_service",          type=int, choices=[0, 1], default=1, help="Make submissions to the ENA dev test server. [default 1/true]")
     parser_submit.add_argument("-t", "--threads",          type=int, default=4, help="Number of threads used to process .bam files. [default 4]")
     parser_submit.add_argument("--keep_depth_files", action="store_true",    help="Do not delete depth files after running. [default false]")
     parser_submit.add_argument("-r", "--submit_reads",    action="store_true", default=False,    help="Use if you want to submit reads.")
@@ -80,7 +80,7 @@ def main():
         sver = staticConfig.synum_version
         wver = staticConfig.webin_cli_version
         loggingC.message(f">Running synum {sver} with webin-cli {wver}", 0)
-        if args.devtest == 1:
+        if args.development_service == 1:
             loggingC.message(">Initializing a test submission to the ENA dev server.", 0)
         else:
             loggingC.message(">Initializing a LIVE SUBMISSION to the ENA production server.", 0)
@@ -121,7 +121,7 @@ def main():
             sample_accession_data = submit_samples(config,
                                                args.staging_dir,
                                                args.logging_dir,
-                                               test=args.devtest)
+                                               test=args.development_service)
         else:
             sample_accessions = utility.from_config(config, 'SAMPLE_ACCESSIONS')
             if not isinstance(sample_accessions, list):
@@ -138,7 +138,7 @@ def main():
             run_accessions = submit_reads(config,
                                           args.staging_dir,
                                           args.logging_dir,
-                                          test=args.devtest)
+                                          test=args.development_service)
         else:
             run_accessions = utility.from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS')
             if not isinstance(run_accessions, list):
@@ -154,7 +154,7 @@ def main():
                                                                                   sample_accession_data,
                                                                                   run_accessions,
                                                                                   threads=args.threads,
-                                                                                  test=args.devtest)
+                                                                                  test=args.development_service)
             # Assembly sample accession will be either the accession of the
             # co-assembly virtual sample or the accession of the single sample
             # which the assembly is based on
@@ -172,7 +172,7 @@ def main():
                     if not assembly_dict['EXISTING_ASSEMBLY_ANALYSIS_ACCESSION'] is None:
                         assembly_analysis_accession = assembly_dict['EXISTING_ASSEMBLY_ANALYSIS_ACCESSION']
                         assembly_sample_accession = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession,
-                                                                                                     args.devtest)
+                                                                                                     args.development_service)
 
         # Bin submision
         if args.submit_bins:
@@ -185,7 +185,7 @@ def main():
                         depth_files,
                         bin_coverage_file,
                         threads=args.threads,
-                        test=args.devtest)
+                        test=args.development_service)
 
         print(">You will receive final accessions once your submission has been processed by ENA.")
         print(">ENA will send those final accession by email to the contact adress of your ENA account.")
@@ -205,7 +205,7 @@ def main():
                         depth_files,
                         bin_coverage_file,
                         threads=args.threads,
-                        test=args.devtest)
+                        test=args.development_service)
 
         # Cleanup
         if not args.keep_depth_files:

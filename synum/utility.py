@@ -116,12 +116,12 @@ def api_response_check(response: requests.Response):
         exit(1)
 
     if response.status_code == 400:
-        err = "\nERROR: Submission failed. ENA API returned status code 400. This indicates a bad request.")
+        err = "\nERROR: Submission failed. ENA API returned status code 400. This indicates a bad request."
         loggingC.message(err, threshold=-1)
         exit(1)
 
     if response.status_code == 408:
-        err = "\nERROR: Submission failed. ENA API returned status code 408. This indicates a timeout.")
+        err = "\nERROR: Submission failed. ENA API returned status code 408. This indicates a timeout."
         loggingC.message(err, threshold=-1)
         exit(1)
 
@@ -170,6 +170,24 @@ def read_yaml(file_path):
         loggingC.message(err, threshold=-1)
         exit(1)
 
+def __strcast(value):
+    """
+    Cast integers and floats to string. If the input is a list, set or dict,
+    call this function on each value.
+    
+    Args:
+        value: The value to cast to string.
+    """
+    if type(value) == int or type(value) == float:
+        return str(value)
+    if type(value) == list:
+        return [__strcast(v) for v in value]
+    if type(value) == set:
+        return {__strcast(v) for v in value}
+    if type(value) == dict:
+        return {k: __strcast(v) for k, v in value.items()}
+    return value
+
     
 def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
     """
@@ -208,9 +226,9 @@ def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
                     err = f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is empty in the config YAML file."
                     loggingC.message(err, threshold=-1)
                     exit(1)
-            return config[key][subkey][subsubkey]
-        return config[key][subkey]
-    return config[key]
+            return __strcast(config[key][subkey][subsubkey])
+        return __strcast(config[key][subkey])
+    return __strcast(config[key])
 
 def optional_from_config(config, key, subkey=None):
     if not key in config:
@@ -241,6 +259,26 @@ def optional_from_config(config, key, subkey=None):
 #             total_length += fasta.get_reference_length(seq)
 
 #     return total_length
+
+def check_fastq(fastq_filepath: str):
+    """
+    Checks if the FASTQ file exists and has a valid extension.
+
+    Args:
+        fastq_filepath (str): The path to the FASTQ file.
+    """
+    if fastq_filepath.endswith('.gz'):
+        fastq_filepath = fastq_filepath[:-3]
+    if not os.path.isfile(fastq_filepath):
+        err = f"\nERROR: The FASTQ file '{fastq_filepath}' does not exist."
+        loggingC.message(err, threshold=-1)
+        exit(1)
+    extensions = staticConfig.fastq_extensions.split(';')
+    if not fastq_filepath.endswith(tuple(extensions)):
+        err = f"\nERROR: The FASTQ file '{fastq_filepath}' has an invalid extension. Valid extensions are {'|'.join(extensions)}."
+        loggingC.message(err, threshold=-1)
+        exit(1)
+        
 
 def is_fasta(filepath, extensions=staticConfig.fasta_extensions.split(';')) -> str:
     """

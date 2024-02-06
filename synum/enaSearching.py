@@ -110,6 +110,10 @@ def search_scientific_name_by_sample(sample_accession: str,
     Returns:
         str: The scientific name of the sample.
     """
+    print("CALLED WITH")
+    print(sample_accession)
+    print(testmode)
+    print("-----------------------------------")
     if testmode:
         #url = "https://wwwdev.ebi.ac.uk/ena/portal/api/search"
         url = staticConfig.ena_search_url
@@ -122,6 +126,7 @@ def search_scientific_name_by_sample(sample_accession: str,
         "fields": "scientific_name"
     }
     response = requests.get(url, params=params)
+    print(response.text)
 
     scientific_name = response.text.split('\n')[1:-1][0]
     scientific_name = scientific_name.split('\t')[0]
@@ -135,7 +140,8 @@ def search_scientific_name_by_sample(sample_accession: str,
 #For debugging
 #print(sample_exists('SAMEA113417025', True))
 #print(study_exists("PRJEB71644", True))
-#print(search_scientific_name_by_sample("SAMEA114749859"))
+print(search_scientific_name_by_sample('ERS28140038', True))
+#print(search_scientific_name_by_sample("SAMEA114749859", True))
 #print(search_samples_by_assembly_analysis('ERZ1049590'))
 #print(search_runs_by_sample('SAMEA113417025'))
 

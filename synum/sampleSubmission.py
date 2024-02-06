@@ -49,10 +49,11 @@ def __prep_samplesheet(config: dict,
                 tree_attribute = ET.SubElement(tree_sample_attributes, 'SAMPLE_ATTRIBUTE')
                 ET.SubElement(tree_attribute, 'TAG').text = key
                 ET.SubElement(tree_attribute, 'VALUE').text = value
-
+        
     # Convert the XML to a string
     tree = ET.ElementTree(tree_root)
     outpath = os.path.join(staging_dir, 'samplesheet.xml')
+
     with open(outpath, 'wb') as f:
         tree.write(f, encoding='UTF-8', xml_declaration=False)
 

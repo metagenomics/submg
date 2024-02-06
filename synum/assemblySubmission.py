@@ -44,9 +44,10 @@ def __prep_coassembly_samplesheet(config: dict,
 
 
     sample_attributes = ET.SubElement(sample, "SAMPLE_ATTRIBUTES")
+
     # Create SAMPLE_ATTRIBUTE elements
     attributes_data = [
-        ("collection date", str(from_config(config, 'ASSEMBLY', ''))),
+        ("collection date", (from_config(config, 'ASSEMBLY', 'collection date'))),
         ("geographic location (country and/or sea)", from_config(config, 'ASSEMBLY', 'geographic location (country and/or sea)')),
         ("sample composed of", ','.join(origin_samples)),
     ]

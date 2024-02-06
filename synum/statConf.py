@@ -32,10 +32,18 @@ class staticConfig:
     mag_assembly_quality_levels = "Many fragments with little to no review of assembly other than reporting of standard assembly statistics.;Single contiguous sequence without gaps or ambiguities with a consensus error rate equivalent to Q50 or better.;Multiple fragments where gaps span repetitive regions. Presence of the 23S, 16S and 5S rRNA genes and at least 18 tRNAs."
     webin_analysis_accession_line: str = 'The following analysis accession was assigned to the submission'
     webin_run_accessions_line: str = 'The following run accession was assigned to the submission'
-
+    mag_metadata_columns: str = 'Bin_id;Quality_category;Flatfile_path;Unlocalised_path'
+    ncbi_taxonomy_columns: str = 'Bin_id;NCBI_taxonomy'
+    gtdb_majority_vote_columns: str = 'Genome ID;GTDB classification;Majority vote NCBI classification'
+    bin_coverage_columns: str = 'Bin_id;Coverage'
+    mag_qstring_finished: str = 'Single contiguous sequence without gaps or ambiguities with a consensus error rate equivalent to Q50 or better.'
+    mag_qstring_high: str = 'Multiple fragments where gaps span repetitive regions. Presence of the 23S, 16S and 5S rRNA genes and at least 18 tRNAs.'
+    mag_qstring_medium: str = 'Many fragments with little to no review of assembly other than reporting of standard assembly statistics.'
+    max_assembly_name_length: int = 50 - len('webin-genome-')
 
 YAMLCOMMENTS = {
     'STUDY': 'The accession of your study (which has to already exist in ENA)',
+    'PROJECT_NAME': 'Name of the project within which the sequencing was organized',
     'TITLE': 'A unique title for your sample',
     'METAGENOME_SCIENTIFIC_NAME': "Taxonomic identifier of the metagenome. Check the ENA metagenome taxonomy tree to find a taxonomy ID and species name fitting your sample",
     'METAGENOME_TAXID': "Taxonomic identifier of the assembly. Must match SPECIES_SCIENTIFIC_NAME",
@@ -87,6 +95,7 @@ YAMLCOMMENTS = {
 
 YAMLEXAMPLES = {
         'STUDY': '\"PRJEB71644\"',
+        'PROJECT_NAME': '\"AgRFex 2 Biogas Survey\"',
         'TITLE': '\"Bioreactor_2_sample\"',
         'METAGENOME_SCIENTIFIC_NAME': '\"biogas fermenter metagenome\"',
         'METAGENOME_TAXID': '\"718289\"',

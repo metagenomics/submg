@@ -158,15 +158,16 @@ def __calculate_bin_coverage(fasta: str,
 
 def __read_ncbi_taxonomy(ncbi_taxonomy_file: str) -> dict:
     """
-    Read the output of GTDB-TKs 'gtdb_to_ncbi_majority_vote.py' script and
-    return a dictionary with a taxid and a scientific name for each genome.
+    Read the output of GTDB-TKs 'gtdb_to_ncbi_majority_vote.py' or a file using
+    the format described in README.md and return a dictionary with a taxid and a
+    scientific name for each genome.
     Important note: The output of GTDB-TKs 'gtdb_to_ncbi_majority_vote.py' script
     might miss some genome bins which didn't get GTDB classifications.
 
     Args:
         ncbi_to_taxonomy_file (str): Output files of GTDB-TKs
             'gtdb_to_ncbi_majority_vote.py' script or NCBI taxonomy file with a
-            similar structure.
+            the columns 'Bin_id' and 'NCBI_taxonomy'.
 
     Returns:
         dict: A dictionary with a taxid and a scientific name for each genome. 
@@ -174,11 +175,27 @@ def __read_ncbi_taxonomy(ncbi_taxonomy_file: str) -> dict:
     result = {}
     with open(ncbi_taxonomy_file, 'r') as f:
         reader = csv.reader(f, delimiter='\t')
-        next(reader) #skip header
-        for row in reader:
-            mag_bin = row[0].strip()
-            lowest_ncbi_name = row[2].strip().split(';')
-            result[mag_bin] = lowest_ncbi_name
+        header = next(reader) #skip header
+        if header == staticConfig.gtdb_majority_vote_columns.split(';'):
+            gtdb_majvote_output = True
+        else:
+            gtdb_majvote_output = False
+    if gtdb_majvote_output:
+        with open(ncbi_taxonomy_file, 'r') as f:
+            reader = csv.reader(f, delimiter='\t')
+            next(reader) #skip header
+            for row in reader:
+                mag_bin = row[0].strip()
+                lowest_ncbi_name = row[2].strip().split(';')
+                result[mag_bin] = lowest_ncbi_name
+    else:
+        with open(ncbi_taxonomy_file, 'r') as f:
+            reader = csv.DictReader(f, delimiter='\t')
+            for row in reader:
+                mag_bin = row["Bin_id"].strip()
+                taxonomy_string = row["NCBI_taxonomy"].strip()
+                lowest_ncbi_name = taxonomy_string.split(';')
+                result[mag_bin] = lowest_ncbi_name
     return result
 
 
@@ -268,11 +285,10 @@ def __read_manual_taxonomy_file(manual_taxonomy_file: str) -> dict:
     """
     result = {}
     with open(manual_taxonomy_file, 'r') as f:
-        reader = csv.DictReader(f, delimiter='\t', fieldnames=["Bin_id", "scientific_name", "tax_id"])
-        next(reader)  # skip header
+        reader = csv.DictReader(f, delimiter='\t')
         for row in reader:
-            mag_bin = row["Bin_id"].strip()
-            tax_id = row["Tax_id"].strip()
+            mag_bin = row['Bin_id'].strip()
+            tax_id = row['Tax_id'].strip()
             scientific_name = row["Scientific_name"].strip()
             result[mag_bin] = {
                 'tax_id': tax_id,
@@ -775,22 +791,22 @@ def __stage_bin_submission(staging_directory: str,
 
     
 def bin_coverage_from_depth(depth_files: str,
-                              bin_files,
+                              bin_name_to_fasta: dict,
                               threads: int = 4) -> dict:
     """
     """
     loggingC.message(">Calculating coverage for each bin from depth files.", threshold=0)
     bin_coverages = {}
-    for b in tqdm(bin_files, leave=False):
-        coverage = __calculate_bin_coverage(b,
+    for bin_name, bin_fasta in tqdm(bin_name_to_fasta.items(), leave=False):
+        coverage = __calculate_bin_coverage(bin_fasta,
                                             depth_files,
                                             threads=threads)
-        bin_coverages[b] = coverage
+        bin_coverages[bin_name] = coverage
     return bin_coverages
 
 
 def bin_coverage_from_tsv(bin_coverage_file: str,
-                            bin_files) -> dict:
+                          bin_names: dict) -> dict:
     """
     """
     loggingC.message(">Reading coverage for each bin from tsv file.", threshold=0)
@@ -801,6 +817,10 @@ def bin_coverage_from_tsv(bin_coverage_file: str,
             bin_name = row['Bin_id']
             coverage = float(row['coverage'])
             bin_coverages[bin_name] = coverage
+    for known_name in bin_names:
+        if not known_name in bin_coverages:
+            print(f"\nERROR: Bin {known_name} was not found in the coverage file at {os.path.abspath(bin_coverage_file)}.")
+            exit(1)
     return bin_coverages
     
 
@@ -876,11 +896,11 @@ def submit_bins(config: dict,
     loggingC.message(">Deriving bin coverage", threshold=1)
     if not depth_files is None:
         bin_coverages = bin_coverage_from_depth(depth_files,
-                                                bin_files,
+                                                bin_name_to_fasta,
                                                 threads=threads)
     elif not bin_coverage_file is None:
         bin_coverages = bin_coverage_from_tsv(bin_coverage_file,
-                                              bin_files)
+                                              bin_name_to_fasta.keys())
         
 
     # Make a samplesheet for all bins

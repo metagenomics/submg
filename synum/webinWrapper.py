@@ -53,18 +53,18 @@ def __webin_cli_validate(manifest,
 
         # Log the stdout if any
         if result.stdout:
-            loggingC.message(result.stdout.strip(), threshold=0)
+            loggingC.message(result.stdout.strip().replace('\n','; '), threshold=0)
 
         # Log the stderr if any
         if result.stderr:
-            loggingC.message(result.stderr.strip(), threshold=0)
+            loggingC.message(result.stderr.strip().replace('\n','; '), threshold=0)
 
     except subprocess.CalledProcessError as e:
         # Even if the subprocess fails, it may produce output or errors, so capture and log them
         if e.stdout:
-            loggingC.message(e.stdout.strip(), threshold=-1)
+            loggingC.message(e.stdout.strip().replace('\n','; '), threshold=-1)
         if e.stderr:
-            loggingC.message(e.stderr.strip(), threshold=-1)
+            loggingC.message(e.stderr.strip().replace('\n','; '), threshold=-1)
 
         # Finally, log the exception itself
         loggingC.message(f"\nERROR: Validation failed with error: {e}", threshold=-1)
@@ -128,7 +128,7 @@ def __webin_cli_submit(manifest,
             accession = line.strip().split(' ')[-1]
 
         if line.startswith('INFO : '):
-            line = line[7:]
+            line = line[7:].strip().replace('\n','; ')
         loggingC.message(f"Webin-CLI: {line}", threshold=0)
 
     process.wait()

@@ -1,35 +1,8 @@
 import os
 import yaml
 
-from synum.statConf import staticConfig, YAMLCOMMENTS, YAMLEXAMPLES
+from synum.statConf import YAMLCOMMENTS, YAMLEXAMPLES
 
-# def __write_config(config: dict,
-#                    outpath: str) -> None:
-#     """
-#     Write the config to file.
-
-#     Args:
-#         config (dict): The config dictionary
-#         outpath (str): The path where the config should be written
-#     """
-  
-#     def represent_none(self, _):
-#         """
-#         We need this to write fields without values to the YAML file.
-#         """
-#         return self.represent_scalar('tag:yaml.org,2002:null', '')
-    
-#     yaml.add_representer(type(None), represent_none)
-
-#     outpath = os.path.abspath(outpath)
-#     if os.path.exists(outpath):
-#         print(f"\nERROR: The file '{outpath}' already exists.")
-#         exit(1)
-
-#     with open(outpath, 'w') as outfile:
-#         yaml.dump(config, outfile, default_flow_style=False)
-
-#     print(f">Config with empty fields written to {outpath}")
 
 def __write_yaml(data: dict,
                  outpath: str,
@@ -55,6 +28,8 @@ def __write_yaml(data: dict,
             stripped_line = line.strip()
             if ':' in stripped_line:
                 key = stripped_line.split(':')[0].strip()
+                if '- ' in key:
+                    key = key.split('- ')[1]
                 if key in comments:
                     next_line += '  # ' + comments[key]
                     if key in examples:
@@ -208,9 +183,10 @@ def __make_config_dict(submit_samples: int,
         entry = {'TITLE': None,
                  'collection date': None,
                  'geographic location (country and/or sea)': None,
-                 'ADDITIONAL_SAMPLESHEET_FIELDS': {}
+                 'ADDITIONAL_SAMPLESHEET_FIELDS': None
         }
         if submit_mags: # MAGs require location, so we might as well ask for them here
+            entry['ADDITIONAL_SAMPLESHEET_FIELDS'] = {}
             entry['ADDITIONAL_SAMPLESHEET_FIELDS']['geographic location (latitude)'] = None
             entry['ADDITIONAL_SAMPLESHEET_FIELDS']['geographic location (longitude)'] = None
             entry['ADDITIONAL_SAMPLESHEET_FIELDS']['broad-scale environmental context'] = None
@@ -235,7 +211,7 @@ def __make_config_dict(submit_samples: int,
             entry['RELATED_SAMPLE_TITLE'] = None
         else:
             entry['RELATED_SAMPLE_ACCESSION'] = None
-        entry['ADDITIONAL_MANIFEST_FIELDS'] = list()
+        entry['ADDITIONAL_MANIFEST_FIELDS'] = None
         reads.append(entry)
     if len(reads) > 0:
         config['SINGLE_READS'] = reads
@@ -255,7 +231,7 @@ def __make_config_dict(submit_samples: int,
             entry['RELATED_SAMPLE_TITLE'] = None
         else:
             entry['RELATED_SAMPLE_ACCESSION'] = None
-        entry['ADDITIONAL_MANIFEST_FIELDS'] = list()
+        entry['ADDITIONAL_MANIFEST_FIELDS'] = None
         reads.append(entry)
     if len(reads) > 0:
         config['PAIRED_END_READS'] = reads
@@ -277,6 +253,11 @@ def __make_config_dict(submit_samples: int,
         assembly['geographic location (country and/or sea)'] = None
     if (submit_single_reads + submit_paired_end_reads) == 0: # We need the accessions of the reads
         assembly['RUN_ACCESSIONS'] = list()
+    if submit_assembly:
+        if known_coverage:
+            assembly['COVERAGE_VALUE'] = None
+        assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = list()
+        assembly['ADDITIONAL_MANIFEST_FIELDS'] = list()
     if submit_mags: # Since we need this for MAGs, we might as well ask for it here
         assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = {
             'broad-scale environmental context': None,
@@ -285,11 +266,6 @@ def __make_config_dict(submit_samples: int,
             'geographic location (latitude)': None,
             'geographic location (longitude)': None,
         }
-    if submit_assembly:
-        if known_coverage:
-            assembly['COVERAGE_VALUE'] = None
-        assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = list()
-        assembly['ADDITIONAL_MANIFEST_FIELDS'] = list()
     config['ASSEMBLY'] = assembly
 
     # Make the BINS section
@@ -301,8 +277,8 @@ def __make_config_dict(submit_samples: int,
             'NCBI_TAXONOMY_FILES': [],
             'MANUAL_TAXONOMY_FILE': None,
             'BINNING_SOFTWARE': None,
-            'ADDITIONAL_SAMPLESHEET_FIELDS': {},
-            'ADDITIONAL_MANIFEST_FIELDS': {},
+            'ADDITIONAL_SAMPLESHEET_FIELDS': None,
+            'ADDITIONAL_MANIFEST_FIELDS': None,
         }
         if submit_mags: # Since we need this for MAGs, we might as well ask for it here
             bins['ADDITIONAL_SAMPLESHEET_FIELDS'] = {
@@ -319,10 +295,10 @@ def __make_config_dict(submit_samples: int,
             'MAG_METADATA_FILE': None,
 #           'BIN_TO_FF_FILE': None,
 #           'MAG_QCATEGORY_FILE': None,
-            'ADDITIONAL_SAMPLESHEET_FIELDS': {},
-            'ADDITIONAL_MANIFEST_FIELDS': {},
+            'ADDITIONAL_SAMPLESHEET_FIELDS': None,
+            'ADDITIONAL_MANIFEST_FIELDS': None,
         }
-        bins['MAGS'] = mags
+        config['MAGS'] = mags
 
     # Add coverage entries or bam file entries
     if submit_assembly or submit_bins or submit_mags:

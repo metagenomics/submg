@@ -26,16 +26,16 @@ def __read_mag_metadata(single_assembly: bool,
     metadata = {}
     
     with open(os.path.abspath(mag_metadata_file), 'r') as file:
-        reader = csv.DictReader(file)
+        reader = csv.DictReader(file, delimiter='\t')
         for row in reader:
             bin_id = row['Bin_id']
-            sample_id = row['Sample_id']
+            #sample_id = row['Sample_id']
             quality_category = row['Quality_category']
-            fasta_path = row['Fasta_path']
+            #fasta_path = row['Fasta_path']
             flatfile_path = row['Flatfile_path']
             unlocalised_path = row['Unlocalised_path']
 
-            for fieldname in ['Bin_id', 'quality_category', 'Flatfile_path']:
+            for fieldname in ['Bin_id', 'Quality_category']:
                 if row['Bin_id'] is None:
                     problematic_bin = ""
                 else:
@@ -44,15 +44,11 @@ def __read_mag_metadata(single_assembly: bool,
                     loggingC.message(f"\nERROR: {fieldname} is missing for a MAG in {os.path.abspath(mag_metadata_file)} {problematic_bin}", threshold=-1)
                     exit(1)
 
-            if fasta_path is None and flatfile_path is None:
-                loggingC.message(f"\nERROR: Neither fasta nor flatfile path is specified for a MAG {bin_id} in {os.path.abspath(mag_metadata_file)}", threshold=-1)
-                exit(1)
-
             metadata[bin_id] = {
-                'Sample_id': sample_id,
+                #'Sample_id': sample_id,
                 'Quality_category': quality_category,
                 'Flatfile_path': flatfile_path,
-                'Fasta_path': fasta_path,
+                #'Fasta_path': fasta_path,
                 'Unlocalised_path': unlocalised_path
             }
     
@@ -65,7 +61,7 @@ def __prep_mags_samplesheet(config: dict,
                             bin_taxonomy_data: dict,
                             assembly_sample_accession: str,
                             samples_submission_dir: str,
-                            devtest: bool) -> str:
+                            development_service: bool) -> str:
     """
     Prepares an XML samplesheet for all MAG samples assume all MAGs are derived
     from the same assembly.
@@ -103,14 +99,14 @@ def __prep_mags_samplesheet(config: dict,
     isolation_source = utility.from_config(config, 'ASSEMBLY', 'ISOLATION_SOURCE')
     collection_date = utility.from_config(config, 'ASSEMBLY', 'collection date')
     location_country = utility.from_config(config, 'ASSEMBLY', 'geographic location (country and/or sea)')
-    location_latitude = utility.from_config(config, 'ASSEMBLY', 'geographic location (latitude)')
-    location_longitude = utility.from_config(config, 'ASSEMBLY', 'geographic location (longitude)')
-    env_context_broad = utility.from_config(config, 'ASSEMBLY', 'broad-scale environmental context')
-    env_context_local = utility.from_config(config, 'ASSEMBLY', 'local environmental context')
-    env_medium = utility.from_config(config, 'ASSEMBLY', 'environmental medium')
+    location_latitude = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS','geographic location (latitude)')
+    location_longitude = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS','geographic location (longitude)')
+    env_context_broad = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS','broad-scale environmental context')
+    env_context_local = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS','local environmental context')
+    env_medium = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS','environmental medium')
     assembly_name = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
     metagenomic_source = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
-                                                                       devtest)
+                                                                       development_service)
     derived_from = ",".join([x['accession'] for x in sample_accession_data])
 
 
@@ -124,6 +120,17 @@ def __prep_mags_samplesheet(config: dict,
         scientific_name  = bin_taxonomy_data[bin_id]['scientific_name']
         completeness = str(bin_quality[bin_id]['completeness'])
         contamination = str(bin_quality[bin_id]['contamination'])
+        quality_category = metadata['Quality_category']
+        if quality_category == 'finished': 
+            assembly_quality = staticConfig.mag_qstring_finished
+        elif quality_category == 'high':
+            assembly_quality = staticConfig.mag_qstring_high
+        elif quality_category == 'medium':
+            assembly_quality = staticConfig.mag_qstring_medium
+        else:
+            err = f"Quality category {quality_category} found in mag metadata. Only \"finished\", \"high\", and \"medium\" are allowed."
+            loggingC.message(err, threshold=-1)
+            exit(1)
 
         # Build XML
         sample = ET.SubElement(root, 'SAMPLE', alias=sample_alias)
@@ -148,7 +155,7 @@ def __prep_mags_samplesheet(config: dict,
             'completeness score': completeness,
             'contamination score': contamination,
             'binning software': binning_software,
-            'assembly quality': metadata['Quality_category'],
+            'assembly quality': assembly_quality,
             'binning parameters': binning_parameters,
             'taxonomic identity marker': taxonomic_identity_marker,
             'isolation_source' : isolation_source,
@@ -272,7 +279,11 @@ def __stage_mag_submission(metadata,
     # Stage the fasta- or flatfile and add them to rows
     if metadata['Flatfile_path'] is None:
         gzipped_fasta_path = os.path.join(staging_directory, "mag"+f"assembly_upload{staticConfig.zipped_fasta_extension}")
-        fasta = metadata['Fasta_path']
+        #fasta = metadata['Fasta_path']
+        # Get the fasta file of the bin with the matching name
+        bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')
+        bin_to_fasta = binSubmission.get_bins_in_dir(bins_directory)
+        fasta = bin_to_fasta[mag_id]
         if fasta.endswith('.gz'):
             shutil.copyfile(fasta, gzipped_fasta_path)
         else:
