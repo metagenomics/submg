@@ -8,12 +8,11 @@ import requests
 import shutil
 
 from requests.auth import HTTPBasicAuth
-from synum import loggingC, utility, binSubmission, enaSearching
+from synum import loggingC, utility, binSubmission, enaSearching, webinWrapper
 from synum.statConf import staticConfig
 
 
-def __read_mag_metadata(single_assembly: bool,
-                        mag_metadata_file: str) -> dict:
+def __read_mag_metadata(mag_metadata_file: str) -> dict:
     """
     Reads the MAG metadata file and returns a metadata dict.
 
@@ -59,7 +58,7 @@ def __prep_mags_samplesheet(config: dict,
                             sample_accession_data: list,
                             mag_metadata: dict,
                             bin_taxonomy_data: dict,
-                            assembly_sample_accession: str,
+                            metagenome_scientific_name: str,
                             samples_submission_dir: str,
                             development_service: bool) -> str:
     """
@@ -73,8 +72,7 @@ def __prep_mags_samplesheet(config: dict,
         mag_metadata (dict): A dictionary with the metadata for each MAG.
         bin_taxonomy_data (dict): A dictionary with the taxonomy data for each
             bin.
-        assembly_sample_accession (str): The accession number of the assembly
-            sample.
+        metagenome_scientific_name (str): The scientific name of the metagenome.
         samples_submission_dir (str): The directory where the samplesheet will
             be written to.
 
@@ -88,7 +86,7 @@ def __prep_mags_samplesheet(config: dict,
     if isinstance(sequencing_platform, list):
         sequencing_platform = ",".join(sequencing_platform)
     assembly_software = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_SOFTWARE')
-    completeness_software = utility.from_config(config, 'BINS', 'COMPLETENESS_SOFTWARE')
+    #completeness_software = utility.from_config(config, 'BINS', 'COMPLETENESS_SOFTWARE')
     binning_software = utility.from_config(config, 'BINS', 'BINNING_SOFTWARE')
     binning_parameters = utility.from_config(config, 'BINS', 'ADDITIONAL_SAMPLESHEET_FIELDS', 'binning parameters')
     project_name = utility.from_config(config, 'PROJECT_NAME')
@@ -105,12 +103,11 @@ def __prep_mags_samplesheet(config: dict,
     env_context_local = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS','local environmental context')
     env_medium = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS','environmental medium')
     assembly_name = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
-    metagenomic_source = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
-                                                                       development_service)
     derived_from = ",".join([x['accession'] for x in sample_accession_data])
 
 
     root = ET.Element('SAMPLE_SET')
+
     for bin_id, metadata in mag_metadata.items():
 
         # Query general MAG data
@@ -167,15 +164,13 @@ def __prep_mags_samplesheet(config: dict,
             'local environmental context': env_context_local,
             'environmental medium': env_medium,
             'sample derived from': derived_from,
-            'metagenomic source': metagenomic_source,
+            'metagenomic source': metagenome_scientific_name,
         }
 
         # Collect any additional attributes specified in the config MAG section
-        try:
+        mag_config = utility.from_config(config, 'MAGS')
+        if 'ADDITIONAL_SAMPLESHEET_FIELDS' in mag_config and mag_config['ADDITIONAL_SAMPLESHEET_FIELDS']:
             mag_additional_dict = utility.from_config(config, 'MAGS', 'ADDITIONAL_SAMPLESHEET_FIELDS')
-        except:
-            mag_additional_dict = None
-        if mag_additional_dict is not None:
             for key in mag_additional_dict.keys():
                 if not mag_additional_dict[key] is None:
                     attribute_data[key] = mag_additional_dict[key]
@@ -187,16 +182,16 @@ def __prep_mags_samplesheet(config: dict,
                 ET.SubElement(attribute, 'TAG').text = key
                 ET.SubElement(attribute, 'VALUE').text = value
 
-        # Convert the XML structure to a string
-        tree = ET.ElementTree(root)
-        outpath = os.path.join(samples_submission_dir, 'MAGs_samplesheet.xml')
-        outpath = os.path.abspath(outpath)
-        with open(outpath, 'wb') as f:
-            tree.write(f, encoding='UTF-8', xml_declaration=False)
+    # Convert the XML structure to a string
+    tree = ET.ElementTree(root)
+    outpath = os.path.join(samples_submission_dir, 'MAGs_samplesheet.xml')
+    outpath = os.path.abspath(outpath)
+    with open(outpath, 'wb') as f:
+        tree.write(f, encoding='UTF-8', xml_declaration=False)
 
-        loggingC.message(f"\t...written MAGs samplesheet to {outpath}", threshold=0)
+    loggingC.message(f"\t...written MAGs samplesheet to {outpath}", threshold=0)
 
-        return outpath
+    return outpath
 
 
 def __submit_mags_samplesheet(samplesheet: str,
@@ -263,12 +258,12 @@ def __stage_mag_submission(metadata,
         run_accessions = ",".join(run_accessions)
 
     # Make the MANIFEST file
-    loggingC.message(f">Preparing MAG manifest in {staging_directory}...", thereshold=1)
+    loggingC.message(f">Preparing MAG manifest in {staging_directory}...", threshold=1)
     rows = [
         ['STUDY', utility.from_config(config, 'STUDY')],
         ['SAMPLE', mag_sample_accession],
         ['ASSEMBLYNAME', mag_assembly_name],
-        ['ASSEMBLY_TYPE', '‘Metagenome-Assembled Genome (MAG)’'],
+        ['ASSEMBLY_TYPE', 'Metagenome-Assembled Genome (MAG)'],
         ['COVERAGE', coverage],
         ['PROGRAM', utility.from_config(config, 'BINS', 'BINNING_SOFTWARE')],
         ['PLATFORM', sequencing_platform],
@@ -279,6 +274,8 @@ def __stage_mag_submission(metadata,
     # Stage the fasta- or flatfile and add them to rows
     if metadata['Flatfile_path'] is None:
         gzipped_fasta_path = os.path.join(staging_directory, "mag"+f"assembly_upload{staticConfig.zipped_fasta_extension}")
+        print("STAGING DIRECTORY IS ", staging_directory)
+        print("GZIPPED FASTA PATH IS ", gzipped_fasta_path)
         #fasta = metadata['Fasta_path']
         # Get the fasta file of the bin with the matching name
         bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')
@@ -306,9 +303,8 @@ def __stage_mag_submission(metadata,
 
 
 
-def submit_mags(single_assembly: bool,
-                config: dict,
-                assembly_sample_accession: str,
+def submit_mags(config: dict,
+                metagenome_scientific_name: str,
                 sample_accession_data: list,
                 run_accessions,
                 bin_taxonomy_data: dict,
@@ -325,12 +321,10 @@ def submit_mags(single_assembly: bool,
     individual analysis object using webin-cli.
     
     Args:
-        single_assembly: True if the MAG was derived from one single assembly.
         config (dict): The config dictionary.
         upload_taxonomy_data (dict): A dictionary with the taxid and scientific
             name for each bin.
-        assembly_sample_accession (str): The accession number of the assembly
-            sample.
+        metagenome_scientific_name (str): The scientific name of the metagenome.
         run_accessions (list): A list of accession numbers of the runs.
         staging_dir (str): The directory where the bins will be staged.
         logging_dir (str): The directory where the logs will be written to.
@@ -345,10 +339,6 @@ def submit_mags(single_assembly: bool,
             Otherwise only validation will happen. Defaults to True.
     """
 
-    if not single_assembly:
-        loggingC.message(f"\nERROR: Currently, this tool supports MAG submission is only for MAGs derived from a single assembly.", threshold=-1)
-        exit(1)
-
     if test:
         url = staticConfig.ena_test_dropbox_url
     else:
@@ -357,7 +347,7 @@ def submit_mags(single_assembly: bool,
     # Extract data
     loggingC.message(">Reading MAG metadata", threshold=1)
     mag_metdata_file = utility.from_config(config, 'MAGS', 'MAG_METADATA_FILE')
-    mag_metadata = __read_mag_metadata(single_assembly, mag_metdata_file)
+    mag_metadata = __read_mag_metadata(mag_metdata_file)
     
     bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')
         
@@ -380,7 +370,7 @@ def submit_mags(single_assembly: bool,
                                           sample_accession_data,
                                           mag_metadata,
                                           bin_taxonomy_data,
-                                          assembly_sample_accession,
+                                          metagenome_scientific_name,
                                           samples_submission_dir,
                                           test)
 
@@ -411,14 +401,14 @@ def submit_mags(single_assembly: bool,
     mag_manifests = {}
     for mag_id in mag_metadata.keys():
         mag_sample_accession = mag_to_accession[mag_id]
-        staging_directory = os.path.join(staging_dir, f"mag_{mag_id}_staging")
-        staging_directories[mag_id] = staging_directory
-        os.makedirs(staging_directory, exist_ok=False)
+        mag_id_staging_directory = os.path.join(staging_dir, f"mag_{mag_id}_staging")
+        staging_directories[mag_id] = mag_id_staging_directory
+        os.makedirs(mag_id_staging_directory, exist_ok=False)
         coverage = bin_coverages[mag_id]
         metadata = mag_metadata[mag_id]
         loggingC.message(f"\t...staging MAG {mag_id}", threshold=1)
         mag_manifests[mag_id] = __stage_mag_submission(metadata,
-                                                       staging_directory,
+                                                       mag_id_staging_directory,
                                                        mag_id,
                                                        config,
                                                        mag_sample_accession,
@@ -426,7 +416,7 @@ def submit_mags(single_assembly: bool,
                                                        run_accessions)
 
     # Submit the MAGs
-    loggingC.nmessage(f">Using ENA Webin-CLI to submit MAGS.\n", threshold=0)
+    loggingC.message(f">Using ENA Webin-CLI to submit MAGS.", threshold=0)
     usr, pwd = utility.get_login()
     mag_receipts = {}
     mag_accessions = {}
@@ -436,19 +426,19 @@ def submit_mags(single_assembly: bool,
         mag_manifest = mag_manifests[mag_id]
         assembly_name = utility.from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
         subdir_name = assembly_name + '_' + mag_id
-        mag_receipts[mag_id], mag_accessions[mag_id] = webin_cli(manifest=mag_manifest,
-                                                                 inputdir=mag_staging_dir,
-                                                                 outputdir=mag_logging_dir,
-                                                                 username=usr,
-                                                                 password=pwd,
-                                                                 subdir_name=subdir_name,
-                                                                 submit=submit)
-    loggingC.message(f">MAG submission completed!", threshold=0)
+        mag_receipts[mag_id], mag_accessions[mag_id] = webinWrapper.webin_cli(manifest=mag_manifest,
+                                                                              inputdir=mag_staging_dir,
+                                                                              outputdir=mag_logging_dir,
+                                                                              username=usr,
+                                                                              password=pwd,
+                                                                              subdir_name=subdir_name,
+                                                                              submit=submit)
+    loggingC.message(f"\n>MAG submission completed!", threshold=0)
 
     # Process the results
     loggingC.message(f">Mag receipt paths are", threshold=1)
     for mag_id, receipt in mag_receipts.items():
-        loggingC.message(f"\t{mag_id}: {receipt}", threshold=1)
+        loggingC.message(f"\t{mag_id}: {os.path.abspath(receipt)}", threshold=1)
 
     bin_to_accession_file = os.path.join(logging_dir, 'mag_to_preliminary_accession.tsv')
     with open(bin_to_accession_file, 'w') as f:
@@ -456,4 +446,4 @@ def submit_mags(single_assembly: bool,
         for mag_id, accession in mag_accessions.items():
             writer.writerow([mag_id, accession])
 
-    loggingC.message(f">The preliminary(!) accessions of your MAGs have been written to {os.path.abspath(bin_to_accession_file)}", threshold=0)
+    loggingC.message(f"\n>The preliminary(!) accessions of your MAGs have been written to {os.path.abspath(bin_to_accession_file)}\n", threshold=0)

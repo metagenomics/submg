@@ -151,12 +151,12 @@ def submit_reads(config,
                 read_manifests[name] = manifest                                       
 
     # Upload the reads
-    loggingC.message(f">Using ENA Webin-CLI to submit reads.\n", threshold=0)
+    loggingC.message(f">Using ENA Webin-CLI to submit reads.", threshold=0)
     usr, pwd = utility.get_login()
     read_receipts = {}
     read_accessions = {}
     for name, manifest in read_manifests.items():
-        loggingC.message(f">Submitting file at {manifest}", threshold=1)
+        loggingC.message(f">Submitting file at {manifest}", threshold=2)
         read_set_logging_dir = os.path.join(logging_dir, f"reads_{name}")
 
         read_receipts[name], read_accessions[name] = webin_cli(manifest=manifest,
@@ -169,10 +169,10 @@ def submit_reads(config,
                                                                test=test,
                                                                context='reads')
         
-    loggingC.message(">Read submission completed!", threshold=0)
+    loggingC.message("\n>Read submission completed!", threshold=0)
     loggingC.message(">Read receipt paths are:", threshold=1)
     for name, receipt in read_receipts.items():
-        loggingC.message(f"\t{name}: {receipt}", threshold=1)
+        loggingC.message(f"\t{name}: {os.path.abspath(receipt)}", threshold=1)
 
     read_to_accession_file = os.path.join(logging_dir, 'read_to_preliminary_accession.tsv')
     with open(read_to_accession_file, 'w') as f:
@@ -181,7 +181,7 @@ def submit_reads(config,
             writer.writerow([name, accession])
 
 
-    loggingC.message(f">The preliminary(!) accessions of your reads have been written to {os.path.abspath(read_to_accession_file)}.", threshold=0)
+    loggingC.message(f"\n>The preliminary(!) accessions of your reads have been written to {os.path.abspath(read_to_accession_file)}.\n", threshold=0)
       
 
     return list(read_accessions.values())

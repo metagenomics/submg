@@ -7,6 +7,7 @@ import time
 from synum import loggingC, utility, preflight, configGen, enaSearching
 from synum.statConf import staticConfig
 
+from synum.utility import prepdir
 from synum.sampleSubmission import submit_samples
 from synum.readSubmission import submit_reads
 from synum.assemblySubmission import submit_assembly
@@ -15,10 +16,6 @@ from synum.magSubmission import submit_mags
 
 
 def main():
-    """
-    Main function.
-    """
-    
     # Parsing command line input
     parser = argparse.ArgumentParser(description="""Tool for submitting metagenome bins to the European Nucleotide Archive.
                                      Environment variables ENA_USER and ENA_PASSWORD must be set for ENA upload.""")
@@ -56,9 +53,10 @@ def main():
     coverage_group.add_argument("--coverage_from_bam", action="store_true", help="Coverages will be calculated from a list of .bam files that you provide.")
     coverage_group.add_argument("--known_coverage", action="store_true", help="Coverages are already known and you provide them as a .bam file.")
 
-
     args = parser.parse_args()
 
+
+    # Config generation
     if args.mode == 'makecfg':
         configGen.make_config(outpath=args.outfile,
                               submit_samples=args.submit_samples,
@@ -72,6 +70,7 @@ def main():
                               no_comments=args.no_comments)
 
 
+    # Submission
     elif args.mode == 'submit':
 
         loggingC.set_up_logging(args.logging_dir, args.verbosity)        
@@ -136,16 +135,14 @@ def main():
             
         if args.submit_reads:
             run_accessions = submit_reads(config,
-                                          args.staging_dir,
-                                          args.logging_dir,
+                                          prepdir(args.staging_dir, 'reads'),
+                                          prepdir(args.logging_dir, 'reads'),
                                           test=args.development_service)
         else:
             run_accessions = utility.from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS')
             if not isinstance(run_accessions, list):
                 run_accessions = [run_accessions]
 
-
-    
         if args.submit_assembly:
             assembly_sample_accession, assembly_fasta_accession = submit_assembly(config,
                                                                                   args.staging_dir,
@@ -180,32 +177,37 @@ def main():
                         bin_taxonomy,
                         assembly_sample_accession,
                         run_accessions,
-                        args.staging_dir,
-                        args.logging_dir,
+                        prepdir(args.staging_dir, 'bins'),
+                        prepdir(args.logging_dir, 'bins'),
                         depth_files,
                         bin_coverage_file,
                         threads=args.threads,
                         test=args.development_service)
-
-        print(">You will receive final accessions once your submission has been processed by ENA.")
-        print(">ENA will send those final accession by email to the contact adress of your ENA account.")
 
 
         # MAG submission
         if args.submit_mags:
-            single_assembly = True
-            submit_mags(single_assembly,
-                        config,
-                        assembly_sample_accession,
+            if args.submit_assembly:
+                metagenome_scientific_name = utility.from_config(config, 'METAGENOME_SCIENTIFIC_NAME')
+            else:
+                metagenome_scientific_name = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
+                                                                                          args.development_service)
+            submit_mags(config,
+                        metagenome_scientific_name,
                         sample_accession_data,
                         run_accessions,
                         bin_taxonomy,
-                        args.staging_dir,
-                        args.logging_dir,
+                        prepdir(args.staging_dir, 'mags'),
+                        prepdir(args.logging_dir, 'mags'),
                         depth_files,
                         bin_coverage_file,
                         threads=args.threads,
                         test=args.development_service)
+
+
+        print(">You will receive final accessions once your submission has been processed by ENA.")
+        print(">ENA will send those final accession by email to the contact adress of your ENA account.")
+
 
         # Cleanup
         if not args.keep_depth_files:

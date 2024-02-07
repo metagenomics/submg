@@ -104,10 +104,10 @@ def __webin_cli_submit(manifest,
     ]
     
     if test:
-        loggingC.message("           Submitting to test/dev service through Webin-CLI", threshold=0)
+        loggingC.message("\n           Submitting to development service through Webin-CLI", threshold=0)
         cmd.append('-test')
     else:
-        loggingC.message("           Submitting to PRODUCTION service through Webin-CLI", threshold=0)
+        loggingC.message("\n           Submitting to PRODUCTION service through Webin-CLI", threshold=0)
     try:
         process = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
@@ -128,7 +128,8 @@ def __webin_cli_submit(manifest,
             accession = line.strip().split(' ')[-1]
 
         if line.startswith('INFO : '):
-            line = line[7:].strip().replace('\n','; ')
+            line = line[7:].strip()
+        line = line.replace('\n',' ')
         loggingC.message(f"Webin-CLI: {line}", threshold=0)
 
     process.wait()
@@ -160,7 +161,7 @@ def webin_cli(manifest,
     """
     jar = find_webin_cli_jar()
     if submit:
-        loggingC.message(f">Using ENA Webin-CLI to submit {subdir_name}", threshold=1)
+        loggingC.message(f">Using ENA Webin-CLI to submit {subdir_name}", threshold=2)
         accession = __webin_cli_submit(manifest,
                                         inputdir,
                                         outputdir,
@@ -172,7 +173,8 @@ def webin_cli(manifest,
         receipt = os.path.join(outputdir, context, subdir_name.replace(' ','_'), 'submit', 'receipt.xml')
         if accession is None:
             print(f"ERROR: Submission failed for {inputdir}")
-            print(f"Please check the webin-cli report at {receipt}")
+            print(f"If the submission failed during validation, please consult the output of Webin-CLI.")
+            print(f"Otherwise please check the receipt at {receipt}")
             exit(1)
     else:
         loggingC.message(f">Validating {subdir_name} for ENA submission using webin-cli", threshold=1)

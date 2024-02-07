@@ -629,7 +629,7 @@ def read_bin_samples_receipt(receipt_path: str) -> dict:
         print(f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information.")
         exit(1)
 
-    loggingC.message("\t...bin samplesheet upload was successful.", threshold=1)
+    loggingC.message("\t...samplesheet upload was successful.", threshold=1)
 
     bin_to_accession = {}
     for sample in root.findall('.//SAMPLE'):
@@ -948,7 +948,7 @@ def submit_bins(config: dict,
                                                          bin_coverages[bin_name])
 
     # Submit the bins
-    loggingC.message(f">Using ENA Webin-CLI to submit bins.\n", threshold=0)
+    loggingC.message(f">Using ENA Webin-CLI to submit bins.", threshold=0)
     usr, pwd = utility.get_login()
     bin_receipts = {}
     bin_accessions = {}
@@ -967,12 +967,12 @@ def submit_bins(config: dict,
                                                                      subdir_name=subdir_name,
                                                                      submit=submit,
                                                                      test=test)
-    loggingC.message(">Bin submission completed!", threshold=0)
+    loggingC.message("\n>Bin submission completed!", threshold=0)
 
     # Process the results    
     loggingC.message(f">Bin receipt paths are:", threshold=1)
     for bin_name, bin_receipt in bin_receipts.items():
-        loggingC.message(f"\t{bin_name}: {bin_receipt}", threshold=1)
+        loggingC.message(f"\t{bin_name}: {os.path.abspath(bin_receipt)}", threshold=1)
 
     bin_to_accession_file = os.path.join(logging_dir, 'bin_to_preliminary_accession.tsv')
     with open(bin_to_accession_file, 'w') as f:
@@ -980,4 +980,4 @@ def submit_bins(config: dict,
         for bin_name, accession in bin_accessions.items():
             writer.writerow([bin_name, accession])
 
-    loggingC.message(f">The preliminary(!) accessions of your bins have been written to {os.path.abspath(bin_to_accession_file)}", threshold=0)
+    loggingC.message(f"\n>The preliminary(!) accessions of your bins have been written to {os.path.abspath(bin_to_accession_file)}\n", threshold=0)

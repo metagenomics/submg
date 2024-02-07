@@ -128,8 +128,12 @@ def search_scientific_name_by_sample(sample_accession: str,
     response = requests.get(url, params=params)
     print(response.text)
 
-    scientific_name = response.text.split('\n')[1:-1][0]
-    scientific_name = scientific_name.split('\t')[0]
+    try:
+        scientific_name = response.text.split('\n')[1:-1][0]
+        scientific_name = scientific_name.split('\t')[0]
+    except IndexError:
+        loggingC.message(f"\nERROR: No scientific name found for {sample_accession}. After submission, it can take some hours before an accession can be found through the ENA search. Please check if you can find this accession using the search function of the web interface.", threshold=-1)
+        exit(1)
 
     if ',' in scientific_name:
         loggingC.message(f"\nERROR: Multiple scientific names found for sample {sample_accession}:\n{scientific_name}", threshold=-1)
@@ -140,7 +144,8 @@ def search_scientific_name_by_sample(sample_accession: str,
 #For debugging
 #print(sample_exists('SAMEA113417025', True))
 #print(study_exists("PRJEB71644", True))
-print(search_scientific_name_by_sample('ERS28140038', True))
+
+#print(search_scientific_name_by_sample('ERS28140038', True))
 #print(search_scientific_name_by_sample("SAMEA114749859", True))
 #print(search_samples_by_assembly_analysis('ERZ1049590'))
 #print(search_runs_by_sample('SAMEA113417025'))

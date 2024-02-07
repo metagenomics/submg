@@ -188,6 +188,16 @@ def __strcast(value):
         return {k: __strcast(v) for k, v in value.items()}
     return value
 
+
+def prepdir(parent_path, name):
+    parent_path = os.path.abspath(parent_path)
+    if not os.path.isdir(parent_path):
+        err = f"\nERROR: The path {parent_path} is not a directory."
+        loggingC.message(err, threshold=-1)
+        exit(1)
+    newdir = os.path.join(parent_path, name)
+    os.makedirs(newdir, exist_ok=False)
+    return newdir
     
 def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
     """

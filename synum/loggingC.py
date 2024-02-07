@@ -1,6 +1,6 @@
 import os
 
-from synum.statConf import staticConfig
+#from synum.statConf import staticConfig
 
 # Global variables for logging
 logfile_path = None
