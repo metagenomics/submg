@@ -7,12 +7,12 @@ from synum  import loggingC
 from synum.statConf import staticConfig
 
 def find_webin_cli_jar():
-    """ Find the Webin CLI JAR file in the parent directory of this script.
+    """ Find the Webin CLI JAR file in the directory of this script.
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
+    #parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
     
-    jar_files = glob.glob(os.path.join(parent_dir, 'webin*.jar'))
+    jar_files = glob.glob(os.path.join(script_dir, 'webin*.jar'))
     
     if len(jar_files) == 1:
         return jar_files[0]
@@ -20,7 +20,7 @@ def find_webin_cli_jar():
         print(f"ERROR: Multiple webin-cli .jar files found in {parent_dir}. Please ensure there's only one.")
         exit(1)
     else:
-        print(f"ERROR: webin_cli .jar file not found in {os.path.abspath(parent_dir)}.\nYou can download the .jar using install.py or from the ENA website.")
+        print(f"ERROR: webin_cli .jar file not found in {os.path.abspath(parent_dir)}.\nYou can download the .jar by running the webin_downloader.py file in the synum directory or manually from the ENA website.")
         exit(1)
 
 def __webin_cli_validate(manifest,

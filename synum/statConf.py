@@ -39,7 +39,7 @@ class staticConfig:
     mag_qstring_finished: str = 'Single contiguous sequence without gaps or ambiguities with a consensus error rate equivalent to Q50 or better.'
     mag_qstring_high: str = 'Multiple fragments where gaps span repetitive regions. Presence of the 23S, 16S and 5S rRNA genes and at least 18 tRNAs.'
     mag_qstring_medium: str = 'Many fragments with little to no review of assembly other than reporting of standard assembly statistics.'
-    max_assembly_name_length: int = 50 - len('webin-genome-')
+    max_assembly_name_length: int = 50 - len('webin-genome-' + '_SAMEA________')
 
 YAMLCOMMENTS = {
     'STUDY': 'The accession of your study (which has to already exist in ENA)',
@@ -49,7 +49,7 @@ YAMLCOMMENTS = {
     'METAGENOME_TAXID': "Taxonomic identifier of the assembly. Must match SPECIES_SCIENTIFIC_NAME",
     'SEQUENCING_PLATFORMS': "One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#platform",
     'NEW_SAMPLES': "These samples will be created in ENA according to the data entered below. Your assembly MUST BE BASED ON ALL OF THESE.",
-    'collection date': "Any ISO compliant time. Can be truncated from the righ (e.g. '2023-12-27T16:07' or '2023-12')",
+    'collection date': "Any ISO compliant time. Can be truncated from the right (e.g. '2023-12-27T16:07' or '2023-12')",
     'geographic location (country and/or sea)': 'See ENA checklists (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000011) for valid values',
     'SAMPLE_ACCESSIONS': "These samples exist in ENA. Your assembly is based on them.",
     'ADDITIONAL_SAMPLESHEET_FIELDS': "Please add more fields from the ENA samplesheet that most closely matches your experiment",

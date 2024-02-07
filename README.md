@@ -2,7 +2,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="synum/logo_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="synum/logo_light.png">
-  <img alt="Synom Logo" src="synum/logo_light.png">
+  <img alt="Synum Logo" src="synum/logo_light.png">
 </picture>
 &nbsp;
 
@@ -15,8 +15,10 @@ Synum aids in the submission of metagenomic experiment data to the European Nucl
 
 Please Note:
 1. The tool will work *only* for metagenomic data.
-2. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenome bin. Bins should be submitted before MAGs.
-3. In case you intend to upload results based on third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
+2. Right now the tool cannot derive the taxonomy of eukaryotic bins. We are working on it.
+3. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenome bin. Bins should be submitted before MAGs.
+4. In case you intend to upload results based on third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
+5. Please report any issues you find, we'll get back to you as soon as possible.
 
 # Content
 - [Installation](#installation)
@@ -28,6 +30,7 @@ Please Note:
   * [MAG Submission](#mag-submission)
     + [Contig- and Chromosome-MAG-Assemblies](#contig--and-chromosome-mag-assemblies)
     + [MAG metadata](#mag-metadata)
+  * [Preventing Process Interruption](#preventing-process-interruption)  
 - [Taxonomy Assignment](#taxonomy-assignment)
   * [NCBI Taxonomy File](#ncbi-taxonomy-file)
   * [Manual Taxonomy File](#manual-taxonomy-file)
@@ -37,16 +40,15 @@ Please Note:
 
 
 # Installation
-- Make sure Python 3.10 or higher is installed
+- Make sure Python 3.8 or higher is installed
 - Make sure Java 1.8 or higher is installed
 - Clone this repository (`git clone https://github.com/ttubb/synum`)
 - Switch into the directory that you just cloned
 - Run `python -m pip install .`
-- Run `python3 webin_downloader.py` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli). 
+- Run `synum download_webin` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli). 
 
 # Usage
-
-Synum is intended to submit data related to a *single* (co-)assembly. All samples, sequncing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run synum for each assembly separately.
+Synum is intended to submit data related to a *single* (co-)assembly. All samples, sequncing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run synum once for each assembly.
 
 ## Example
 Assuming you want to upload 2 samples, 2 paired-end read files, a co-assembly and bins.
@@ -72,7 +74,7 @@ synum submit --config /path/to/your/config.yaml --staging_dir /path/to/empty/dir
 ```
 
 ## ENA Development Service
-[ENA provides a development service to trial your submission before uploading your data to the production server](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/interactive.html). We strongly suggest submitting to the production server only after a test submission with identical parameters was successful. Otherwise, you might end up with incomplete or incorrect submissions, with no ability to correct or remove them. Unless `--development_service 0` is specified, synum will always submit to the test server.
+ENA provides a [development service](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/interactive.html) to trial your submission before uploading your data to the production server. We strongly suggest submitting to the production server only after a test submission with identical parameters was successful. Otherwise, you might end up with incomplete or incorrect submissions, with no ability to correct or remove them. Unless `--development_service 0` is specified, synum will always submit to the test server.
 
 ## Study Object
 `Study` is used synonymously with `project` here. Before you can submit data using synum, you need to have a `Study` object (= a project) in your ENA account. If you intend to submit annotation data, you will also need a [locus tag prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html). You can create both through the ENA webin portal on the [production server](https://www.ebi.ac.uk/ena/submit/webin/login) or the [development server](https://wwwdev.ebi.ac.uk/ena/submit/webin/login). Be aware that if you create the `Study` object on the production server, it can take up to 24h hours until it is available on the development server. This can cause test submissions to fail.
@@ -101,6 +103,8 @@ Using the table below, MAG `m1` will be submitted as a medium quality contig ass
 |m2|high|/path/to/m2_flatfile.tsv|||
 |m3|finished|/path/to/m3_flatfile.tsv|/path/to/m3_chromosome.txt|/path/to/m3_unlocalised.txt|
 
+## Preventing Process Interruption
+A submission can take several hours to complete. We recommend using [nohup](https://en.wikipedia.org/wiki/Nohup), [tmux](https://github.com/tmux/tmux/wiki) or something similar to prevent the process from being interrupted. 
 
 # Taxonomy Assignment
 Assemblies and bins need a valid NCBI taxonomy (scientific name and taxonomic identifier) for submission. If you did taxonomic annotation of bins based on [GTDB](https://gtdb.ecogenomic.org/), you can use the `gtdb_to_ncbi_majority_vote.py` script of the [GTDB-Toolkit](https://github.com/Ecogenomics/GTDBTk) to translate your results to NCBI taxonomy.

@@ -248,7 +248,7 @@ def __stage_mag_submission(metadata,
     # Prepare some data
     assembly_name = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME')
     assembly_name = assembly_name.replace(' ', '_')
-    mag_assembly_name = f"{assembly_name}_MAG_{mag_sample_accession}"
+    mag_assembly_name = f"{assembly_name}_{mag_sample_accession}"
 
     sequencing_platform = utility.from_config(config, 'SEQUENCING_PLATFORMS')
     if isinstance(sequencing_platform, list):
@@ -274,8 +274,6 @@ def __stage_mag_submission(metadata,
     # Stage the fasta- or flatfile and add them to rows
     if metadata['Flatfile_path'] is None:
         gzipped_fasta_path = os.path.join(staging_directory, "mag"+f"assembly_upload{staticConfig.zipped_fasta_extension}")
-        print("STAGING DIRECTORY IS ", staging_directory)
-        print("GZIPPED FASTA PATH IS ", gzipped_fasta_path)
         #fasta = metadata['Fasta_path']
         # Get the fasta file of the bin with the matching name
         bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')

@@ -10,14 +10,14 @@ class CustomInstall(install):
 
 setup(
     name='synum',
-    version='0.1.0',
+    version='0.0.9',
     packages=find_packages(),
     install_requires=[
         'pysam>=0.19.1',
         'PyYAML>=5.4.1',
         'Requests>=2.31.0',
         'tqdm>=4.64.1',
-        'yaspin>=3.0.1',
+        'yaspin>=2.0',
     ],
     scripts=[
         'synum/main.py',

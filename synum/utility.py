@@ -98,7 +98,8 @@ def build_sample_submission_xml(outpath: str,
         add = ET.SubElement(action2, "HOLD", HoldUntilDate=hold_until_date)
 
     tree = ET.ElementTree(root)
-    ET.indent(tree, space="\t", level=0)
+    #Skipping indentation for python3.8 compatibility
+    #ET.indent(tree, space="\t", level=0)
 
     with open(outpath, "wb") as f:
         tree.write(f, encoding="utf-8", xml_declaration=True)

@@ -4,7 +4,7 @@ import argparse
 import os
 import time
 
-from synum import loggingC, utility, preflight, configGen, enaSearching
+from synum import loggingC, utility, preflight, configGen, webinDownload, enaSearching
 from synum.statConf import staticConfig
 
 from synum.utility import prepdir
@@ -24,7 +24,8 @@ def main():
 
     subparsers = parser.add_subparsers(dest='mode')
 
-    
+    parser_download_webin = subparsers.add_parser('download_webin', help='Download a compatible version of the webin-cli .jar file')
+
     parser_submit = subparsers.add_parser('submit', help='Stage your data and submit it to either the ENA development or production server')
     parser_submit.add_argument("-x", "--config",           required=True,          help="Path to the YAML file containing metadata and filepaths. Mandatory")
     parser_submit.add_argument("-g", "--staging_dir",      required=True,          help="Directory where files will be staged for upload. Must be empty. May use up a lot of disk space. Mandatory.")
@@ -55,9 +56,16 @@ def main():
 
     args = parser.parse_args()
 
+    # Webin-cli download
+    if args.mode == 'download_webin':
+        toolVersion, webinCliVersion = webinDownload.versions()
+        print(f">Versions: tool={toolVersion}, webin-cli={webinCliVersion}")
+        print(">Checking Java installation...")
+        webinDownload.check_java()
+        webinDownload.download_webin_cli(webinCliVersion)
 
     # Config generation
-    if args.mode == 'makecfg':
+    elif args.mode == 'makecfg':
         configGen.make_config(outpath=args.outfile,
                               submit_samples=args.submit_samples,
                               submit_single_reads=args.submit_single_reads,

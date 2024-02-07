@@ -10,3 +10,4 @@ from . import assemblySubmission
 from . import binSubmission
 from . import webinWrapper
 from . import loggingC
+from . import webinDownload
