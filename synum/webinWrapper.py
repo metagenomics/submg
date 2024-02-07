@@ -3,6 +3,9 @@ import os
 import glob
 import signal
 
+from synum  import loggingC
+from synum.statConf import staticConfig
+
 def find_webin_cli_jar():
     """ Find the Webin CLI JAR file in the parent directory of this script.
     """
@@ -27,8 +30,7 @@ def __webin_cli_validate(manifest,
                          password,
                          test,
                          context,
-                         jar,
-                         verbose=1):
+                         jar):
     cmd = [
         'java',
         '-jar',
@@ -41,60 +43,43 @@ def __webin_cli_validate(manifest,
         f'-context={context}',
         f'-manifest={manifest}'
     ]
-    
     try:
-        if verbose<1:
-            subprocess.run(cmd,
-                           stdout = subprocess.DEVNULL,
-                           stderr = subprocess.DEVNULL,
-                           check=True)
-        else:
-            subprocess.run(cmd,
-                           check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"\nERROR: Validation failed with error: {e}") 
+        # Run the subprocess and capture stdout and stderr
+        result = subprocess.run(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                text=True,  # Ensures the output is in string format
+                                check=True)
 
-# def __webin_cli_submit(manifest,
-#                        inputdir,
-#                        outputdir,
-#                        username,
-#                        password,
-#                        test,
-#                        context,
-#                        jar,
-#                        verbose=1):
-#     cmd = [
-#         'java',
-#         '-jar',
-#         jar,
-#         '-submit',
-#         f'-username={username}',
-#         f'-password={password}',
-#         f'-inputdir={inputdir}',
-#         f'-outputdir={outputdir}',
-#         f'-context={context}',
-#         f'-manifest={manifest}'
-#     ]
-    
-#     if test:
-#         if verbose>0:
-#             print("Using test submission service")
-#         cmd.append('-test')
-#     else:
-#         if verbose>0:
-#             print("Using production submission service")
-    
-#     try:
-#         if verbose<1:
-#             subprocess.run(cmd,
-#                            stdout = subprocess.DEVNULL,
-#                            stderr = subprocess.DEVNULL,
-#                            check=True)
-#         else:
-#             subprocess.run(cmd,
-#                            check=True)
-#     except subprocess.CalledProcessError as e:
-#         print(f"\nERROR: Submission failed with error: {e}")
+        # Log the stdout if any
+        if result.stdout:
+            loggingC.message(result.stdout.strip().replace('\n','; '), threshold=0)
+
+        # Log the stderr if any
+        if result.stderr:
+            loggingC.message(result.stderr.strip().replace('\n','; '), threshold=0)
+
+    except subprocess.CalledProcessError as e:
+        # Even if the subprocess fails, it may produce output or errors, so capture and log them
+        if e.stdout:
+            loggingC.message(e.stdout.strip().replace('\n','; '), threshold=-1)
+        if e.stderr:
+            loggingC.message(e.stderr.strip().replace('\n','; '), threshold=-1)
+
+        # Finally, log the exception itself
+        loggingC.message(f"\nERROR: Validation failed with error: {e}", threshold=-1)
+
+#    try:
+#        if verbose<1:
+#            subprocess.run(cmd,
+#                           stdout = subprocess.DEVNULL,
+#                           stderr = subprocess.DEVNULL,
+#                           check=True)
+#        else:
+#            subprocess.run(cmd,
+#                           check=True)
+#    except subprocess.CalledProcessError as e:
+#        print(f"\nERROR: Validation failed with error: {e}") 
 
         
 def __webin_cli_submit(manifest,
@@ -104,8 +89,7 @@ def __webin_cli_submit(manifest,
                        password,
                        test,
                        context,
-                       jar,
-                       verbose=1):
+                       jar):
     cmd = [
         'java',
         '-jar',
@@ -120,12 +104,10 @@ def __webin_cli_submit(manifest,
     ]
     
     if test:
-        if verbose>0:
-            print("           Submitting to test/dev service through Webin-CLI")
+        loggingC.message("\n           Submitting to development service through Webin-CLI", threshold=0)
         cmd.append('-test')
     else:
-        if verbose>0:
-            print("           Submitting to PRODUCTION service through Webin-CLI")    
+        loggingC.message("\n           Submitting to PRODUCTION service through Webin-CLI", threshold=0)
     try:
         process = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
@@ -135,14 +117,20 @@ def __webin_cli_submit(manifest,
         process.send_signal(signal.SIGINT)
     
     accession = None
-    accession_line = 'The following analysis accession was assigned to the submission'
+    if context == 'genome':
+        accession_line = staticConfig.webin_analysis_accession_line
+    elif context == 'reads':
+        accession_line = staticConfig.webin_run_accessions_line
+    else:
+        raise ValueError(f"ERROR: Invalid context {context}")
     for line in iter(process.stdout.readline, ''):
         if accession_line in line:
             accession = line.strip().split(' ')[-1]
-        if verbose>0:
-            if line.startswith('INFO : '):
-                line = line[7:]
-            print(f"Webin-CLI: {line}", end='')
+
+        if line.startswith('INFO : '):
+            line = line[7:].strip()
+        line = line.replace('\n',' ')
+        loggingC.message(f"Webin-CLI: {line}", threshold=0)
 
     process.wait()
 
@@ -157,8 +145,7 @@ def webin_cli(manifest,
               subdir_name,
               submit=False,
               test=True,
-              context='genome',
-              verbose=1):
+              context='genome'):
     """
     Submit or validate data to/from the Webin submission system.
 
@@ -174,8 +161,7 @@ def webin_cli(manifest,
     """
     jar = find_webin_cli_jar()
     if submit:
-        if verbose>1:
-            print(f"Submitting {subdir_name} to ENA through webin-cli")
+        loggingC.message(f">Using ENA Webin-CLI to submit {subdir_name}", threshold=2)
         accession = __webin_cli_submit(manifest,
                                         inputdir,
                                         outputdir,
@@ -183,16 +169,15 @@ def webin_cli(manifest,
                                         password,
                                         test,
                                         context,
-                                        jar,
-                                        verbose)
-        receipt = os.path.join(outputdir, 'genome', subdir_name.replace(' ','_'), 'submit', 'receipt.xml')
+                                        jar)
+        receipt = os.path.join(outputdir, context, subdir_name.replace(' ','_'), 'submit', 'receipt.xml')
         if accession is None:
             print(f"ERROR: Submission failed for {inputdir}")
-            print(f"Please check the webin-cli report at {receipt}")
+            print(f"If the submission failed during validation, please consult the output of Webin-CLI.")
+            print(f"Otherwise please check the receipt at {receipt}")
             exit(1)
     else:
-        if verbose>1:
-            print(f"Validating {subdir_name} for ENA submission using webin-cli")
+        loggingC.message(f">Validating {subdir_name} for ENA submission using webin-cli", threshold=1)
         __webin_cli_validate(manifest,
                              inputdir,
                              outputdir,
@@ -200,8 +185,7 @@ def webin_cli(manifest,
                              password,
                              test,
                              context,
-                             jar,
-                             verbose)
+                             jar)
         receipt = None
 
     return receipt, accession

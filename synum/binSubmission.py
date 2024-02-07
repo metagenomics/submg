@@ -7,18 +7,17 @@ import gzip
 import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
 
-from synum import utility
+from synum import loggingC, utility
 from synum.webinWrapper import webin_cli
 from synum.statConf import staticConfig
 
-def __report_tax_issues(issues, verbose=1):
+def __report_tax_issues(issues):
     """
     Reports the issues encountered when trying to determine the taxonomy
     of metagenome bins automatically.
 
     Args:
         issues (list): A list of dictionaries with the issues encountered.
-        verbose (int, optional): Verbosity level. Defaults to 1.
     """
     print(f"\nERROR: Unable to determine taxonomy for {len(issues)} bins:")
     problematic_bins = [x['mag_bin'] for x in issues]
@@ -26,28 +25,26 @@ def __report_tax_issues(issues, verbose=1):
     for_printing = '\n'.join(problematic_bins)
     print(for_printing)
     print(f"Please manually enter taxonomy data for these bins into a .tsv file and specify it in the MANUAL_TAXONOMY_FILE field in the config file.")
-    if verbose>0:
-        print(f"\nTaxonomy issues are:")
-        for i in issues:
-            mag = i['mag_bin']
-            level = i['level']
-            classification = i['classification']
-            suggestions = i['suggestions']
-            if len(i['suggestions']) == 0:
-                print(f"MAG {mag} - no suggestions found (classified as {level} {classification})")
-            else:
-                print(f"MAG {mag} - multiple suggestions found (classified as {level} {classification})")
-                print("\tSuggestions are:")
-                for s in suggestions:
-                    print(f"\t{s['taxId']}\t{s['scientificName']}")
+    loggingC.message(f"\nTaxonomy issues are:", threshold=0)
+    for i in issues:
+        mag = i['mag_bin']
+        level = i['level']
+        classification = i['classification']
+        suggestions = i['suggestions']
+        if len(i['suggestions']) == 0:
+            loggingC.message(f"MAG {mag} - no suggestions found (classified as {level} {classification})", threshold=0)
+        else:
+            loggingC.message(f"MAG {mag} - multiple suggestions found (classified as {level} {classification})", threshold=0)
+            loggingC.message("\tSuggestions are:", threshold=0)
+            for s in suggestions:
+                loggingC.message(f"\t{s['taxId']}\t{s['scientificName']}", threshold=0)
     exit(1)
 
 
 def query_ena_taxonomy(level: str,
                          domain: str,
                          classification: str,
-                         filtered: bool = True,
-                         verbose: int = 1) -> list:
+                         filtered: bool = True) -> list:
     """ 
     Based on the query string, use the ENA REST API to get a suggestion for the
     taxonomy.
@@ -58,7 +55,6 @@ def query_ena_taxonomy(level: str,
         classification (str): The query string.
         filtered (bool, optional): If True, only return the best suggestion.
             Defaults to True.
-        verbose (int, optional): Verbosity level. Defaults to 1.
 
     Returns:
         list: A list of dictionaries with the suggestions from the ENA REST API.
@@ -123,17 +119,16 @@ def query_ena_taxonomy(level: str,
                     result.append(taxdata)                  
         return result
     else:
-        print(f"\nERROR: Trying to fetch taxonomy suggestion for {level}: {classification} (domain: {domain}) but ENA REST API returned status code {response.status_code}")
-        if verbose > 0:
-            print(f"Attempted query was {url}")
+        err = f"\nERROR: Trying to fetch taxonomy suggestion for {level}: {classification} (domain: {domain}) but ENA REST API returned status code {response.status_code}"
+        loggingC.message(err, threshold=-1)
+        loggingC.message(f"Attempted query was {url}", threshold=0)
         exit(1)
 
 
 
 def __calculate_bin_coverage(fasta: str,
                              depth_files: list,
-                             threads=4,
-                             verbose: int = 1) -> float:
+                             threads=4) -> float:
     """
     Extract the names of contigs in the bin and calculate the bin coverage
     based on the depth files.
@@ -142,7 +137,6 @@ def __calculate_bin_coverage(fasta: str,
         fasta (str): Path to the fasta file of the bin.
         depth_files (list): A list of paths to the depth files.
         threads (int, optional): Number of threads to use for samtools. Defaults to 4.
-        verbose (int, optional): Verbosity level. Defaults to 1.
 
     Returns:
         float: The average coverage of the contigs in the bin.
@@ -154,29 +148,26 @@ def __calculate_bin_coverage(fasta: str,
             if line.startswith('>'):
                 contig_names.append(line.strip().split(' ')[0][1:])
     # Get the average coverage of the contigs of this bin
-    if verbose == 1:
-        bin_verbosity = 0
-    else:
-        bin_verbosity = verbose
     coverage = utility.calculate_coverage(depth_files,
                                           contig_names,
                                           threads=threads,
-                                          verbose=bin_verbosity)
+                                          silent=True)
     
     return coverage
 
 
 def __read_ncbi_taxonomy(ncbi_taxonomy_file: str) -> dict:
     """
-    Read the output of GTDB-TKs 'gtdb_to_ncbi_majority_vote.py' script and
-    return a dictionary with a taxid and a scientific name for each genome.
+    Read the output of GTDB-TKs 'gtdb_to_ncbi_majority_vote.py' or a file using
+    the format described in README.md and return a dictionary with a taxid and a
+    scientific name for each genome.
     Important note: The output of GTDB-TKs 'gtdb_to_ncbi_majority_vote.py' script
     might miss some genome bins which didn't get GTDB classifications.
 
     Args:
         ncbi_to_taxonomy_file (str): Output files of GTDB-TKs
             'gtdb_to_ncbi_majority_vote.py' script or NCBI taxonomy file with a
-            similar structure.
+            the columns 'Bin_id' and 'NCBI_taxonomy'.
 
     Returns:
         dict: A dictionary with a taxid and a scientific name for each genome. 
@@ -184,16 +175,31 @@ def __read_ncbi_taxonomy(ncbi_taxonomy_file: str) -> dict:
     result = {}
     with open(ncbi_taxonomy_file, 'r') as f:
         reader = csv.reader(f, delimiter='\t')
-        next(reader) #skip header
-        for row in reader:
-            mag_bin = row[0].strip()
-            lowest_ncbi_name = row[2].strip().split(';')
-            result[mag_bin] = lowest_ncbi_name
+        header = next(reader) #skip header
+        if header == staticConfig.gtdb_majority_vote_columns.split(';'):
+            gtdb_majvote_output = True
+        else:
+            gtdb_majvote_output = False
+    if gtdb_majvote_output:
+        with open(ncbi_taxonomy_file, 'r') as f:
+            reader = csv.reader(f, delimiter='\t')
+            next(reader) #skip header
+            for row in reader:
+                mag_bin = row[0].strip()
+                lowest_ncbi_name = row[2].strip().split(';')
+                result[mag_bin] = lowest_ncbi_name
+    else:
+        with open(ncbi_taxonomy_file, 'r') as f:
+            reader = csv.DictReader(f, delimiter='\t')
+            for row in reader:
+                mag_bin = row["Bin_id"].strip()
+                taxonomy_string = row["NCBI_taxonomy"].strip()
+                lowest_ncbi_name = taxonomy_string.split(';')
+                result[mag_bin] = lowest_ncbi_name
     return result
 
 
-def __best_classifications(ncbi_classifications: dict,
-                           verbose: int = 1) -> dict:
+def __best_classifications(ncbi_classifications: dict) -> dict:
     """
     For each bin, find the best classification string. This is the classification
     string on the lowest level that is not empty.
@@ -226,8 +232,7 @@ def __best_classifications(ncbi_classifications: dict,
             else:
                 print(f"\nERROR: Found unclassified bin {mag_bin} with unknown classification {clasf}. Please check your NCBI taxonomy files.")
                 exit(1)
-            if verbose>1:
-                print(f">INFO: Bin {mag_bin} does not have a proper classification ({clasf})")
+            loggingC.message(f">INFO: Bin {mag_bin} is unclassified.", threshold=1)
         else:
             # Iterate through classification strings until we find a valid one
             for cstring, level in zip(reversed(clist), levels):
@@ -246,8 +251,7 @@ def __best_classifications(ncbi_classifications: dict,
     return result
 
 
-def __taxonomic_classification(ncbi_taxonomy_files: list,
-                               verbose: int = 1) -> dict:
+def __taxonomic_classification(ncbi_taxonomy_files: list) -> dict:
     """
     Read the output of GTDB-TKs 'gtdb_to_ncbi_majority_vote.py' script and
     return a dictionary with a taxid and a scientific name for each genome.
@@ -263,60 +267,52 @@ def __taxonomic_classification(ncbi_taxonomy_files: list,
     all_classifications = {}
     for f in ncbi_taxonomy_files:
         ncbi_classifications = __read_ncbi_taxonomy(f)
-        best_ncbi_classifications = __best_classifications(ncbi_classifications,
-                                                           verbose)
+        best_ncbi_classifications = __best_classifications(ncbi_classifications)
         all_classifications.update(best_ncbi_classifications)
     return all_classifications
 
 
-def __read_manual_taxonomy_file(manual_taxonomy_file: str,
-                                verbose: int = 1) -> dict:
+def __read_manual_taxonomy_file(manual_taxonomy_file: str) -> dict:
     """
     Read a manual taxonomy file and return a dictionary with the taxid and
     scientific name for each bin.
 
     Args:
         manual_taxonomy_file (str): Path to the manual taxonomy file.
-        verbose (int, optional): Verbosity level. Defaults to 1.
 
     Returns:
         dict: A dictionary with the taxid and scientific name for each bin.
     """
-    if verbose > 0:
-        print(f">Reading manual taxonomy file {manual_taxonomy_file}")
     result = {}
     with open(manual_taxonomy_file, 'r') as f:
-        reader = csv.reader(f, delimiter='\t')
-        next(reader) #skip header
+        reader = csv.DictReader(f, delimiter='\t')
         for row in reader:
-            mag_bin = row[0].strip()
-            tax_id = row[2].strip()
-            scientific_name = row[1].strip()
+            mag_bin = row['Bin_id'].strip()
+            tax_id = row['Tax_id'].strip()
+            scientific_name = row["Scientific_name"].strip()
             result[mag_bin] = {
                 'tax_id': tax_id,
                 'scientific_name': scientific_name,
             }
     return result
 
-def get_bin_taxonomy(config,
-                     verbose=1) -> dict:
+def get_bin_taxonomy(config) -> dict:
     """
     Based on the NCBI taxonomy files and the manual taxonomy file, create a
     dictionary with the taxid and scientific name for each bin.
 
     Args:
         config (dict): The config dictionary.
-        verbose (int, optional): Verbosity level. Defaults to 1.
 
     Returns:
         dict: A dictionary with the taxid and scientific name for each bin.
     """
-    if verbose>0:
-        print(">Reading in bin taxonomy data")
+    loggingC.message(">Reading in bin taxonomy data", threshold=0)
     # Extract data from config
     ncbi_taxonomy_files = utility.optional_from_config(config, 'BINS', 'NCBI_TAXONOMY_FILES')
     if ncbi_taxonomy_files == '': # Key not found in config
         ncbi_taxonomy_files = []
+        loggingC.message(">No NCBI taxonomy files found in config.", threshold=0)
     if not type(ncbi_taxonomy_files) == list:
         ncbi_taxonomy_files = [ncbi_taxonomy_files]
     bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')
@@ -336,15 +332,17 @@ def get_bin_taxonomy(config,
                                                    'BINS',
                                                    'MANUAL_TAXONOMY_FILE',
                                                    supress_errors=True)
+        loggingC.message(f">Reading manual taxonomy file {os.path.basename(manual_taxonomy_file)}", threshold=0)
     except:
         manual_taxonomy_file = 'manual_taxonomy_file_doesnt_exist'
+        loggingC.message(">No manual taxonomy file found.", threshold=0)
     if os.path.exists(manual_taxonomy_file):
         if not manual_taxonomy_file == 'manual_taxonomy_file_doesnt_exist':
-            upload_taxonomy_data = __read_manual_taxonomy_file(manual_taxonomy_file, verbose)
+            upload_taxonomy_data = __read_manual_taxonomy_file(manual_taxonomy_file)
 
     # Make a dictionary for the taxonomies based on the taxonomy files
-    annotated_bin_taxonomies = __taxonomic_classification(ncbi_taxonomy_files,
-                                                          verbose)
+    annotated_bin_taxonomies = __taxonomic_classification(ncbi_taxonomy_files)
+
 
     # Make sure that for each bin showing up in the taxonomy files we have a 
     # corresponding fasta file in bin_files
@@ -365,25 +363,23 @@ def get_bin_taxonomy(config,
         exit(1)
     only_fasta = set(bin_basenames) - from_taxonomies
     if len(only_fasta) > 0:
-        print(f"\nERROR: The following bins were found in the bins directory but not in the taxonomy files:")
+        print(f"\nERROR: Tt in the taxonomy files:")
         for b in only_fasta:
             print(f"\t{b}")
         exit(1)
 
     # Query the ENA API for taxids and scientific names for each bin
-    if verbose > 0:
-        print(">Querying ENA for taxids and scientific names for each bin.")
+    loggingC.message(">Querying ENA for taxids and scientific names for each bin.", threshold=0)
+
     issues = []
     for bin_name, taxonomy in tqdm(annotated_bin_taxonomies.items(), leave=False):
         if bin_name in upload_taxonomy_data:
-            if verbose > 1:
-                print(f"\t...skipping {bin_name} because it was found in the manual taxonomy file.")
+            loggingC.message(f">INFO: Bin {bin_name} was found in the manual taxonomy file and will be skipped.", threshold=1)
             continue
         suggestions = query_ena_taxonomy(taxonomy['level'],
                                            taxonomy['domain'],
                                            taxonomy['classification'],
-                                           filtered=True,
-                                           verbose=verbose)
+                                           filtered=True)
         if len(suggestions) == 1:
             upload_taxonomy_data[bin_name] = {
                 'scientific_name': suggestions[0]['scientificName'],
@@ -393,8 +389,7 @@ def get_bin_taxonomy(config,
             all_ena_suggestions = query_ena_taxonomy(taxonomy['level'],
                                                        taxonomy['domain'],
                                                        taxonomy['classification'],
-                                                       filtered=False,
-                                                       verbose=verbose)
+                                                       filtered=False)
 
             issues.append({
                 'mag_bin': bin_name,
@@ -420,12 +415,12 @@ def get_bin_taxonomy(config,
             })
 
     if len(issues) > 0:
-        __report_tax_issues(issues, verbose)
+        __report_tax_issues(issues)
         exit(1)
 
     return upload_taxonomy_data
 
-def get_bin_quality(config, verbose) -> dict:
+def get_bin_quality(config, silent=False) -> dict:
     """
     Based on CheckM output (or any other tsv with the columns 'Bin Id',
     'Completness' and 'Contamination'), create a dictionary with the
@@ -447,10 +442,11 @@ def get_bin_quality(config, verbose) -> dict:
         if basename:
             bin_basenames.add(basename)
     # Get quality scores
-    quality_file = utility.from_config(config, 'BINS', 'BINS_QUALITY_FILE')
+    quality_file = utility.from_config(config, 'BINS', 'QUALITY_FILE')
     result = {}
-    if verbose > 0:
-        print(f"\t...reading bin quality file at {os.path.abspath(quality_file)}")
+    if not silent:
+        msg = f">Reading bin quality file at {os.path.abspath(quality_file)}"
+        loggingC.message(msg, threshold=0)
     with open(quality_file, 'r') as f:
         reader = csv.DictReader(f, delimiter='\t')
         headers = reader.fieldnames
@@ -479,76 +475,47 @@ def get_bin_quality(config, verbose) -> dict:
             print(f"\t{b}")
         exit(1)
 
-    if verbose > 1:
-        print(f"\t...found {len(result)} bins in bin quality file.")
+    loggingC.message(f"\t...found {len(result)} bins in bin quality file.", threshold=1)
+
     return result
 
 
 def __prep_bins_samplesheet(config: dict,
                             assembly_sample_accession: str,
                             samples_submission_dir: str,
-                            upload_taxonomy_data: dict,
-                            verbose: int = 1) -> str:
+                            upload_taxonomy_data: dict) -> str:
     """
-    Prepares a samplesheet for all bin samples.
+    Prepares an XML samplesheet for all bin samples.
 
     Args:
         config (dict): The config dictionary.
+        assembly_sample_accession (str): Either the accession of a co-assembly
+            virtual sample or the accession of the single biological sample
+            which the assembly is based on.
         samples_submission_dir (str): The directory where the samplesheet will
             be written to.
         upload_taxonomy_data (dict): A dictionary with the taxid and scientific
             name for each bin.
-        verbose (int, optional): Verbosity level. Defaults to 1.
 
     Returns:
         str: The path to the samplesheet.
     """
-    if verbose > 0:
-        print(f">Preparing bins samplesheet...")
+    loggingC.message(">Preparing bins samplesheet...", threshold=0)
 
-    bin_quality = get_bin_quality(config, verbose=verbose)
-
-#    project_name = utility.from_config(config, 'PROJECT_NAME')
-
-    sequencing_platform = utility.from_config(config, 'ASSEMBLY', 'PLATFORM')
-    if type(sequencing_platform) == list:
-        sequencing_platform = ','.join(sequencing_platform)
-    
-    assembly_software = utility.from_config(config, 'ASSEMBLY', 'PROGRAM')
-    
+    bin_quality = get_bin_quality(config)
+    sequencing_platform = utility.from_config(config, 'SEQUENCING_PLATFORMS')
+    if isinstance(sequencing_platform, list):
+        sequencing_platform = ",".join(sequencing_platform)
+    assembly_software = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_SOFTWARE')
     completeness_software = utility.from_config(config, 'BINS', 'COMPLETENESS_SOFTWARE')
-    
     binning_software = utility.from_config(config, 'BINS', 'BINNING_SOFTWARE')
-    
     assembly_quality = staticConfig.bin_assembly_quality
-    
-#    isolation_source = utility.from_config(config, 'ASSEMBLY', 'ISOLATION_SOURCE')
-    
-    collection_date = utility.from_config(config, 'ASSEMBLY', 'DATE')
-    
-    geographic_location_country = utility.from_config(config, 'ASSEMBLY', 'LOCATION')
-    
-    #geographic_location_latitude = utility.optional_from_config(config, 'ASSEMBLY', 'LATITUDE')
-    
-    #geographic_location_longitude = utility.optional_from_config(config, 'ASSEMBLY', 'LONGITUDE')
-    
+    collection_date = utility.from_config(config, 'ASSEMBLY', 'collection date')
+    geographic_location_country = utility.from_config(config, 'ASSEMBLY', 'geographic location (country and/or sea)')
     investigation_type = staticConfig.bin_investigation_type
-    
-    #binning_parameters = utility.from_config(config, 'BINS', 'BINNING_PARAMETERS')
-    
-    #taxonomic_identity_marker = utility.from_config(config, 'BINS', 'TAXONOMIC_IDENTITY_MARKER')
-    
-    #broad_env_context = utility.optional_from_config(config, 'ASSEMBLY', 'BROAD_ENVIRONMENTAL_CONTEXT')
-    
-    #local_env_context = utility.optional_from_config(config, 'ASSEMBLY', 'LOCAL_ENVIRONMENTAL_CONTEXT')
-    
-    #env_medium = utility.optional_from_config(config, 'ASSEMBLY', 'ENVIRONMENTAL_MEDIUM')
-    
     sample_derived_from = assembly_sample_accession
-    
-    metagenomic_source = utility.from_config(config, 'ASSEMBLY', 'SPECIES_SCIENTIFIC_NAME')
-
-    sequencing_method = utility.from_config(config, 'ASSEMBLY', 'PLATFORM')
+    metagenomic_source = utility.from_config(config, 'METAGENOME_SCIENTIFIC_NAME')
+    sequencing_method = utility.from_config(config, 'SEQUENCING_PLATFORMS')
     if isinstance(sequencing_method, list):
         sequencing_method = ",".join(sequencing_method)
 
@@ -581,7 +548,7 @@ def __prep_bins_samplesheet(config: dict,
 
         sample_attributes = ET.SubElement(sample, "SAMPLE_ATTRIBUTES")
         
-        # Add all specified attributes
+        # Add the attributes we specified above
         attribute_data = {
 #            "project name": project_name,
             "sequencing method": sequencing_method,
@@ -592,19 +559,40 @@ def __prep_bins_samplesheet(config: dict,
             "binning software": binning_software,
             "assembly quality": assembly_quality,
             "investigation type": investigation_type,
-#            "binning parameters": binning_parameters,
-#            "isolation_source": isolation_source,
             "collection date": collection_date,
             "geographic location (country and/or sea)": geographic_location_country,
-#            "geographic location (latitude)": geographic_location_latitude,
-#            "geographic location (longitude)": geographic_location_longitude,
-#            "broad-scale environmental context": broad_env_context,
-#            "local environmental context": local_env_context,
-#            "environmental medium": env_medium,
             "sample derived from": sample_derived_from,
             "metagenomic source": metagenomic_source,
         }
 
+        # Add additional attributes specified in the config bin section
+        try:
+            bin_additional_dict = utility.from_config(config, 'BINS', 'ADDITIONAL_SAMPLESHEET_FIELDS', supress_errors=True)
+        except:
+            bin_additional_dict = None
+        if bin_additional_dict is not None:
+            for key in bin_additional_dict.keys():
+                if not bin_additional_dict[key] is None:
+                    attribute_data[key] = bin_additional_dict[key]
+
+        # Add additional attributes from assembly
+        try:
+            assembly_additional_dict = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS', supress_errors=True)
+        except:
+            assembly_additional_dict = None
+        related_fields = [
+            'broad-scale environmental context',
+            'local environmental context',
+            'environmental medium',
+            'geographic location (latitude)',
+            'geographic location (longitude)',
+        ]
+        if assembly_additional_dict is not None:
+            for key in related_fields:
+                if key in assembly_additional_dict.keys():
+                    attribute_data[key] = assembly_additional_dict[key]
+
+        # Add all attributes to the XML tree
         for key, value in attribute_data.items():
             if value:  # Only add attribute if value is not empty
                 attribute = ET.SubElement(sample_attributes, "SAMPLE_ATTRIBUTE")
@@ -614,23 +602,21 @@ def __prep_bins_samplesheet(config: dict,
     # Convert the XML structure to a string
     tree = ET.ElementTree(root)
     outpath = os.path.join(samples_submission_dir, "bins_samplesheet.xml")
+    outpath = os.path.abspath(outpath)
     with open(outpath, 'wb') as f:
         tree.write(f, encoding='UTF-8', xml_declaration=False)
 
-    if verbose > 0:
-        print(f"\t...written bins samplesheet to {os.path.abspath(outpath)}")
+    loggingC.message(f"\t...written bins samplesheet to {outpath}", threshold=0)
 
     return outpath
 
-def __read_bin_samples_receipt(receipt_path: str,
-                               verbose: int = 1) -> dict:
+def read_bin_samples_receipt(receipt_path: str) -> dict:
     """
     Reads the receipt file from the bin samplesheet upload and returns a
     dictionary with the bin names and their accession numbers.
 
     Args:
         receipt_path (str): Path to the receipt file.
-        verbose (int, optional): Verbosity level. Defaults to 1.
 
     Returns:
         dict: A dictionary with the bin names and their accession numbers.
@@ -643,9 +629,7 @@ def __read_bin_samples_receipt(receipt_path: str,
         print(f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information.")
         exit(1)
 
-    if verbose>1:
-        print("...bin samplesheet upload was successful.")
-
+    loggingC.message("\t...samplesheet upload was successful.", threshold=1)
 
     bin_to_accession = {}
     for sample in root.findall('.//SAMPLE'):
@@ -665,8 +649,7 @@ def __read_bin_samples_receipt(receipt_path: str,
 def __submit_bins_samplesheet(sample_xml: str,
                               staging_dir: str,
                               logging_dir: str,
-                              url: str,
-                              verbose: int = 1) -> str:
+                              url: str) -> str:
     """
     Uploads the samplesheet to ENA.
 
@@ -675,38 +658,32 @@ def __submit_bins_samplesheet(sample_xml: str,
         staging_dir (str): Path to the staging directory.
         logging_dir (str): Path to the logging directory.
         url (str): The URL to the ENA dropbox.
-        verbose (int, optional): Verbosity level. Defaults to 1.
 
     Returns:
-        str: The accession number of the uploaded samplesheet.
+        dict: A dictionary matching bin ids to accessions
     """
 
-    # Make the submission xml
+    # Make the submission XML
     submission_xml = os.path.join(staging_dir, 'bin_samplesheet_submission.xml')
     utility.build_sample_submission_xml(submission_xml,
-                                        hold_until_date=None,
-                                        verbose=verbose)
+                                        hold_until_date=None)
     
+    # Submit
+    loggingC.message(">Submitting bins samplesheet through ENA API.", threshold=0)
     receipt_path = os.path.join(logging_dir, "bins_samplesheet_receipt.xml")
     usr, pwd = utility.get_login()
-
-    if verbose > 0:
-        print(f">Trying to submit samplesheet through ENA API.")
-
     response = requests.post(url,
                 files={
                     'SUBMISSION': open(submission_xml, "rb"),
                     'SAMPLE': open(sample_xml, "rb"),
                 }, auth=HTTPBasicAuth(usr, pwd))
-    if verbose>1:
-        print("\tHTTP status: "+str(response.status_code))
+    loggingC.message(f"\tHTTP status: {response.status_code}", threshold=1)
 
+    # Process response
     utility.api_response_check(response)
-
     with open(receipt_path, 'w') as f:
         f.write(response.text)
-
-    bin_to_accession = __read_bin_samples_receipt(receipt_path, verbose)
+    bin_to_accession = read_bin_samples_receipt(receipt_path)
 
     return bin_to_accession
 
@@ -715,8 +692,8 @@ def __prep_bin_manifest(config: dict,
                         staging_directory: str,
                         bin_coverage: float,
                         bin_sample_accession: str,
-                        gzipped_fasta_path: str,
-                        verbose: int = 1) -> str:
+                        run_accessions: list,
+                        gzipped_fasta_path: str) -> str:
     """
     Creates a manifest file for a single bin inside the staging directory.
 
@@ -727,23 +704,22 @@ def __prep_bin_manifest(config: dict,
         bin_coverage (float): The coverage of the bin.
         bin_sample_accession (str): The accession number of the bin sample.
         gzipped_fasta_path (str): Path to the gzipped fasta file of the bin.
-        verbose (int, optional): Verbosity level. Defaults to 1.
 
     Returns:
         str: The path to the manifest file.
     """
-    if verbose > 1:
-        print(f"\t>Preparing bin manifest in {staging_directory}...")
+    loggingC.message(f">Preparing bin manifest in {staging_directory}...", threshold=1)
 
-    platform = utility.from_config(config, 'ASSEMBLY', 'PLATFORM')
-    if isinstance(platform, list):
-        platform = ",".join(platform)
+    sequencing_platform = utility.from_config(config, 'SEQUENCING_PLATFORMS')
+    if isinstance(sequencing_platform, list):
+        sequencing_platform = ",".join(sequencing_platform)
 
-    run_refs = utility.from_config(config, 'ASSEMBLY', 'RUN_REFS')
-    if isinstance(run_refs, list):
-        run_refs = ",".join(run_refs)
+    if isinstance(run_accessions, list):
+        run_accessions = ",".join(run_accessions)
 
-    bin_assembly_name = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME') + "_bin_" + bin_sample_accession
+    assembly_name = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME')
+    assembly_name = assembly_name.replace(' ','_')
+    bin_assembly_name = f"{assembly_name}_bin_{bin_sample_accession}"
     if len(bin_assembly_name) > staticConfig.max_assembly_name_length:
         # Cut characters from the beginning until the name fits
         bin_assembly_name = bin_assembly_name[-staticConfig.max_assembly_name_length:]
@@ -755,10 +731,9 @@ def __prep_bin_manifest(config: dict,
         ['ASSEMBLY_TYPE', 'binned metagenome'],
         ['COVERAGE', bin_coverage],
         ['PROGRAM', utility.from_config(config, 'BINS', 'BINNING_SOFTWARE')],
-        ['PLATFORM', platform],
-        ['MOLECULETYPE', utility.from_config(config, 'ASSEMBLY','MOLECULE_TYPE')],
-    #    ['DESCRIPTION', utility.from_config(config, 'ASSEMBLY','DESCRIPTION')],
-        ['RUN_REF', run_refs],
+        ['PLATFORM', sequencing_platform],
+        ['MOLECULETYPE', staticConfig.assembly_molecule_type],
+        ['RUN_REF', run_accessions],
         ['FASTA', os.path.basename(gzipped_fasta_path)]
     ]
 
@@ -767,8 +742,7 @@ def __prep_bin_manifest(config: dict,
         writer = csv.writer(f, delimiter='\t')
         writer.writerows(rows)
 
-    if verbose > 1:
-        print(f"\t...written bin manifest to {os.path.abspath(manifest_path)}")
+    loggingC.message(f"\t...written bin manifest to {os.path.abspath(manifest_path)}", threshold=1)
 
     return manifest_path
 
@@ -777,8 +751,8 @@ def __stage_bin_submission(staging_directory: str,
                            bin_fasta: str,
                            config: dict,
                            bin_sample_accession: str,
-                           bin_coverage,
-                           verbose: int = 1) -> None:
+                           run_accessions: list,
+                           bin_coverage) -> None:
     """
     Prepares a bin submission by creating a manifest file inside the staging
     directory and copying the fasta file to the staging directory.
@@ -791,7 +765,6 @@ def __stage_bin_submission(staging_directory: str,
         config (dict): The config dictionary.
         bin_sample_accession (str): The accession number of the bin sample.
         bin_coverage (float): The coverage of the bin.
-        verbose (int, optional): Verbosity level. Defaults to 1.
 
     Returns:
         str: The path to the manifest file.
@@ -803,7 +776,7 @@ def __stage_bin_submission(staging_directory: str,
         shutil.copyfile(bin_fasta, gzipped_fasta_path)
     else:
         with open(bin_fasta, 'rb') as f_in:
-            with gzip.open(gzipped_fasta_path, 'wb') as f_out:
+            with gzip.open(gzipped_fasta_path, 'wb', compresslevel=5) as f_out:
                 f_out.writelines(f_in)
 
     # Make the MANIFEST file
@@ -811,38 +784,94 @@ def __stage_bin_submission(staging_directory: str,
                                         staging_directory,
                                         bin_coverage,
                                         bin_sample_accession,
-                                        gzipped_fasta_path,
-                                        verbose=verbose)  
+                                        run_accessions,
+                                        gzipped_fasta_path)  
 
     return manifest_path          
 
     
+def bin_coverage_from_depth(depth_files: str,
+                              bin_name_to_fasta: dict,
+                              threads: int = 4) -> dict:
+    """
+    """
+    loggingC.message(">Calculating coverage for each bin from depth files.", threshold=0)
+    bin_coverages = {}
+    for bin_name, bin_fasta in tqdm(bin_name_to_fasta.items(), leave=False):
+        coverage = __calculate_bin_coverage(bin_fasta,
+                                            depth_files,
+                                            threads=threads)
+        bin_coverages[bin_name] = coverage
+    return bin_coverages
+
+
+def bin_coverage_from_tsv(bin_coverage_file: str,
+                          bin_names: dict) -> dict:
+    """
+    """
+    loggingC.message(">Reading coverage for each bin from tsv file.", threshold=0)
+    bin_coverages = {}
+    with open(bin_coverage_file, 'r') as f:
+        reader = csv.DictReader(f, delimiter='\t')
+        for row in reader:
+            bin_name = row['Bin_id']
+            coverage = float(row['coverage'])
+            bin_coverages[bin_name] = coverage
+    for known_name in bin_names:
+        if not known_name in bin_coverages:
+            print(f"\nERROR: Bin {known_name} was not found in the coverage file at {os.path.abspath(bin_coverage_file)}.")
+            exit(1)
+    return bin_coverages
+    
+
+def get_bins_in_dir(bins_directory: str) -> list:
+    """
+    """
+    bin_files = os.listdir(bins_directory)
+    bin_name_to_fasta = {}
+    for f in bin_files:
+        bin_name = utility.is_fasta(os.path.join(bins_directory, f))
+        if bin_name is None:
+            loggingC.message(f"\t...skipping {f} because it does not seem to be a fasta file.", threshold=0)
+            continue
+        bin_name_to_fasta[bin_name] = os.path.join(bins_directory, f)
+    return bin_name_to_fasta
 
 
 def submit_bins(config: dict,
                 upload_taxonomy_data: dict,
                 assembly_sample_accession: str,
+                run_accessions,
                 staging_dir: str,
                 logging_dir: str,
-                depth_files: str,
+                depth_files: list,
+                bin_coverage_file: str,
                 threads: int = 4,
-                verbose: int = 1,
                 test: bool = True,
                 submit: bool = True) -> tuple:
     """
-    Submits all metagenomic bins to the ENA
+    Submits a samplesheet for all metagenomic bins to the ENA. Then submits each
+    bin as an individual analysis object using webin-cli.
 
     Args:
         config (dict): The config dictionary.
         upload_taxonomy_data (dict): A dictionary with the taxid and scientific
             name for each bin.
-        staging_dir (str): Path to the staging directory.
-        logging_dir (str): Path to the logging directory.
-        depth_files (list): A list of paths to the depth files.
+        assembly_sample_accession (str): Either the accession of a co-assembly
+            virtual sample or the accession of the single biological sample
+            which the assembly is based on.
+        run_accessions (list): A list of accession numbers of the runs.
+        staging_dir (str): The directory where the bins will be staged.
+        logging_dir (str): The directory where the logs will be written to.
+        depth_files (list): A list of paths to the depth files. Either this or
+            bin_coverage_file must be specified.
+        bin_coverage_file (str): Path to a tsv file with the coverage for each
+            bin. Either this or depth_files must be specified.
         threads (int, optional): Number of threads to use for samtools. Defaults to 4.
-        verbose (int, optional): Verbosity level. Defaults to 1.
-        test (bool, optional): If True, use the test dropbox. Defaults to True.
-        submit (bool, optional): If True, submit the bins. Defaults to True.
+        test (bool, optional): If True, the ENA dev server will be used
+            instead of the production server. Defaults to True.
+        submit (bool, optional): If True, the bins will be submitted to ENA.
+            Otherwise only validation will happen. Defaults to True.
 
     Returns:
         tuple: A tuple with the receipt paths and the accession numbers of the
@@ -857,51 +886,40 @@ def submit_bins(config: dict,
     # Extract data from config
     bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')
 
+
     # Make a list of all files in the bins directory and extract bin names
-    bin_files = os.listdir(bins_directory)
-    bin_name_to_fasta = {}
-    for f in bin_files:
-        bin_name = utility.is_fasta(os.path.join(bins_directory, f))
-        if bin_name is None:
-            if verbose > 0:
-                print(f"\t...skipping {f} because it does not seem to be a fasta file.")
-            continue
-        bin_name_to_fasta[bin_name] = os.path.join(bins_directory, f)
+    loggingC.message(">Deriving bin names", threshold=1)
+    bin_name_to_fasta = get_bins_in_dir(bins_directory)
+
 
     # Get the coverage for each bin file
-    if verbose > 0:
-        print(">Calculating coverage for each bin.")
-    bin_coverages = {}
-    for f in tqdm(bin_files, leave=False):
-        bin_name = utility.is_fasta(os.path.join(bins_directory, f))
-        if bin_name is None:
-            if verbose > -1:
-                print(f"\t...skipping {f} because it does not seem to be a fasta file.")
-            continue
-        bin_file = os.path.join(bins_directory, f)
-        coverage = __calculate_bin_coverage(bin_file,
-                                            depth_files,
-                                            threads=threads,
-                                            verbose=verbose)
-        bin_coverages[bin_name] = coverage
+    loggingC.message(">Deriving bin coverage", threshold=1)
+    if not depth_files is None:
+        bin_coverages = bin_coverage_from_depth(depth_files,
+                                                bin_name_to_fasta,
+                                                threads=threads)
+    elif not bin_coverage_file is None:
+        bin_coverages = bin_coverage_from_tsv(bin_coverage_file,
+                                              bin_name_to_fasta.keys())
+        
 
     # Make a samplesheet for all bins
+    loggingC.message(">Making bin samplesheet", threshold=1)
     samples_submission_dir = os.path.join(staging_dir, 'bin_samplesheet')
     os.makedirs(samples_submission_dir, exist_ok=False)
     samplesheet = __prep_bins_samplesheet(config,
                                           assembly_sample_accession,
                                           samples_submission_dir,
-                                          upload_taxonomy_data,
-                                          verbose)
+                                          upload_taxonomy_data)
     
     # Upload the samplesheet
+    loggingC.message(">Starting bin samplesheet upload", threshold=1)
     samples_logging_dir = os.path.join(logging_dir, 'bin_samplesheet')
     os.makedirs(samples_logging_dir, exist_ok=False)
     prefixbin_to_accession = __submit_bins_samplesheet(samplesheet,
                                                     samples_submission_dir,
                                                     samples_logging_dir,
-                                                    url,
-                                                    verbose)
+                                                    url)
     # Remove the prefixes
     assembly_name = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
     prefix_len = len(f"{assembly_name}_bin_")
@@ -911,30 +929,26 @@ def submit_bins(config: dict,
         bin_name = suffix_bin_name[prefix_len:-suffix_len]
         bin_to_accession[bin_name] = accession
     
-
     # Stage the bins
     staging_directories = {}
-    if verbose > 0:
-        print(f">Staging bin submission sequences and manifests...")
+    loggingC.message(">Staging bin submission sequences and manifests...", threshold=0)
     bin_manifests = {}
     for bin_name, bin_fasta in bin_name_to_fasta.items():
         bin_sample_accession = bin_to_accession[bin_name]
         staging_directory = os.path.join(staging_dir, f"bin_{bin_name}_staging")
         staging_directories[bin_name] = staging_directory
         os.makedirs(staging_directory, exist_ok=False)
-        
+        loggingC.message(f"\t...staging bin {bin_name}", threshold=1)
         bin_manifests[bin_name] = __stage_bin_submission(staging_directory,
                                                          bin_name,
                                                          bin_fasta,
                                                          config,
                                                          bin_sample_accession,
-                                                         bin_coverages[bin_name],
-                                                         verbose)
+                                                         run_accessions,
+                                                         bin_coverages[bin_name])
 
-
-    # Upload the bins
-    if verbose>0:
-        print(f">Using ENA Webin-CLI to submit bins.\n")
+    # Submit the bins
+    loggingC.message(f">Using ENA Webin-CLI to submit bins.", threshold=0)
     usr, pwd = utility.get_login()
     bin_receipts = {}
     bin_accessions = {}
@@ -942,7 +956,6 @@ def submit_bins(config: dict,
         bin_logging_dir = os.path.join(logging_dir, f"{bin_name}")
         os.makedirs(bin_logging_dir, exist_ok=False)
         bin_manifest = bin_manifests[bin_name]
-        bin_staging_dir = staging_directories[bin_name]
         assembly_name = utility.from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
         subdir_name = assembly_name + '_' + bin_name
 
@@ -953,16 +966,13 @@ def submit_bins(config: dict,
                                                                      password=pwd,
                                                                      subdir_name=subdir_name,
                                                                      submit=submit,
-                                                                     test=test,
-                                                                     verbose=verbose)
-        print("")
-        
-    if verbose>0:
-        print("\n>Bin submission completed!")
-    if verbose>1:
-        print(f">Bin receipt paths are:")
-        for bin_name, bin_receipt in bin_receipts.items():
-            print(f"\t{bin_name}: {bin_receipt}")
+                                                                     test=test)
+    loggingC.message("\n>Bin submission completed!", threshold=0)
+
+    # Process the results    
+    loggingC.message(f">Bin receipt paths are:", threshold=1)
+    for bin_name, bin_receipt in bin_receipts.items():
+        loggingC.message(f"\t{bin_name}: {os.path.abspath(bin_receipt)}", threshold=1)
 
     bin_to_accession_file = os.path.join(logging_dir, 'bin_to_preliminary_accession.tsv')
     with open(bin_to_accession_file, 'w') as f:
@@ -970,4 +980,4 @@ def submit_bins(config: dict,
         for bin_name, accession in bin_accessions.items():
             writer.writerow([bin_name, accession])
 
-    print(f">The preliminary(!) accessions of your bins have been written to {os.path.abspath(bin_to_accession_file)}.")
+    loggingC.message(f"\n>The preliminary(!) accessions of your bins have been written to {os.path.abspath(bin_to_accession_file)}\n", threshold=0)

@@ -10,32 +10,28 @@ import concurrent.futures
 from tqdm import tqdm
 from yaspin import yaspin
 
+from synum import loggingC
 from synum.statConf import staticConfig
 
 
-def construct_depth_files(staging_dir: str, threads: int, config: dict, verbose: int) -> dict:
+def construct_depth_files(staging_dir: str,
+                          threads: int,
+                          bam_files: list) -> dict:
     """
     Construct depth files from bam files.
 
     Args:
         staging_dir: The staging directory.
         threads: The total number of threads to use.
-        config:  The config file as a dictionary.
-        verbose: The verbosity level.
+        bam_files: The list of bam files.
     """
-    if verbose>0:
-        print(f">Constructing depth files from bam files. This might take a while.")
+    loggingC.message(">Constructing depth files from bam files. This might take a while.", threshold=0)
     
     depth_directory = os.path.join(staging_dir, 'depth')
     os.makedirs(depth_directory, exist_ok=True)
     
-    bam_files = from_config(config, 'BAM_FILES')
-    if not isinstance(bam_files, list):
-        bam_files = [bam_files]
-
     threads_per_file = max(1, threads // len(bam_files))
     max_workers = min(threads, len(bam_files))
-
 
     with yaspin(text=f"Processing {len(bam_files)} bam files with {threads_per_file} threads each...\t", color="yellow") as spinner:
 
@@ -52,15 +48,13 @@ def construct_depth_files(staging_dir: str, threads: int, config: dict, verbose:
                         depth_file = future.result()
                         depth_files.append(depth_file)
                     except Exception as exc:
-                        if verbose:
-                            print(f"{bam_file} generated an exception: {exc}")
+                        loggingC.message(f"{bam_file} generated an exception: {exc}", threshold=-1)
 
     return depth_files
 
 # def construct_depth_files(staging_dir: str,
 #                           threads: int,
-#                           config: dict,
-#                           verbose: int) -> dict:
+#                           config: dict) -> dict:
 #     """
 #     Construct depth files from bam files.
 
@@ -68,10 +62,8 @@ def construct_depth_files(staging_dir: str, threads: int, config: dict, verbose:
 #         staging_dir: The staging directory.
 #         threads: The number of threads to use.
 #         config:  The config file as a dictionary.
-#         verbose: The verbosity level.
 #     """
-#     if verbose:
-#         print(f">Constructing depth files from bam files using {threads} threads. This might be stuck at 0% for a while.")
+#     loggingC.message(f">Constructing depth files from bam files using {threads} threads. This might be stuck at 0% for a while.", threshold=0)
 #     depth_files = []
 #     depth_directory = os.path.join(staging_dir, 'depth')
 #     os.makedirs(depth_directory)
@@ -86,17 +78,15 @@ def construct_depth_files(staging_dir: str, threads: int, config: dict, verbose:
 #     return depth_files
 
 def build_sample_submission_xml(outpath: str,
-                                  hold_until_date: str = None,
-                                  verbose: int = 1):
+                                  hold_until_date: str = None):
     """
     Build an ENA submission XML file for uploading sample data.
 
     Args:
         outpath (str): The output path for the submission.xml file.
-        verbose (int, optional): Verbosity level. Defaults to 1.
     """
-    if verbose > 0:
-        print(f">Building sample submission.xml file...")
+    loggingC.message(f">Building sample submission.xml file...", threshold=0)
+
     root = ET.Element("SUBMISSION")
     actions = ET.SubElement(root, "ACTIONS")
     action = ET.SubElement(actions, "ACTION")
@@ -113,31 +103,36 @@ def build_sample_submission_xml(outpath: str,
     with open(outpath, "wb") as f:
         tree.write(f, encoding="utf-8", xml_declaration=True)
     
-    if verbose > 0:
-        print(f"\t...written to {os.path.abspath(outpath)}")
+    loggingC.message(f"\t...written to {os.path.abspath(outpath)}", threshold=0)
+
 
 def api_response_check(response: requests.Response):
     if response.status_code == 403:
-        print("""\nERROR: Submission failed. ENA API returned status code 403.
-                 This indicates incorrect ENA login credentials. Please test your credentials
-                 by logging in to the ENA submission web interface. Make sure the environment variables
-                 ENA_USER and ENA_PASSWORD contain these credentials.""")
+        err = """\nERROR: Submission failed. ENA API returned status code 403.
+                    This indicates incorrect ENA login credentials. Please test your credentials
+                    by logging in to the ENA submission web interface. Make sure the environment variables
+                    ENA_USER and ENA_PASSWORD contain these credentials."""
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     if response.status_code == 400:
-        print("\nERROR: Submission failed. ENA API returned status code 400. This indicates a bad request.")
+        err = "\nERROR: Submission failed. ENA API returned status code 400. This indicates a bad request."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     if response.status_code == 408:
-        print("\nERROR: Submission failed. ENA API returned status code 408. This indicates a timeout.")
+        err = "\nERROR: Submission failed. ENA API returned status code 408. This indicates a timeout."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     if response.status_code != 200:
-        print(f"\nERROR: Submission failed. ENA API returned status code {response.status_code}.")
+        err = f"\nERROR: Submission failed. ENA API returned status code {response.status_code}."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     if response.text == "":
-        print("\nERROR: Submission failed, received an empty response from API endpoint.")
+        err = "\nERROR: Submission failed, received an empty response from API endpoint."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
 def calculate_md5(fname):
@@ -152,10 +147,12 @@ def get_login():
     Reads ENA login credentials from environmental variables and returns them.
     """
     if not 'ENA_USER' in os.environ:
-        print("\nERROR: ENA_USER environmental variable not set. Please export your ENA username and password as environmental variables ENA_USER and ENA_PASSWORD.")
+        err = "\nERROR: ENA_USER environmental variable not set. Please export your ENA username and password as environmental variables ENA_USER and ENA_PASSWORD."
+        loggingC.message(err, threshold=-1)
         exit(1)
     if not 'ENA_PASSWORD' in os.environ:
-        print("\nERROR: ENA_PASSWORD environmental variable not set. Please export your ENA username and password as environmental variables ENA_USER and ENA_PASSWORD.")
+        err = "\nERROR: ENA_PASSWORD environmental variable not set. Please export your ENA username and password as environmental variables ENA_USER and ENA_PASSWORD."
+        loggingC.message(err, threshold=-1)
         exit(1)
     return os.environ['ENA_USER'], os.environ['ENA_PASSWORD']
 
@@ -165,36 +162,83 @@ def read_yaml(file_path):
             data = yaml.safe_load(yaml_file)
             return data
     except FileNotFoundError:
-        print(f"ERROR: YAML file not found at: {file_path}")
-        return None
+        err = f"\nERROR: YAML file not found at: {file_path}"
+        loggingC.message(err, threshold=-1)
+        exit(1)
     except Exception as e:
-        print(f"\nERROR: An error occurred while reading {yaml}, error is: {e}")
-        return None
+        err = f"\nERROR: An error occurred while reading {file_path}, error is: {e}"
+        loggingC.message(err, threshold=-1)
+        exit(1)
+
+def __strcast(value):
+    """
+    Cast integers and floats to string. If the input is a list, set or dict,
+    call this function on each value.
     
-def from_config(config, key, subkey=None, supress_errors=False):
+    Args:
+        value: The value to cast to string.
+    """
+    if type(value) == int or type(value) == float:
+        return str(value)
+    if type(value) == list:
+        return [__strcast(v) for v in value]
+    if type(value) == set:
+        return {__strcast(v) for v in value}
+    if type(value) == dict:
+        return {k: __strcast(v) for k, v in value.items()}
+    return value
+
+
+def prepdir(parent_path, name):
+    parent_path = os.path.abspath(parent_path)
+    if not os.path.isdir(parent_path):
+        err = f"\nERROR: The path {parent_path} is not a directory."
+        loggingC.message(err, threshold=-1)
+        exit(1)
+    newdir = os.path.join(parent_path, name)
+    os.makedirs(newdir, exist_ok=False)
+    return newdir
+    
+def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
     """
     Extracts a value from the dict that was created based on the
     config YAML file.
     """
     if not key in config:
         if not supress_errors:
-            print(f"\nERROR: The field '{key}' is missing from the config YAML file.")
-        exit(1)
+            err = f"\nERROR: The field '{key}' is missing from the config YAML file."
+            loggingC.message(err, threshold=-1)
+            exit(1)
     if not config[key]:
         if not supress_errors:
-            print(f"\nERROR: The field '{key}' is empty in the config YAML file.")
-        exit(1)
+            err = f"\nERROR: The field '{key}' is empty in the config YAML file."
+            loggingC.message(err, threshold=-1)
+            exit(1)
     if subkey:
         if not subkey in config[key]:
             if not supress_errors:
-                print(f"\nERROR: The field '{key}|{subkey}' is missing from the config YAML file.")
-            exit(1)
+                err = f"\nERROR: The field '{key}|{subkey}' is missing from the config YAML file."
+                loggingC.message(err, threshold=-1)
+                exit(1)
         if not config[key][subkey]:
             if not supress_errors:
-                print(f"\nERROR: The field '{key}|{subkey}' is empty in the config YAML file.")
-            exit(1)
-        return config[key][subkey]
-    return config[key]
+                err = f"\nERROR: The field '{key}|{subkey}' is empty in the config YAML file."
+                loggingC.message(err, threshold=-1)
+                exit(1)
+        if subsubkey:
+            if not subsubkey in config[key][subkey]:
+                if not supress_errors:
+                    err = f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is missing from the config YAML file."
+                    loggingC.message(err, threshold=-1)
+                    exit(1)
+            if not config[key][subkey][subsubkey]:
+                if not supress_errors:
+                    err = f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is empty in the config YAML file."
+                    loggingC.message(err, threshold=-1)
+                    exit(1)
+            return __strcast(config[key][subkey][subsubkey])
+        return __strcast(config[key][subkey])
+    return __strcast(config[key])
 
 def optional_from_config(config, key, subkey=None):
     if not key in config:
@@ -225,6 +269,26 @@ def optional_from_config(config, key, subkey=None):
 #             total_length += fasta.get_reference_length(seq)
 
 #     return total_length
+
+def check_fastq(fastq_filepath: str):
+    """
+    Checks if the FASTQ file exists and has a valid extension.
+
+    Args:
+        fastq_filepath (str): The path to the FASTQ file.
+    """
+    if fastq_filepath.endswith('.gz'):
+        fastq_filepath = fastq_filepath[:-3]
+    if not os.path.isfile(fastq_filepath):
+        err = f"\nERROR: The FASTQ file '{fastq_filepath}' does not exist."
+        loggingC.message(err, threshold=-1)
+        exit(1)
+    extensions = staticConfig.fastq_extensions.split(';')
+    if not fastq_filepath.endswith(tuple(extensions)):
+        err = f"\nERROR: The FASTQ file '{fastq_filepath}' has an invalid extension. Valid extensions are {'|'.join(extensions)}."
+        loggingC.message(err, threshold=-1)
+        exit(1)
+        
 
 def is_fasta(filepath, extensions=staticConfig.fasta_extensions.split(';')) -> str:
     """
@@ -260,10 +324,12 @@ def check_fasta(fasta_path) -> tuple:
         Tuple[str, bool]: The path to the fasta file and whether it is gzipped.
     """
     if fasta_path is None or fasta_path is False or fasta_path == "":
-        print("\nERROR: Trying to submit assembly, but no FASTA file is provided in the description.")
+        err = "\nERROR: Trying to submit assembly, but no FASTA file is provided in the description."
+        loggingC.message(err, threshold=-1)
         exit(1)
     elif not os.path.isfile(fasta_path):
-        print(f"\nERROR: Trying to submit assembly, but the FASTA file {fasta_path} does not exist.")
+        err = f"\nERROR: Trying to submit assembly, but the FASTA file {fasta_path} does not exist."
+        loggingC.message(err, threshold=-1)
         exit(1)
     extension = fasta_path.split('.')[-1]
     gzipped = False
@@ -271,7 +337,8 @@ def check_fasta(fasta_path) -> tuple:
         gzipped = True
         extension = fasta_path.split('.')[-2]
     if not extension in staticConfig.fasta_extensions:
-        print(f"\nERROR: fasta file at {fasta_path} has an unknown file extension ({extension}). Allowed extensions are {staticConfig.fasta_extensions} (+.gz).")
+        err = f"\nERROR: fasta file at {fasta_path} has an unknown file extension ({extension}). Allowed extensions are {staticConfig.fasta_extensions} (+.gz)."
+        loggingC.message(err, threshold=-1)
         exit(1)
     return fasta_path, gzipped
 
@@ -296,7 +363,8 @@ def check_bam(bam_file,
         file_ending = '.bam'
     else:
         ext = bam_file.split('.')[-1]
-        print(f"\nERROR: The file {bam_file} has the unexpected extension {ext} (expected .bam or .BAM).   ")
+        err = f"\nERROR: The file {bam_file} has the unexpected extension {ext} (expected .bam or .BAM)."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     # Check if BAM file is sorted, sort it if not. This will also index the file.
@@ -305,7 +373,8 @@ def check_bam(bam_file,
         pysam.index(sorted_bam_file)
     except:  # This might mean the bam file is not sorted, so we try that
         time.sleep(1)
-        print(f"WARNING: Cannot read {bam_file}. The file might be unsorted, trying to sort...")
+        warn = f"WARNING: Cannot read {bam_file}. The file might be unsorted, trying to sort..."
+        loggingC.message(warn, threshold=0)
         sorted_bam_file = bam_file[:len(bam_file) - len(file_ending)] + '.tmp.sorted' + file_ending
         pysam.sort("-o", sorted_bam_file, bam_file, "-@", str(num_threads))      
         time.sleep(1)
@@ -361,7 +430,7 @@ def contigs_coverage(depth_file):
 def calculate_coverage(depth_files: list,
                        target_contigs: set = None,
                        threads=4,
-                       verbose=1):
+                       silent=False):
     """
     Calculate the average coverage of an assembly based on multiple depth files using parallel processing.
 
@@ -391,8 +460,12 @@ def calculate_coverage(depth_files: list,
                 local_length += contig_length[contig]
             return local_coverage, local_length
 
-    if verbose > 0:
-        print(f">Calculating coverage from depth files. This might take a while.")
+    if silent:
+        threshold = 3
+    else:
+        threshold = 0
+    loggingC.message(">Calculating coverage from depth files. This might take a while.", threshold)
+
 
     inuse = min(threads, len(depth_files))
     with yaspin(text=f"Processing with {inuse} threads...\t", color="yellow") as spinner:
@@ -405,15 +478,14 @@ def calculate_coverage(depth_files: list,
 
         average_coverage = total_coverage / total_length if total_length > 0 else 0
 
-    if verbose > 1:
-        print(f"\t...coverage is {str(average_coverage)}")
+    if not silent:
+        loggingC.message(f"\t...coverage is {str(average_coverage)}", threshold+1)
 
     return average_coverage
 
 # def calculate_coverage(depth_files: list,
 #                        target_contigs: str = None,
-#                        threads=4,
-#                        verbose=1):
+#                        threads=4):
 #     """
 #     Calculate the average coverage of an assembly based on multiple depth files.
 
@@ -427,8 +499,7 @@ def calculate_coverage(depth_files: list,
 #     total_coverage = 0.0
 #     total_length = 0.0
 
-#     if verbose>0:
-#         print(">Calculating coverage from depth files. This might be stuck at 0% for a while.")
+#     loggingC.message(">Calculating coverage from depth files. This might take a while.", threshold=0)
 
 #     for depth_file in tqdm(depth_files, leave=False):
 #         with open(depth_file, 'r') as depth:
@@ -442,13 +513,12 @@ def calculate_coverage(depth_files: list,
 
 #     average_coverage = total_coverage / total_length
 
-#     if verbose>0:
-#         print(f"\t...all depth files processed, coverage is {str(average_coverage)}")
+#     loggingC.message(f"\t...all depth files processed, coverage is {str(average_coverage)}", threshold=0)
 
 #     return average_coverage
 
 '''
-def calculate_coverage(bam_files, fasta_file, verbose=1, num_threads=4):
+def calculate_coverage(bam_files, fasta_file, num_threads=4):
     """
     Calculate the average coverage of an assembly based on multiple .BAM files.
 
@@ -505,7 +575,7 @@ def calculate_coverage(bam_files, fasta_file, verbose=1, num_threads=4):
 '''
 
 
-def read_receipt(receipt_path: str, verbose=1) -> str:
+def read_receipt(receipt_path: str) -> str:
     """
     Extract success status and appropriate accession (ANALYSIS or SAMPLE) from receipt file.
     
@@ -519,25 +589,23 @@ def read_receipt(receipt_path: str, verbose=1) -> str:
     success = root.attrib['success']
 
     if success != 'true':
-        print(f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information.")
+        err = f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     # Check for ANALYSIS receipt
     analysis_element = root.find('.//ANALYSIS')
     if analysis_element is not None:
         accession = analysis_element.attrib['accession']
-        #if verbose > 0:
-        #    print(f"\n>...analysis submission successful, accession is {accession}\n\n")
         return accession
 
     # Check for SAMPLE receipt
     sample_element = root.find('.//SAMPLE')
     if sample_element is not None:
         accession = sample_element.attrib['accession']
-        #if verbose > 0:
-        #    print(f"\t...sample submission successful, accession is {accession}")
         return accession
 
     # If neither, print error message
-    print("\nERROR: Unknown receipt type. Cannot extract accession.")
+    loggingC.message(f"\nERROR: Unknown receipt type. Cannot extract accession.", threshold=-1)
+
     return None
