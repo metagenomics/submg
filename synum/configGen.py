@@ -122,7 +122,9 @@ def __check_parameters(outpath: str,
         is_valid = True
     elif (submit_reads and submit_assembly and not submit_samples): # Mode 4-6
         is_valid = True
-    if (submit_assembly and submit_bins and not submit_samples and not submit_reads): # Mode 7-9
+    if (submit_assembly and submit_bins and not submit_samples and not submit_reads): # Mode 7-8
+        is_valid = True
+    elif (submit_assembly and not submit_bins and not submit_mags and not submit_samples and not submit_reads): # Mode 9
         is_valid = True
     if (submit_bins and submit_mags and not submit_assembly and not submit_samples and not submit_reads): # Mode 10
         is_valid = True 
