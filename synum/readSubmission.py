@@ -10,6 +10,7 @@ import shutil
 import gzip
 
 def __prep_reads_manifest(config: dict,
+                          sample_accession_data,
                           data: dict,
                           staging_dir: str,
                           fastq1_path: str,
@@ -17,9 +18,20 @@ def __prep_reads_manifest(config: dict,
     
     # Find the related sample
     if 'RELATED_SAMPLE_TITLE' in data.keys():
-        sample = from_config(data, 'RELATED_SAMPLE_TITLE')
+        sample_title = from_config(data, 'RELATED_SAMPLE_TITLE')
+        sample = None
+        for sd in sample_accession_data:
+            if sd['alias'] == sample_title:
+                sample = sd['accession']
+                break
+        if sample is None:
+            err = f"\nERROR: No related sample found for the reads with title '{sample_title}'. Please check the configuration file."
+            loggingC.message(err, threshold=-1)
     elif 'RELATED_SAMPLE_ACCESSION' in data.keys():
         sample = from_config(data, 'RELATED_SAMPLE_ACCESSION')
+    else:
+        err = "\nERROR: No related sample found for the reads. Please specify either 'RELATED_SAMPLE_TITLE' or 'RELATED_SAMPLE_ACCESSION' in the configuration file."
+        loggingC.message(err, threshold=-1)
 
     # Build the rows
     rows = [
@@ -70,6 +82,7 @@ def __zipcopy(input: str,
 
 
 def __stage_reads_submission(config: dict,
+                             sample_accession_data,
                              data: dict,
                              staging_dir: str,
                              logging_dir: str) -> str:
@@ -91,6 +104,7 @@ def __stage_reads_submission(config: dict,
 
     # Make the MANIFEST file
     manifest = __prep_reads_manifest(config,
+                                     sample_accession_data,
                                      data,
                                      staging_dir,
                                      gzipped_fastq1_path,
@@ -99,6 +113,7 @@ def __stage_reads_submission(config: dict,
     
 
 def submit_reads(config,
+                 sample_accession_data,
                  staging_dir,
                  logging_dir,
                  test=True):
@@ -107,9 +122,14 @@ def submit_reads(config,
 
     Args:
         config (dict): The configuration dictionary.
+        sample_accession_data (list): Contains one dictionary with information
+            on each sample. Dict keys are 'accession', 'external_accession',
+            and 'alias'.
         staging_dir (str): The directory where the reads will be staged.
-        logging_dir (str): The directory where the submission logs will be written.
-        test (bool, optional): If True, use the Webin test submission service (default is True).
+        logging_dir (str): The directory where the submission logs will be
+            written.
+        test (bool, optional): If True, use the Webin test submission service
+        (default is True).
 
     Returns:
         list: The accessions of the submitted reads.
@@ -126,6 +146,7 @@ def submit_reads(config,
             read_set_logging_dir = os.path.join(logging_dir, f"reads_{name}")
             os.makedirs(read_set_logging_dir, exist_ok=False)
             manifest = __stage_reads_submission(config,
+                                                sample_accession_data,
                                                 data,
                                                 read_set_staging_dir,
                                                 read_set_logging_dir)                                                
@@ -133,9 +154,9 @@ def submit_reads(config,
                 read_manifests[name] = manifest  
             counter = i + 1
 
-    if 'SINGLE_END_READS' in config.keys():
+    if 'SINGLE_READS' in config.keys():
         loggingC.message(">Staging single-end reads for submission. This might take a while.", threshold=0)
-        for j, data in enumerate(from_config(config, 'SINGLE_END_READS')):
+        for j, data in enumerate(from_config(config, 'SINGLE_READS')):
             i = counter + j
             name = from_config(data, 'NAME').replace(' ', '_')
             read_set_staging_dir = os.path.join(staging_dir, f"reads_{name}")
@@ -143,6 +164,7 @@ def submit_reads(config,
             read_set_logging_dir = os.path.join(logging_dir, f"reads_{name}")
             os.makedirs(read_set_logging_dir, exist_ok=False)
             manifest = __stage_reads_submission(config,
+                                                sample_accession_data,
                                                 data,
                                                 read_set_staging_dir,
                                                 read_set_logging_dir)         

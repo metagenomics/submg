@@ -19,13 +19,16 @@ def __report_tax_issues(issues):
     Args:
         issues (list): A list of dictionaries with the issues encountered.
     """
-    print(f"\nERROR: Unable to determine taxonomy for {len(issues)} bins:")
+    err = f"\nERROR: Unable to determine taxonomy for {len(issues)} bins:"
+    loggingC.message(err, threshold=-1)
     problematic_bins = [x['mag_bin'] for x in issues]
     problematic_bins = set(problematic_bins)
-    for_printing = '\n'.join(problematic_bins)
-    print(for_printing)
-    print(f"Please manually enter taxonomy data for these bins into a .tsv file and specify it in the MANUAL_TAXONOMY_FILE field in the config file.")
-    loggingC.message(f"\nTaxonomy issues are:", threshold=0)
+    msg = '\n'.join(problematic_bins)
+    loggingC.message(msg, threshold=0)
+    msg = f"Please manually enter taxonomy data for these bins into a .tsv file and specify it in the MANUAL_TAXONOMY_FILE field in the config file."
+    loggingC.message(msg, threshold=0) 
+    msg = f"\nTaxonomy issues are:"
+    loggingC.message(msg, threshold=0)
     for i in issues:
         mag = i['mag_bin']
         level = i['level']
@@ -72,7 +75,8 @@ def query_ena_taxonomy(level: str,
         elif domain == 'Bacteria':
             query = 'uncultured bacterium'
         else:
-            print(f"\nERROR: Encountered unknown domain {domain} for a mag bin. Please check your NCBI taxonomy files.")
+            err = f"\nERROR: Encountered unknown domain {domain} for a mag bin. Please check your NCBI taxonomy files."
+            loggingC.message(err, threshold=-1)
             exit(1)
     # If we know only something between domain and genus then we get
     # "<classification> bacterium" / "<classification> archeon"
@@ -84,7 +88,8 @@ def query_ena_taxonomy(level: str,
         elif domain == 'metagenome':
             dstring = 'metagenome'
         else:
-            print(f"\nERROR: Encountered unknown domain {domain}")
+            err = f"\nERROR: Encountered unknown domain {domain}"
+            loggingC.message(err, threshold=-1)
             exit(1)
         if domain == 'metagenome':
             query = classification
@@ -230,7 +235,8 @@ def __best_classifications(ncbi_classifications: dict) -> dict:
                     'domain': 'Archaea',
                 }
             else:
-                print(f"\nERROR: Found unclassified bin {mag_bin} with unknown classification {clasf}. Please check your NCBI taxonomy files.")
+                err = f"\nERROR: Found unclassified bin {mag_bin} with unknown classification {clasf}. Please check your NCBI taxonomy files."
+                loggingC.message(err, threshold=-1)
                 exit(1)
             loggingC.message(f">INFO: Bin {mag_bin} is unclassified.", threshold=1)
         else:
@@ -352,20 +358,25 @@ def get_bin_taxonomy(config) -> dict:
     only_bin_basenames = bin_basenames_set.difference(from_taxonomies)
     only_taxonomies = from_taxonomies.difference(bin_basenames_set)
     if len(only_bin_basenames) > 0:
-        print(f"\nERROR: The following bins were found in the bins directory but not in the taxonomy files:")
+        err = f"\nERROR: The following bins were found in the bins directory but not in the taxonomy files:"
+        loggingC.message(err, threshold=-1)
         for b in only_bin_basenames:
-            print(f"\t{b}")
+            msg = f"\t{b}"
+            loggingC.message(msg, threshold=-0)
         exit(1)
     if len(only_taxonomies) > 0:
-        print(f"\nERROR: The following bins were found in the taxonomy files but not in the bins directory:")
+        err = f"\nERROR: The following bins were found in the taxonomy files but not in the bins directory:"
+        loggingC.message(err, threshold=-1)
         for b in only_taxonomies:
-            print(f"\t{b}")
+            msg = f"\t{b}"
+            loggingC.message(msg, threshold=-1)
         exit(1)
     only_fasta = set(bin_basenames) - from_taxonomies
     if len(only_fasta) > 0:
-        print(f"\nERROR: Tt in the taxonomy files:")
+        err = f"\nERROR: Tt in the taxonomy files:"
         for b in only_fasta:
-            print(f"\t{b}")
+            msg = f"\t{b}"
+            loggingC.message(msg, threshold=-1)
         exit(1)
 
     # Query the ENA API for taxids and scientific names for each bin
@@ -462,17 +473,23 @@ def get_bin_quality(config, silent=False) -> dict:
     # Check that the set of bins in the directory equals the set of bins in the quality file
     only_in_quality = set(result.keys()) - bin_basenames
     if len(only_in_quality) > 0:
-        print(f"\nERROR: The following bins were found in the quality file but not in the bins directory:")
+        err = f"\nERROR: The following bins were found in the quality file but not in the bins directory:"
+        loggingC.message(err, threshold=-1)
         for b in only_in_quality:
-            print(f"\t{b}")
-        print(f"Quality file: {os.path.abspath(quality_file)}")
-        print(f"Bins directory: {os.path.abspath(bins_directory)}")
+            msg = f"\t{b}"
+            loggingC.message(msg, threshold=-1)
+        msg = f"Quality file: {os.path.abspath(quality_file)}"
+        loggingC.message(msg, threshold=-1)
+        msg = f"Bins directory: {os.path.abspath(bins_directory)}"
+        loggingC.message(msg, threshold=-1)
         exit(1)
     only_in_directory = bin_basenames - set(result.keys())
     if len(only_in_directory) > 0:
-        print(f"\nERROR: The following bins were found in the bins directory but not in the quality file:")
+        err = f"\nERROR: The following bins were found in the bins directory but not in the quality file:"
+        loggingC.message(err, threshold=-1)
         for b in only_in_directory:
-            print(f"\t{b}")
+            msg = f"\t{b}"
+            loggingC.message(msg, threshold=-1)
         exit(1)
 
     loggingC.message(f"\t...found {len(result)} bins in bin quality file.", threshold=1)
@@ -626,7 +643,8 @@ def read_bin_samples_receipt(receipt_path: str) -> dict:
 
     success = root.attrib['success']
     if success != 'true':
-        print(f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information.")
+        err = f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
     loggingC.message("\t...samplesheet upload was successful.", threshold=1)
@@ -635,11 +653,13 @@ def read_bin_samples_receipt(receipt_path: str) -> dict:
     for sample in root.findall('.//SAMPLE'):
         alias = sample.attrib.get('alias')
         if alias is None:
-            print(f"\nERROR: Submission failed. Didn't find alias for all bins in the receipt. Please check the receipt at {os.path.abspath(receipt_path)}.")
+            err = f"\nERROR: Submission failed. Didn't find alias for all bins in the receipt. Please check the receipt at {os.path.abspath(receipt_path)}."
+            loggingC.message(err, threshold=-1)
             exit(1)
         ext_id = sample.find('EXT_ID')
         if ext_id is None:
-            print(f"\nERROR: Submission failed. Didn't find EXT_ID for all bins in the receipt. Please check the receipt at {os.path.abspath(receipt_path)}.")
+            err = f"\nERROR: Submission failed. Didn't find EXT_ID for all bins in the receipt. Please check the receipt at {os.path.abspath(receipt_path)}."
+            loggingC.message(err, threshold=-1)
             exit(1)
         accession = ext_id.attrib.get('accession')
         bin_to_accession[alias] = accession
@@ -819,7 +839,8 @@ def bin_coverage_from_tsv(bin_coverage_file: str,
             bin_coverages[bin_name] = coverage
     for known_name in bin_names:
         if not known_name in bin_coverages:
-            print(f"\nERROR: Bin {known_name} was not found in the coverage file at {os.path.abspath(bin_coverage_file)}.")
+            err = f"\nERROR: Bin {known_name} was not found in the coverage file at {os.path.abspath(bin_coverage_file)}."
+            loggingC.message(err, threshold=-1)
             exit(1)
     return bin_coverages
     

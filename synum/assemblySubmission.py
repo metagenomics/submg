@@ -282,7 +282,8 @@ def submit_assembly(config: dict,
     with open(assembly_accession_file, 'w') as f:
         f.write(assembly_fasta_accession)
 
-    print(f"\n>The preliminary(!) assembly accession has been written to {os.path.abspath(assembly_accession_file)}\n")
+    msg = (f"\n>The preliminary(!) assembly accession has been written to {os.path.abspath(assembly_accession_file)}\n")
+    loggingC.message(msg, threshold=0)
 
     return assembly_sample_accession, assembly_fasta_accession
 

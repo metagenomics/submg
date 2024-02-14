@@ -1,0 +1,54 @@
+# ABOUT: This is a config for submitting 1 sample, 2 sets of single-end reads, an assembly and bins.
+# ABOUT: Coverage is derived from one unsorted .bam file.
+# ABOUT: Taxonomy is derived from `gtdb_to_ncbi_majority_vote.py` output
+# USAGE: navigate to the <examples> directory
+# USAGE: synum submit --config 02_samples_reads_assembly_bins.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_samples --submit_reads --submit_assembly --submit_bins
+
+STUDY: "PRJEB71644"                                              # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"
+METAGENOME_SCIENTIFIC_NAME: 'ant fungus garden metagenome'                         # Taxonomic identifier of the metagenome. Check the ENA metagenome taxonomy tree to find a taxonomy ID and species name fitting your sample >>EXAMPLE: "biogas fermenter metagenome"
+METAGENOME_TAXID: '797283'                                   # Taxonomic identifier of the assembly. Must match SPECIES_SCIENTIFIC_NAME >>EXAMPLE: "718289"
+SEQUENCING_PLATFORMS: ['ILLUMINA']                            # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#platform >>EXAMPLE: ["ILLUMINA","OXFORD_NANOPORE"]
+NEW_SAMPLES:                                        # These samples will be created in ENA according to the data entered below. Your assembly MUST BE BASED ON ALL OF THESE.
+- TITLE: 'idx00_example02_sample01'                                            # A unique title for your sample >>EXAMPLE: "Bioreactor_2_sample"
+  collection date: '2012'                                 # Any ISO compliant time. Can be truncated from the right (e.g. '2023-12-27T16:07' or '2023-12') >>EXAMPLE: "2023-03"
+  geographic location (country and/or sea): 'missing: data agreement established pre-2023'        # See ENA checklists (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000011) for valid values >>EXAMPLE: "Germany"
+  ADDITIONAL_SAMPLESHEET_FIELDS:                    # Please add more fields from the ENA samplesheet that most closely matches your experiment
+SINGLE_READS:                                     
+- NAME: 'idx00_pe_reads_01_sample01'                                            # Choose a unique name >>EXAMPLE: "Bioreactor_2_replicate_1"
+  SEQUENCING_INSTRUMENT: 'Illumina MiSeq'                     # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument >>EXAMPLE: ["Illumina HiSeq 1500", "GridION"]
+  LIBRARY_SOURCE: 'METAGENOMIC'                                   # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "GENOMIC"
+  LIBRARY_SELECTION: 'RANDOM'                                # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "RANDOM"
+  LIBRARY_STRATEGY: 'WGS'                                # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy >>EXAMPLE: "WGS"
+  FASTQ_FILE: "data/reads/fwd1.fastq"                                        # Path to the fastq file >>EXAMPLE: "/mnt/data/reads.fastq.gz"
+  RELATED_SAMPLE_TITLE: 'idx00_example02_sample01'                            # The title of the sample that these reads originate from >>EXAMPLE: "Bioreactor_2_sample"
+  ADDITIONAL_MANIFEST_FIELDS:                       # You can add additional fields that will be written to the manifest
+- NAME: 'idx00_pe_reads_02_sample01'                                                   # Choose a unique name >>EXAMPLE: "Bioreactor_2_replicate_1"
+  SEQUENCING_INSTRUMENT: 'Illumina MiSeq'                             # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument >>EXAMPLE: ["Illumina HiSeq 1500", "GridION"]
+  LIBRARY_SOURCE: 'METAGENOMIC'                                   # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "GENOMIC"
+  LIBRARY_SELECTION: 'RANDOM'                                # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "RANDOM"
+  LIBRARY_STRATEGY: 'WGS'                                # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy >>EXAMPLE: "WGS"
+  FASTQ_FILE: "data/reads/fwd2.fastq"                                         # Path to the fastq file >>EXAMPLE: "/mnt/data/reads.fastq.gz"
+  RELATED_SAMPLE_TITLE: 'idx00_example02_sample01'                               # The title of the sample that these reads originate from >>EXAMPLE: "Bioreactor_2_sample"
+  ADDITIONAL_MANIFEST_FIELDS:                       # You can add additional fields that will be written to the manifest
+ASSEMBLY:                                         
+  ASSEMBLY_NAME: 'idx00_e02_assembly'                                   # Choose a name, even if your assembly has been uploaded already. Will only be used for naming assembly and bins/MAGs. >>EXAMPLE: "Northern Germany biogas digester metagenome"
+  ASSEMBLY_SOFTWARE: 'metaSPAdes'                                # Software used to generate the assembly >>EXAMPLE: "MEGAHIT"
+  ISOLATION_SOURCE: 'ant fungus garden'                                # Describe where your sample was taken from >>EXAMPLE: "biogas plant anaerobic digester"
+  FASTA_FILE: "data/assembly.fasta"                                            # Path to the fasta file >>EXAMPLE: "/mnt/data/assembly.fasta.gz"
+  collection date: '2012-02'                                 # Any ISO compliant time. Can be truncated from the right (e.g. '2023-12-27T16:07' or '2023-12') >>EXAMPLE: "2023-03"
+  geographic location (country and/or sea): 'missing: data agreement established pre-2023'         # See ENA checklists (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000011) for valid values >>EXAMPLE: "Germany"
+  ADDITIONAL_SAMPLESHEET_FIELDS:
+    geographic location (latitude): 52.51                                     # Use WGS84. For more information consult appropriate an ENA samplesheet template (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000050) >>EXAMPLE: "41.85"
+    geographic location (longitude): 8.77   
+  ADDITIONAL_MANIFEST_FIELDS:                    # You can add additional fields that will be written to the manifest
+BINS:                                             
+  BINS_DIRECTORY: "data/2bins"                                       # Directory containing the fasta files of all bins/MAGs >>EXAMPLE: "/mnt/data/bins"
+  COMPLETENESS_SOFTWARE: "CheckM"                            # Software used to calculate completeness >>EXAMPLE: "CheckM"
+  QUALITY_FILE: "data/checkm_quality_2bins.tsv"                                        # tsv file containing quality values of each bin. Header must include 'Bin_id', 'Completeness', 'Contamination'. A CheckM output table will work here. >>EXAMPLE: "/mnt/data/checkm_quality.tsv"
+  NCBI_TAXONOMY_FILES: ["data/taxonomy/archaea_taxonomy.tsv", "data/taxonomy/bacteria_taxonomy.tsv"]
+  MANUAL_TAXONOMY_FILE:                             # Scientific names and taxids for bins. See example file for the structure. Columns must be 'Bin_id', 'Tax_id' and 'Scientific_name'. Consult the README for more information. >>EXAMPLE: "/mnt/data/manual_tax.tsv"
+  BINNING_SOFTWARE: 'VAMB'                                # The program that was used for binning. >>EXAMPLE: "metabat2"
+  ADDITIONAL_SAMPLESHEET_FIELDS:                    # Please add more fields from the ENA samplesheet that most closely matches your experiment
+  ADDITIONAL_MANIFEST_FIELDS:                       # You can add additional fields that will be written to the manifest
+BAM_FILES:
+  - "data/mapping/1.unsorted.bam"                                                  

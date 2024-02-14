@@ -68,9 +68,10 @@ def __read_samplesheet_receipt(receipt_path: str) -> list:
 
     success = tree_root.attrib['success']
     if success != 'true':
-        print(f"\nERROR: The submission of the biological samples failed. Consult the receipt file at {os.path.abspath(receipt_path)} for more information.")
+        err = f"\nERROR: The submission of the biological samples failed. Consult the receipt file at {os.path.abspath(receipt_path)} for more information."
+        loggingC.message(err, threshold=-1)
         exit(1)
-    loggingC.message(f"\t...samplesheet upload was successful.", threshold=1)
+    loggingC.message(f"\t...samplesheet upload was successful.", threshold=0)
 
     sample_accessions = []
     for sample in tree_root.iterfind('.//SAMPLE'):
@@ -79,7 +80,8 @@ def __read_samplesheet_receipt(receipt_path: str) -> list:
         accession = sample.attrib.get('accession')
         external_accession = ext_id.attrib.get('accession')
         if alias is None is None or accession is None or external_accession is None:
-            print(f"\nERROR: The submission of the biological samples failed. Consult the receipt file at {os.path.abspath(receipt_path)} for more information.")
+            err = f"\nERROR: The submission of the biological samples failed. Consult the receipt file at {os.path.abspath(receipt_path)} for more information."
+            loggingC.message(err, threshold=-1)
             exit(1)
 
         sample_accessions.append({
@@ -107,20 +109,20 @@ def __submit_samplesheet(samplesheet: str,
     receipt_path = os.path.join(logging_dir, 'submission_receipt.xml')
     usr, pwd = utility.get_login()
 
-    loggingC.message(">Submitting biological samples samplesheet through ENA API", threshold=1)
+    loggingC.message(">Submitting biological samples samplesheet through ENA API", threshold=0)
 
     response = requests.post(url,
                              files={
                                 'SUBMISSION': open(submission_xml, 'rb'),
                                 'SAMPLE': open(samplesheet, 'rb'),},
                              auth=requests.auth.HTTPBasicAuth(usr, pwd))
-    loggingC.message(f"\t...HTTP status: {response.status_code}", threshold=1)
+    loggingC.message(f"\t...HTTP status: {response.status_code}", threshold=0)
     utility.api_response_check(response)
 
     # Write receipt
     with open(receipt_path, 'w') as f:
         f.write(response.text)
-    loggingC.message(f"\t...written submission receipt to {os.path.abspath(receipt_path)}", threshold=1)
+    loggingC.message(f"\t...written submission receipt to {os.path.abspath(receipt_path)}", threshold=0)
 
     # Get the accessions
     accessions = __read_samplesheet_receipt(receipt_path)
@@ -142,17 +144,29 @@ def submit_samples(config: dict,
         url = staticConfig.ena_dropbox_url
 
     # Make a samplesheet and stage it
+    loggingC.message(">Preparing samplesheet for biological samples", threshold=0)
     sample_staging_dir = os.path.join(staging_dir, 'biological_samples')
     os.makedirs(sample_staging_dir, exist_ok=False)
     samplesheet = __prep_samplesheet(config,
                                      sample_staging_dir)
         
+    
     # Upload the samplesheet
+    loggingC.message(">Uploading samplesheet for biological samples", threshold=0)
     sample_logging_dir = os.path.join(logging_dir, 'biological_samples')
     os.makedirs(sample_logging_dir, exist_ok=False)
     sample_accessions = __submit_samplesheet(samplesheet,
                                      sample_staging_dir,
                                      sample_logging_dir,
                                      url=url)
+    
+    samples_accessions_file = os.path.join(sample_logging_dir, 'sample_preliminary_accessions.txt')
+    with open(samples_accessions_file, 'w') as f:
+        f.write("alias\taccession\texternal_accession\n")
+        for sample in sample_accessions:
+            f.write(f"{sample['alias']}\t{sample['accession']}\t{sample['external_accession']}\n")
+
+    msg = f"\n>The preliminary(!) sample accessions have been written to {os.path.abspath(samples_accessions_file)}\n"
+    loggingC.message(msg, threshold=0)
 
     return sample_accessions

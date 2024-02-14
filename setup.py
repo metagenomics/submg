@@ -6,11 +6,11 @@ from setuptools.command.install import install
 class CustomInstall(install):
     def run(self):
         install.run(self)
-        print("\nIMPORTANT: Please also run webin_downloader.py before using synum.")
+        print("\nIMPORTANT: Please run the 'synum download_webin' command.")
 
 setup(
     name='synum',
-    version='0.0.9',
+    version='0.2.1',
     packages=find_packages(),
     install_requires=[
         'pysam>=0.19.1',

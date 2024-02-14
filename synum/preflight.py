@@ -6,7 +6,39 @@ from synum import loggingC, utility, enaSearching
 from synum.statConf import staticConfig
 from synum.webinWrapper import find_webin_cli_jar
 from synum.binSubmission import query_ena_taxonomy
+import time
+import csv
 
+def __check_tsv(tsvfile: str,
+                required_columns: list):
+    """
+    Check if a .tsv file exists and has the required columns. If one of the 
+    columns is "Bin_ids", return a list of all bin ids.
+
+    Args:
+        tsvfile:            The .tsv file to check.
+        required_columns:   A list of column names that must be present in the
+                            .tsv file.
+    """
+    if not os.path.isfile(tsvfile):
+        err = f"\nERROR: The .tsv file '{tsvfile}' does not exist."
+        loggingC.message(err, threshold=-1)
+        exit(1)
+    with open(tsvfile, 'r') as f:
+        header = f.readline().strip().split('\t')
+    for col in required_columns:
+        if not col in header:
+            err = f"\nERROR: The .tsv file '{tsvfile}' is missing the column '{col}'."
+            loggingC.message(err, threshold=-1)
+            exit(1)
+    if 'Bin_ids' in header:
+        bin_ids = []
+        with open(tsvfile, 'r') as f:
+            reader = csv.DictReader(f, delimiter='\t')
+            for row in reader:
+                bin_ids.append(row['Bin_ids'])
+        return bin_ids
+    
 
 def __check_fields(items: list,
                    mandatory_fields: list,
@@ -344,7 +376,7 @@ def __check_bins(arguments: dict,
         config:       The config file as a dictionary.
         testmode:     Whether or not to use the ENA development server.
     """
-    if not arguments['submit_bins']:
+    if not arguments['submit_bins'] and not arguments['submit_mags']:
         return
     
     # Check if all fields are present and not empty
@@ -358,6 +390,11 @@ def __check_bins(arguments: dict,
                         'QUALITY_FILE',
                         'BINNING_SOFTWARE']
     __check_fields(bin_data, mandatory_fields, category_name="BINS")
+    
+    # Check quality file existence and columns
+    quality_file = bin_data['QUALITY_FILE']
+    __check_tsv(quality_file, staticConfig.bin_quality_columns.split(';'))
+
 
     # Check if at least one NCBI_TAXONOMY_FILE or MANUAL_TAXONOMY_FILE exists
     tax_files = []
@@ -379,7 +416,6 @@ def __check_bins(arguments: dict,
             if not header == gtdb_majority_vote_columns:
                 for item in ncbi_taxonomy_columns:
                     if not item in header:
-                        print(item, header)
                         err = f"\nERROR: The taxonomy file '{tax_file}' needs to have one of the following two sets of columns:\n{'|'.join(gtdb_majority_vote_columns)}\n{'|'.join(ncbi_taxonomy_columns)}"
                         loggingC.message(err, threshold=-1)
                         exit(1)
@@ -389,6 +425,7 @@ def __check_bins(arguments: dict,
             loggingC.message(err, threshold=-1)
             exit(1)
         if not bin_data['MANUAL_TAXONOMY_FILE'] is None:
+            __check_tsv(bin_data['MANUAL_TAXONOMY_FILE'], staticConfig.manual_taxonomy_columns.split(';'))
             tax_files.append(bin_data['MANUAL_TAXONOMY_FILE'])
     # And if the headers of the MANUAL_TAXONOMY_FILE are correct
             
@@ -448,20 +485,7 @@ def __check_mags(arguments: dict,
 
     # Check the metadata file
     metadata_file = utility.from_config(config, 'MAGS', 'MAG_METADATA_FILE')
-    if not os.path.isfile(metadata_file):
-        err = f"\nERROR: The MAG metadata file '{metadata_file}' does not exist."
-        loggingC.message(err, threshold=-1)
-        exit(1)
-    with open(metadata_file, 'r') as f:
-        header = f.readline().split('\t')
-        for i in range(len(header)):
-            header[i] = header[i].strip()
-    required_columns = staticConfig.mag_metadata_columns.split(';')
-    for col in required_columns:
-        if not col in header:
-            err = f"\nERROR: The MAG metadata file '{metadata_file}' is missing the column '{col}'."
-            loggingC.message(err, threshold=-1)
-            exit(1)
+    __check_tsv(metadata_file, staticConfig.mag_metadata_columns.split(';'))
 
     # Check fields in ASSEMBLY section
     assembly_data = utility.from_config(config, 'ASSEMBLY')
@@ -481,7 +505,7 @@ def __check_mags(arguments: dict,
     ]
     __check_fields(assembly_additional_data, mandatory_fields, category_name="ASSEMBLY")
 
-    # Check the BINS section
+    # Check the BINS section (basic checks will already have been done in __check_bins)
     bins_additional_data = utility.from_config(config, 'BINS', 'ADDITIONAL_SAMPLESHEET_FIELDS')
     mandatory_fields = [
         'binning parameters',
@@ -530,18 +554,7 @@ def __check_coverage(arguments: dict,
         else:
             # Check if the coverage file exists and has valid headers
             bin_coverage_file = bin_data['COVERAGE_FILE']
-            if not os.path.isfile(bin_coverage_file):
-                err = f"\nERROR: The bin coverage file '{bin_coverage_file}' does not exist."
-                loggingC.message(err, threshold=-1)
-                exit(1)
-            required_columns = staticConfig.bin_coverage_columns.split(';')
-            with open(bin_coverage_file, 'r') as f:
-                header = f.readline().strip().split('\t')
-            for col in required_columns:
-                if not col in header:
-                    err = f"\nERROR: The bin coverage file '{bin_coverage_file}' is missing the column '{col}'."
-                    loggingC.message(err, threshold=-1)
-                    exit(1)
+            __check_tsv(bin_coverage_file, staticConfig.bin_coverage_columns.split(';'))
 
     # Are there bam files?
     coverage_bams = False
@@ -640,6 +653,14 @@ def preflight_checks(arguments: dict) -> None:
     
     # Read data from the YAML config file
     config = utility.read_yaml(arguments['config'])
+
+    # Skip checks if requested
+    if arguments['skip_checks'] == True:
+        message = f"WARNING: Skipping ALL preflight checks."
+        delay = 3
+        time.sleep(delay)
+        loggingC.message(message, threshold=0)
+        return config
 
     # Check if the config file was filled out correctly
     testmode = arguments['development_service']

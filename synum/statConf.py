@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 
 @dataclass
 class staticConfig:
-    synum_version: str = '0.2.0'
-    webin_cli_version: str = '6.7.2'
+    synum_version: str = '0.2.1'
+    webin_cli_version: str = '7.0.0'
     #ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/webin-v2/submit/'
     #ena_test_dropbox_url: str = 'https://wwwdev.ebi.ac.uk/ena/submit/webin-v2/submit/'
     ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/drop-box/submit/'
@@ -24,7 +24,7 @@ class staticConfig:
     assembly_molecule_type: str = 'genomic DNA'
     max_contamination: int = 100
     max_assembly_name_length: int = 10
-    valid_locations: str = "Afghanistan;Albania;Algeria;American Samoa;Andorra;Angola;Anguilla;Antarctica;Antigua and Barbuda;Arctic Ocean;Argentina;Armenia;Aruba;Ashmore and Cartier Islands;Atlantic Ocean;Australia;Austria;Azerbaijan;Bahamas;Bahrain;Baker Island;Baltic Sea;Bangladesh;Barbados;Bassas da India;Belarus;Belgium;Belize;Benin;Bermuda;Bhutan;Bolivia;Borneo;Bosnia and Herzegovina;Botswana;Bouvet Island;Brazil;British Virgin Islands;Brunei;Bulgaria;Burkina Faso;Burundi;Cambodia;Cameroon;Canada;Cape Verde;Cayman Islands;Central African Republic;Chad;Chile;China;Christmas Island;Clipperton Island;Cocos Islands;Colombia;Comoros;Cook Islands;Coral Sea Islands;Costa Rica;Cote d'Ivoire;Croatia;Cuba;Curacao;Cyprus;Czech Republic;Democratic Republic of the Congo;Denmark;Djibouti;Dominica;Dominican Republic;East Timor;Ecuador;Egypt;El Salvador;Equatorial Guinea;Eritrea;Estonia;Ethiopia;Europa Island;Falkland Islands (Islas Malvinas);Faroe Islands;Fiji;Finland;France;French Guiana;French Polynesia;French Southern and Antarctic Lands;Gabon;Gambia;Gaza Strip;Georgia;Germany;Ghana;Gibraltar;Glorioso Islands;Greece;Greenland;GrENAda;Guadeloupe;Guam;Guatemala;Guernsey;Guinea;Guinea-Bissau;Guyana;Haiti;Heard Island and McDonald Islands;Honduras;Hong Kong;Howland Island;Hungary;Iceland;India;Indian Ocean;Indonesia;Iran;Iraq;Ireland;Isle of Man;Israel;Italy;Jamaica;Jan Mayen;Japan;Jarvis Island;Jersey;Johnston Atoll;Jordan;Juan de Nova Island;Kazakhstan;Kenya;Kerguelen Archipelago;Kingman Reef;Kiribati;Kosovo;Kuwait;Kyrgyzstan;Laos;Latvia;Lebanon;Lesotho;Liberia;Libya;Liechtenstein;Lithuania;Luxembourg;Macau;Macedonia;Madagascar;Malawi;Malaysia;Maldives;Mali;Malta;Marshall Islands;Martinique;Mauritania;Mauritius;Mayotte;Mediterranean Sea;Mexico;Micronesia;Midway Islands;Moldova;Monaco;Mongolia;Montenegro;Montserrat;Morocco;Mozambique;Myanmar;Namibia;Nauru;Navassa Island;Nepal;Netherlands;New Caledonia;New Zealand;Nicaragua;Niger;Nigeria;Niue;Norfolk Island;Northern Mariana Islands;North Korea;North Sea;Norway;not applicable;not collected;not provided;Oman;Pacific Ocean;Pakistan;Palau;Palmyra Atoll;Panama;Papua New Guinea;Paracel Islands;Paraguay;Peru;Philippines;Pitcairn Islands;Poland;Portugal;Puerto Rico;Qatar;Republic of the Congo;restricted access;Reunion;Romania;Ross Sea;Russia;Rwanda;Saint HelENA;Saint Kitts and Nevis;Saint Lucia;Saint Pierre and Miquelon;Saint Vincent and the GrENAdines;Samoa;San Marino;Sao Tome and Principe;Saudi Arabia;Senegal;Serbia;Seychelles;Sierra Leone;Singapore;Sint Maarten;Slovakia;Slovenia;Solomon Islands;Somalia;South Africa;Southern Ocean;South Georgia and the South Sandwich Islands;South Korea;Spain;Spratly Islands;Sri Lanka;Sudan;Suriname;Svalbard;Swaziland;Sweden;Switzerland;Syria;Taiwan;Tajikistan;Tanzania;Tasman Sea;Thailand;Togo;Tokelau;Tonga;Trinidad and Tobago;Tromelin Island;Tunisia;Turkey;Turkmenistan;Turks and Caicos Islands;Tuvalu;Uganda;Ukraine;United Arab Emirates;United Kingdom;Uruguay;USA;Uzbekistan;Vanuatu;Venezuela;Viet Nam;Virgin Islands;Wake Island;Wallis and Futuna;West Bank;Western Sahara;Yemen;Zambia;Zimbabwe"
+    valid_locations: str = "Afghanistan;Albania;Algeria;American Samoa;Andorra;Angola;Anguilla;Antarctica;Antigua and Barbuda;Arctic Ocean;Argentina;Armenia;Aruba;Ashmore and Cartier Islands;Atlantic Ocean;Australia;Austria;Azerbaijan;Bahamas;Bahrain;Baker Island;Baltic Sea;Bangladesh;Barbados;Bassas da India;Belarus;Belgium;Belize;Benin;Bermuda;Bhutan;Bolivia;Borneo;Bosnia and Herzegovina;Botswana;Bouvet Island;Brazil;British Virgin Islands;Brunei;Bulgaria;Burkina Faso;Burundi;Cambodia;Cameroon;Canada;Cape Verde;Cayman Islands;Central African Republic;Chad;Chile;China;Christmas Island;Clipperton Island;Cocos Islands;Colombia;Comoros;Cook Islands;Coral Sea Islands;Costa Rica;Cote d'Ivoire;Croatia;Cuba;Curacao;Cyprus;Czech Republic;Democratic Republic of the Congo;Denmark;Djibouti;Dominica;Dominican Republic;East Timor;Ecuador;Egypt;El Salvador;Equatorial Guinea;Eritrea;Estonia;Ethiopia;Europa Island;Falkland Islands (Islas Malvinas);Faroe Islands;Fiji;Finland;France;French Guiana;French Polynesia;French Southern and Antarctic Lands;Gabon;Gambia;Gaza Strip;Georgia;Germany;Ghana;Gibraltar;Glorioso Islands;Greece;Greenland;GrENAda;Guadeloupe;Guam;Guatemala;Guernsey;Guinea;Guinea-Bissau;Guyana;Haiti;Heard Island and McDonald Islands;Honduras;Hong Kong;Howland Island;Hungary;Iceland;India;Indian Ocean;Indonesia;Iran;Iraq;Ireland;Isle of Man;Israel;Italy;Jamaica;Jan Mayen;Japan;Jarvis Island;Jersey;Johnston Atoll;Jordan;Juan de Nova Island;Kazakhstan;Kenya;Kerguelen Archipelago;Kingman Reef;Kiribati;Kosovo;Kuwait;Kyrgyzstan;Laos;Latvia;Lebanon;Lesotho;Liberia;Libya;Liechtenstein;Lithuania;Luxembourg;Macau;Macedonia;Madagascar;Malawi;Malaysia;Maldives;Mali;Malta;Marshall Islands;Martinique;Mauritania;Mauritius;Mayotte;Mediterranean Sea;Mexico;Micronesia;Midway Islands;Moldova;Monaco;Mongolia;Montenegro;Montserrat;Morocco;Mozambique;Myanmar;Namibia;Nauru;Navassa Island;Nepal;Netherlands;New Caledonia;New Zealand;Nicaragua;Niger;Nigeria;Niue;Norfolk Island;Northern Mariana Islands;North Korea;North Sea;Norway;not applicable;not collected;not provided;Oman;Pacific Ocean;Pakistan;Palau;Palmyra Atoll;Panama;Papua New Guinea;Paracel Islands;Paraguay;Peru;Philippines;Pitcairn Islands;Poland;Portugal;Puerto Rico;Qatar;Republic of the Congo;restricted access;Reunion;Romania;Ross Sea;Russia;Rwanda;Saint HelENA;Saint Kitts and Nevis;Saint Lucia;Saint Pierre and Miquelon;Saint Vincent and the GrENAdines;Samoa;San Marino;Sao Tome and Principe;Saudi Arabia;Senegal;Serbia;Seychelles;Sierra Leone;Singapore;Sint Maarten;Slovakia;Slovenia;Solomon Islands;Somalia;South Africa;Southern Ocean;South Georgia and the South Sandwich Islands;South Korea;Spain;Spratly Islands;Sri Lanka;Sudan;Suriname;Svalbard;Swaziland;Sweden;Switzerland;Syria;Taiwan;Tajikistan;Tanzania;Tasman Sea;Thailand;Togo;Tokelau;Tonga;Trinidad and Tobago;Tromelin Island;Tunisia;Turkey;Turkmenistan;Turks and Caicos Islands;Tuvalu;Uganda;Ukraine;United Arab Emirates;United Kingdom;Uruguay;USA;Uzbekistan;Vanuatu;Venezuela;Viet Nam;Virgin Islands;Wake Island;Wallis and Futuna;West Bank;Western Sahara;Yemen;Zambia;Zimbabwe;missing: control sample;missing: data agreement established pre-2023;missing: endangered species;missing: human-identifiable;missing: lab stock;missing: sample group;missing: synthetic construct;missing: third party data;not applicable;not collected;not provided;restricted access"
     valid_sequencing_instruments: str = '454 GS;454 GS 20;454 GS FLX;454 GS FLX Titanium;454 GS FLX+;454 GS Junior;AB 310 Genetic Analyzer;AB 3130 Genetic Analyzer;AB 3130xL Genetic Analyzer;AB 3500 Genetic Analyzer;AB 3500xL Genetic Analyzer;AB 3730 Genetic Analyzer;AB 3730xL Genetic Analyzer;AB 5500 Genetic Analyzer;AB 5500xl Genetic Analyzer;AB 5500xl-W Genetic Analysis System;BGISEQ-50;BGISEQ-500;DNBSEQ-G400;DNBSEQ-G400 FAST;DNBSEQ-G50;DNBSEQ-T7;Element AVITI;GridION;Helicos HeliScope;HiSeq X Five;HiSeq X Ten;Illumina Genome Analyzer;Illumina Genome Analyzer II;Illumina Genome Analyzer IIx;Illumina HiScanSQ;Illumina HiSeq 1000;Illumina HiSeq 1500;Illumina HiSeq 2000;Illumina HiSeq 2500;Illumina HiSeq 3000;Illumina HiSeq 4000;Illumina HiSeq X;Illumina MiSeq;Illumina MiniSeq;Illumina NovaSeq 6000;Illumina NovaSeq X;Illumina iSeq 100;Ion GeneStudio S5;Ion GeneStudio S5 Plus;Ion GeneStudio S5 Prime;Ion Torrent Genexus;Ion Torrent PGM;Ion Torrent Proton;Ion Torrent S5;Ion Torrent S5 XL;MGISEQ-2000RS;MinION;NextSeq 1000;NextSeq 2000;NextSeq 500;NextSeq 550;PacBio RS;PacBio RS II;PromethION;Sequel;Sequel II;Sequel IIe;UG 100;unspecified'
     valid_sequencing_platforms: str = "BGISEQ;CAPILLARY;DNBSEQ;ELEMENT;HELICOS;ILLUMINA;ION_TORRENT;LS454;OXFORD_NANOPORE;PACBIO_SMRT;ULTIMA;ABI_SOLID;COMPLETE_GENOMICS"
     valid_library_sources: str = "GENOMIC;GENOMIC SINGLE CELL;TRANSCRIPTOMIC;TRANSCRIPTOMIC SINGLE CELL;METAGENOMIC;METATRANSCRIPTOMIC;SYNTHETIC;VIRAL RNA;OTHER"
@@ -34,12 +34,32 @@ class staticConfig:
     webin_run_accessions_line: str = 'The following run accession was assigned to the submission'
     mag_metadata_columns: str = 'Bin_id;Quality_category;Flatfile_path;Unlocalised_path'
     ncbi_taxonomy_columns: str = 'Bin_id;NCBI_taxonomy'
+    manual_taxonomy_columns: str = 'Bin_id;Scientific_name;Tax_id'
     gtdb_majority_vote_columns: str = 'Genome ID;GTDB classification;Majority vote NCBI classification'
     bin_coverage_columns: str = 'Bin_id;Coverage'
+    bin_quality_columns = 'Bin Id;Completeness;Contamination'
     mag_qstring_finished: str = 'Single contiguous sequence without gaps or ambiguities with a consensus error rate equivalent to Q50 or better.'
     mag_qstring_high: str = 'Multiple fragments where gaps span repetitive regions. Presence of the 23S, 16S and 5S rRNA genes and at least 18 tRNAs.'
     mag_qstring_medium: str = 'Many fragments with little to no review of assembly other than reporting of standard assembly statistics.'
     max_assembly_name_length: int = 50 - len('webin-genome-' + '_SAMEA________')
+    submission_modes_message: str = """
+        The following modes of submission are supported:
+
+        Samples + Reads + Assembly + Bins + MAGs
+        Samples + Reads + Assembly + Bins
+        Samples + Reads + Assembly
+                  Reads + Assembly + Bins + MAGs
+                  Reads + Assembly + Bins
+                  Reads + Assembly
+                          Assembly + Bins + MAGs
+                          Assembly + Bins
+                          Assembly
+                                     Bins + MAGs
+                                     Bins
+                                            MAGs
+        
+        Submitting single and paired reads at the same time works.
+    """
 
 YAMLCOMMENTS = {
     'STUDY': 'The accession of your study (which has to already exist in ENA)',

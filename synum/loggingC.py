@@ -1,6 +1,7 @@
-import os
+# I don't remember exactly why I wrote this but during development there was
+# some issue with the python logging module and this was a quick solution..
 
-#from synum.statConf import staticConfig
+import os
 
 # Global variables for logging
 logfile_path = None

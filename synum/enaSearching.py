@@ -55,7 +55,10 @@ def sample_exists(sample_accession: str,
         "fields": "sample_accession"
     }
     response = requests.get(url, params=params)
-
+    print("URL IS", url)
+    print("PARAMS ARE, ", params)
+    print("RESPONSE TEXT IS")
+    print(response.text)
     data = response.text.split('\n')
     if (data[0] != 'sample_accession') or (data[1] not in [sample_accession, '']):
         loggingC.message(f"\nERROR: Unexpected response when querying ENA API for sample accession {sample_accession}.", threshold=-1)
@@ -110,10 +113,10 @@ def search_scientific_name_by_sample(sample_accession: str,
     Returns:
         str: The scientific name of the sample.
     """
-    print("CALLED WITH")
-    print(sample_accession)
-    print(testmode)
-    print("-----------------------------------")
+    #print("CALLED WITH")
+    #print(sample_accession)
+    #print(testmode)
+    #print("-----------------------------------")
     if testmode:
         #url = "https://wwwdev.ebi.ac.uk/ena/portal/api/search"
         url = staticConfig.ena_search_url
@@ -126,7 +129,7 @@ def search_scientific_name_by_sample(sample_accession: str,
         "fields": "scientific_name"
     }
     response = requests.get(url, params=params)
-    print(response.text)
+    #print(response.text)
 
     try:
         scientific_name = response.text.split('\n')[1:-1][0]
@@ -143,6 +146,8 @@ def search_scientific_name_by_sample(sample_accession: str,
 
 #For debugging
 #print(sample_exists('SAMEA113417025', True))
+#print(sample_exists('ERS28162653', True))
+
 #print(study_exists("PRJEB71644", True))
 
 #print(search_scientific_name_by_sample('ERS28140038', True))

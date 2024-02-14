@@ -17,10 +17,12 @@ def find_webin_cli_jar():
     if len(jar_files) == 1:
         return jar_files[0]
     elif len(jar_files) > 1:
-        print(f"ERROR: Multiple webin-cli .jar files found in {parent_dir}. Please ensure there's only one.")
+        err = f"ERROR: Multiple webin-cli .jar files found in {os.path.abspath(script_dir)}. Please ensure there's only one."
+        loggingC.message(err, threshold=-1)
         exit(1)
     else:
-        print(f"ERROR: webin_cli .jar file not found in {os.path.abspath(parent_dir)}.\nYou can download the .jar by running the webin_downloader.py file in the synum directory or manually from the ENA website.")
+        err = f"ERROR: webin_cli .jar file not found in {os.path.abspath(script_dir)}.\nYou can download the .jar by running the webin_downloader.py file in the synum directory or manually from the ENA website."
+        loggingC.message(err, threshold=-1)
         exit(1)
 
 def __webin_cli_validate(manifest,
@@ -172,9 +174,10 @@ def webin_cli(manifest,
                                         jar)
         receipt = os.path.join(outputdir, context, subdir_name.replace(' ','_'), 'submit', 'receipt.xml')
         if accession is None:
-            print(f"ERROR: Submission failed for {inputdir}")
-            print(f"If the submission failed during validation, please consult the output of Webin-CLI.")
-            print(f"Otherwise please check the receipt at {receipt}")
+            err =  f"ERROR: The submission failed for {inputdir}."
+            err += f"If the submission failed during validation, please consult the output of Webin-CLI."
+            err += f"Otherwise please check the receipt at {receipt}"
+            loggingC.message(err, threshold=-1)
             exit(1)
     else:
         loggingC.message(f">Validating {subdir_name} for ENA submission using webin-cli", threshold=1)

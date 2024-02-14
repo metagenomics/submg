@@ -1,7 +1,7 @@
 import os
 import yaml
 
-from synum.statConf import YAMLCOMMENTS, YAMLEXAMPLES
+from synum.statConf import YAMLCOMMENTS, YAMLEXAMPLES, staticConfig
 
 
 def __write_yaml(data: dict,
@@ -84,24 +84,7 @@ def __check_parameters(outpath: str,
         exit(1)
 
     # The valid submission modes we support are 
-    submission_modes = """
-    The following modes of submission are supported:
-
-      Samples + Reads + Assembly + Bins + MAGs
-      Samples + Reads + Assembly + Bins
-      Samples + Reads + Assembly
-                Reads + Assembly + Bins + MAGs
-                Reads + Assembly + Bins
-                Reads + Assembly
-                        Assembly + Bins + MAGs
-                        Assembly + Bins
-                        Assembly
-                                   Bins + MAGs
-                                   Bins
-                                          MAGs
-    
-    Submitting single and paired reads at the same time works.
-    """
+    submission_modes = staticConfig.submission_modes_message
 
     # Do we lack coverage data or have redundancy
     if (coverage_from_bam + known_coverage) != 1:
@@ -174,7 +157,7 @@ def __make_config_dict(submit_samples: int,
 
     # Platform - needed for assembly and bins
     if submit_assembly or submit_bins or submit_mags:
-        config['SEQUENCING_PLATFORMS'] = []
+        config['SEQUENCING_PLATFORMS'] = list()
 
     if submit_mags:
         config['PROJECT_NAME'] = None
@@ -198,7 +181,7 @@ def __make_config_dict(submit_samples: int,
     if len(samples) > 0:
         config['NEW_SAMPLES'] = samples
     else:
-        config['SAMPLE_ACCESSIONS'] = []
+        config['SAMPLE_ACCESSIONS'] = list()
 
     # Make the SINGLE READ section
     reads = []
@@ -258,8 +241,8 @@ def __make_config_dict(submit_samples: int,
     if submit_assembly:
         if known_coverage:
             assembly['COVERAGE_VALUE'] = None
-        assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = list()
-        assembly['ADDITIONAL_MANIFEST_FIELDS'] = list()
+        assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = None
+        assembly['ADDITIONAL_MANIFEST_FIELDS'] = None
     if submit_mags: # Since we need this for MAGs, we might as well ask for it here
         assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = {
             'broad-scale environmental context': None,
