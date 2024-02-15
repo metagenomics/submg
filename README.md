@@ -25,7 +25,7 @@ Synum aids in the submission of metagenomic experiment data to the European Nucl
 Please Note:
 1. The tool will work *only* for metagenomic data.
 2. Right now the tool cannot automatically derive the taxonomy of eukaryotic bins. We are working on it.
-3. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenome bin. Bins should be submitted before MAGs.
+3. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenomic bin. Bins should be submitted before MAGs.
 4. In case you intend to upload results based on third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
 5. Please [report](#support) any issues you have with this tool. We'll get back to you as soon as possible.
 
