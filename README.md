@@ -12,11 +12,15 @@
 
 # Synum
 Synum aids in the submission of metagenomic experiment data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in single YAML form, Synum derives additional information where required, creates all samplesheets and manifests and uploads everything to your ENA account.
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="synum/img/steps_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="synum/img/steps_light.png">
   <img alt="Steps of submitting data with synum" src="synum/img/steps_light.png">
 </picture>
+
+&nbsp;
+&nbsp;
 
 Please Note:
 1. The tool will work *only* for metagenomic data.
