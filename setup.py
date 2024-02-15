@@ -10,7 +10,7 @@ class CustomInstall(install):
 
 setup(
     name='synum',
-    version='0.2.1',
+    version='0.2.2',
     packages=find_packages(),
     install_requires=[
         'pysam>=0.19.1',
@@ -37,7 +37,7 @@ setup(
     # Metadata
     author='ttubb',
     author_email='t.tubbesing@uni-bielefeld.de',
-    description='A tool for submitting metagenomes and metagenome bins to ENA',
+    description='A tool for submitting metagenome data to ENA',
     keywords='Metagenome, MAG, ENA, Submission',
     url='https://github.com/ttubb/synum',
 )
