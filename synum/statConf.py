@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 @dataclass
 class staticConfig:
     synum_version: str = '0.2.1'
-    webin_cli_version: str = '7.0.0'
+    webin_cli_version: str = '7.0.1'
     #ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/webin-v2/submit/'
     #ena_test_dropbox_url: str = 'https://wwwdev.ebi.ac.uk/ena/submit/webin-v2/submit/'
     ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/drop-box/submit/'

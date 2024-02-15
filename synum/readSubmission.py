@@ -196,7 +196,7 @@ def submit_reads(config,
     for name, receipt in read_receipts.items():
         loggingC.message(f"\t{name}: {os.path.abspath(receipt)}", threshold=1)
 
-    read_to_accession_file = os.path.join(logging_dir, 'read_to_preliminary_accession.tsv')
+    read_to_accession_file = os.path.join(logging_dir, 'readset_to_preliminary_accession.tsv')
     with open(read_to_accession_file, 'w') as f:
         writer = csv.writer(f, delimiter='\t')
         for name, accession in read_accessions.items():
