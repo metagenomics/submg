@@ -22,7 +22,6 @@ def main():
                                      Environment variables ENA_USER and ENA_PASSWORD must be set for ENA upload.""")
     parser.add_argument("-v", "--version",          action="version", version=f"%(prog)s {staticConfig.synum_version}")
     
-
     subparsers = parser.add_subparsers(dest='mode')
 
     parser_download_webin = subparsers.add_parser('download_webin', help='Download a compatible version of the webin-cli .jar file')
@@ -241,4 +240,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
+    

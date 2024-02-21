@@ -1,5 +1,5 @@
 # I don't remember exactly why I wrote this but during development there was
-# some issue with the python logging module and this was a quick solution..
+# some issue with the python logging module and this was a quick solution...
 
 import os
 

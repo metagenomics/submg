@@ -195,6 +195,18 @@ def submit_assembly(config: dict,
     Submits the assembly to ENA.
 
     Args:
+        config (dict): The configuration dictionary.
+        staging_dir (str): The staging directory.
+        logging_dir (str): The logging directory.
+        depth_files (str): The path to the depth files.
+        sample_accessions_data (list): The sample accessions.
+        run_accessions (list): The run accessions.
+        threads (int, optional): The number of threads to use. Defaults to 4.
+        test (bool, optional): Whether to use the test server. Defaults to True.
+        submit (bool, optional): Whether to submit the assembly. Defaults to
+            True.
+        staticConfig (staticConfig, optional): The static configuration object.
+            Defaults to staticConfig.
 
     Returns:
         Tuple[str, str]: The assembly sample accession and the assembly

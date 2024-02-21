@@ -1,6 +1,5 @@
 import requests
 
-#from synum import utility
 from synum import loggingC
 from synum.statConf import staticConfig
 
@@ -42,6 +41,14 @@ def study_exists(study_accession: str,
 def sample_exists(sample_accession: str,
                   testmode: bool) -> bool:
     """
+    Check if a sample with the input accession exists in ENA.
+
+    Args:
+        sample_accession (str): The sample accession.
+        testmode (bool):        Whether to use the test server.
+
+    Returns:
+        bool: True if the sample exists, False if not.
     """
     if testmode:
         #url = "https://wwwdev.ebi.ac.uk/ena/portal/api/search"
@@ -113,10 +120,6 @@ def search_scientific_name_by_sample(sample_accession: str,
     Returns:
         str: The scientific name of the sample.
     """
-    #print("CALLED WITH")
-    #print(sample_accession)
-    #print(testmode)
-    #print("-----------------------------------")
     if testmode:
         #url = "https://wwwdev.ebi.ac.uk/ena/portal/api/search"
         url = staticConfig.ena_search_url
@@ -147,33 +150,8 @@ def search_scientific_name_by_sample(sample_accession: str,
 #For debugging
 #print(sample_exists('SAMEA113417025', True))
 #print(sample_exists('ERS28162653', True))
-
 #print(study_exists("PRJEB71644", True))
-
 #print(search_scientific_name_by_sample('ERS28140038', True))
 #print(search_scientific_name_by_sample("SAMEA114749859", True))
 #print(search_samples_by_assembly_analysis('ERZ1049590'))
 #print(search_runs_by_sample('SAMEA113417025'))
-
-# def search_runs_by_sample(sample_accession):
-#     """
-#     Get a list of run accessions for a given sample accession.
-#     """
-#     url = "https://www.ebi.ac.uk/ena/portal/api/search"
-#     #url = staticConfig.ena_search_url
-#     params = {
-#         "query": f"sample_accession={sample_accession}",
-#         "result": "read_run",
-#         "fields": "run_accession"
-#     }
-#     response = requests.get(url, params=params)
-#     #utility.api_response_check(response)
-
-#     #print(response.url)  # This will show you the full URL after adding the parameters
-#     #print(response.status_code)
-#     run_accessions = response.text.split('\n')[1:-1]
-#     print(response.text.split('\n'))
-
-#     print(type(response.text))
-#     print((run_accessions))
-#     return run_accessions

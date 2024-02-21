@@ -63,6 +63,15 @@ def __prep_samplesheet(config: dict,
 
 
 def __read_samplesheet_receipt(receipt_path: str) -> list:
+    """
+    Reads the receipt of the samplesheet upload.
+
+    Args:
+        receipt_path: The path to the receipt file.
+
+    Returns:
+        list: The accessions of the submitted samples.
+    """
     tree = ET.parse(receipt_path)
     tree_root = tree.getroot()
 
@@ -98,6 +107,16 @@ def __submit_samplesheet(samplesheet: str,
                          logging_dir: str,
                          url: str) -> list:
     """
+    Submits the samplesheet to ENA.
+
+    Args:
+        samplesheet: The path to the samplesheet.
+        staging_dir: The directory where the submission receipt will be written.
+        logging_dir: The directory where the submission receipt will be written.
+        url: The URL of the ENA API.
+
+    Returns:
+        list: The accessions of the submitted samples.
     """
     
     # Make the submission xml
@@ -136,6 +155,15 @@ def submit_samples(config: dict,
                    test: bool  = True) -> list:
     """
     Submits the specified samples to ENA.
+
+    Args:
+        config: The configuration dictionary.
+        staging_dir: The directory where the samplesheet will be written.
+        logging_dir: The directory where the submission receipt will be written.
+        test: Whether to use the test or production ENA API.
+
+    Returns:
+        list: The accessions of the submitted samples.
     """
 
     if test:

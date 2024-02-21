@@ -9,6 +9,20 @@ def __write_yaml(data: dict,
                  no_comments: bool = False,
                  comments: dict = YAMLCOMMENTS,
                  examples: dict = YAMLEXAMPLES) -> None:
+    """
+    Write a dictionary to a YAML file, with comments and examples.
+
+    Args:
+        data (dict): The dictionary to be written to the file
+        outpath (str): The path where the file should be written
+        no_comments (bool): Whether to write the file without comments
+        comments (dict): A dictionary with keys corresponding to the keys in the
+            data dictionary and values corresponding to the comments that should
+            be written for each key
+        examples (dict): A dictionary with keys corresponding to the keys in the
+            data dictionary and values corresponding to the examples that should
+            be written for each key
+    """
 
 
     # Function to handle None values, representing them as empty fields
@@ -359,177 +373,3 @@ def make_config(outpath: str,
             in the config file.
             Only fill out one of these fields and leave the other empty.""")
           
-    
-# def __LEOLD_make_config_dict(submit_samples: int,
-#                        submit_single_reads: int,
-#                        submit_paired_end_reads: int,
-#                        coverage_from_bam: bool,
-#                        known_coverage: bool,
-#                        submit_assembly: bool,
-#                        submit_bins: bool,
-#                        submit_mags: bool) -> None:
-#     """
-
-#     """
-
-#     # Create the config dictionary. We always need a 'STUDY' field
-#     config = {'STUDY': ""}
-    
-#     # Metagenome taxonomy
-#     # We need the scientific name for everything except reads
-#     # If the assembly was already submitted, then we can derive the taxonomy
-#     if not submit_assembly and submit_bins or submit_mags:
-#         pass # We can derive the taxonomy from the assembly
-#     elif submit_assembly or submit_bins or submit_mags or submit_samples:
-
-#     elif not submit_assembly and 
-#     if submit_samples > 0 or submit_assembly or submit_bins or submit_mags:
-#         config['METAGENOME_SCIENTIFIC_NAME'] = ""
-#     # we only need the taxid if we are submitting bins or an assembly
-#     if (submit_samples > 0) or (submit_assembly > 0):
-#         config['METAGENOME_TAXID'] = ""
-
-#     # Platform - needed for assembly and bins
-#     if submit_assembly or submit_bins or submit_mags:
-#         config['SEQUENCING_PLATFORMS'] = [""]
-
-#     # Make the SAMPLE section
-#     samples = []
-#     for _ in range(submit_samples):
-#         entry = {'TITLE': "",
-#                  'DESCRIPTION': "",
-#                  'COLLECTION_DATE': "",
-#                  'LOCATION': "",
-#                  'OPTIONAL_FIELDS': None}
-#         if submit_mags:
-#             entry['OPTIONAL_FIELDS']['geographic location (latitude)'] = ""
-#             entry['OPTIONAL_FIELDS']['geographic location (longitude)'] = ""
-#         samples.append(entry)
-#     if len(samples) > 0:
-#         config['NEW_SAMPLES'] = samples
-#     else:
-#         if submit_assembly or submit_bins or submit_mags:
-#             config['SAMPLE_ACCESSIONS'] = [""]
-
-#     # Make the SINGLE READ section
-#     reads = []
-#     for _ in range(submit_single_reads):
-#         entry = {'NAME': "",
-#                  'READ_TYPE': "",
-#                  'SEQUENCING_INSTRUMENT': "",
-#                  'LIBRARY_SOURCE': "",
-#                  'LIBRARY_SELECTION': "",
-#                  'LIBRARY_STRATEGY': "",
-#                  'FASTQ_FILE': "",
-#                  'OPTIONAL_FIELDS': None}
-#         if submit_samples > 0:
-#             entry['RELATED_SAMPLE_TITLE'] = ""
-#         else:
-#             entry['RELATED_SAMPLE_ACCESSION'] = ""
-#         reads.append(entry)
-#     if len(reads) > 0:
-#         config['SINGLE_READS'] = reads
-
-#     # Make the PAIRED-END READ section
-#     reads = []
-#     for _ in range(submit_paired_end_reads):
-#         entry = {'NAME': "",
-#                  'READ_TYPE': "",
-#                  'INSTRUMENT': "",
-#                  'LIBRARY_SOURCE': "",
-#                  'LIBRARY_SELECTION': "",
-#                  'LIBRARY_STRATEGY': "",
-#                  'FASTQ1_FILE': "",
-#                  'FASTQ2_FILE': "",
-#                  'OPTIONAL_FIELDS': None}
-#         if submit_samples > 0:
-#             entry['RELATED_SAMPLE_TITLE'] = ""
-#         else:
-#             entry['RELATED_SAMPLE_ACCESSION'] = ""
-#         reads.append(entry)
-#     if len(reads) > 0:
-#         config['PAIRED_END_READS'] = reads
-
-#     # Make the ASSEMBLY section
-#     assembly = {}
-#     if (not submit_assembly) and submit_bins or submit_mags:
-#         assembly['ASSEMBLY_ACCESSION'] = ""
-#     if submit_assembly or submit_bins or submit_mags:
-#         assembly['ASSEMBLY_NAME'] = ""
-#     if submit_assembly:
-#         assembly['ASSEMBLY_SOFTWARE'] = ""
-#         assembly['ISOLATION_SOURCE'] = ""
-#         assembly['LOCATION'] = ""
-#         assembly['FASTA_FILE'] = ""
-#     if (not submit_single_reads) and (not submit_paired_end_reads):
-#         assembly['READ_ACCESSIONS'] = [""]
-#     if submit_assembly or submit_bins or submit_mags:
-#         assembly['OPTIONAL_FIELDS'] = None
-
-#     # Make the BINS section
-#     if submit_bins or submit_mags:
-#         bins = {
-#             'BINS_DIRECTORY': "",
-#             'COMPLETENESS_SOFTWARE': "",
-#             'BIN_QUALITY_FILE': "",
-#             'BIN_NCBI_TAXONOMY_FILES': [""],
-#             'MANUAL_TAXONOMY_FILE': "",
-#             'BINNING_SOFTWARE': "",
-#         }
-
-#     # Make the MAGs section (and add fields to the BINS section)
-#     if submit_mags:
-#         # Extra that can easily be provided on assembly level
-#         assembly['broad-scale environmental context'] = ""
-#         assembly['local environmental context'] = ""
-#         assembly['environmental medium'] = ""
-#         assembly['geographic location (latitude)'] = ""
-#         assembly['geographic location (longitude)'] = ""
-#         # Extra information needed on bin level
-#         bins['BINNING_PARAMETERS'] = ""
-#         bins['TAXONOMIC_IDENTITY_MARKER'] = ""
-#         mags = {
-#             'MAG_NAMES_FILE': "",
-#         }
-
-            
-#         mags = {
-#             'MAGS_FILE': "",
-#             'MAG_QUALITY_FILE': "",
-#             'MAG_NCBI_TAXONOMY_FILES': [""],
-#             'MANUAL_TAXONOMY_FILE': "",
-#             'MAGS_SOFTWARE': "",
-#         }
-#         bins['MAGS'] = mags
-
-#     # Add optional fields to assembly, bins, mags
-#     if submit_assembly:
-#         assembly['OPTIONAL_FIELDS'] = None
-#     if submit_bins or submit_mags:
-#         bins['OPTIONAL_FIELDS'] = None
-#     if submit_mags:
-#         mags['OPTIONAL_FIELDS'] = None
-    
-#     # Add assembly, bins, mags to the dict
-#     if submit_assembly or submit_bins or submit_mags:
-#         config['ASSEMBLY'] = assembly
-#     if submit_bins or submit_mags:
-#         config['BINS'] = bins
-#     if submit_mags:
-#         config['MAGS'] = mags
-
-#     # BAM files if we need to calculate coverages
-#     if submit_assembly or submit_bins or submit_mags:
-#         if coverage_from_bam:
-#             assert known_coverage == False
-#             config['BAM_FILES'] = [""]
-#         elif known_coverage:
-#             assert coverage_from_bam == False
-#             if submit_assembly:
-#                 config['ASSEMBLY']['COVERAGE'] = ""
-#             if submit_bins:
-#                 config['BINS']['COVERAGE_FILE'] = ""
-#         else:
-#             raise ValueError("Either coverage_from_bam or known_coverage must be set to True")
-
-#     return config

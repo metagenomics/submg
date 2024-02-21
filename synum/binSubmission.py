@@ -814,6 +814,15 @@ def bin_coverage_from_depth(depth_files: str,
                               bin_name_to_fasta: dict,
                               threads: int = 4) -> dict:
     """
+    Calculate coverage for each bin from depth files.
+
+    Args:
+        depth_files (str): Path to the depth files.
+        bin_name_to_fasta (dict): Dictionary mapping bin names to fasta files.
+        threads (int, optional): Number of threads to use for calculation. Defaults to 4.
+
+    Returns:
+        dict: Dictionary mapping bin names to coverage values.
     """
     loggingC.message(">Calculating coverage for each bin from depth files.", threshold=0)
     bin_coverages = {}
@@ -827,7 +836,16 @@ def bin_coverage_from_depth(depth_files: str,
 
 def bin_coverage_from_tsv(bin_coverage_file: str,
                           bin_names: dict) -> dict:
-    """
+    """Reads coverage for each bin from a tsv file.
+
+    Args:
+        bin_coverage_file (str): The path to the tsv file containing the bin
+            coverage data.
+        bin_names (dict): A dictionary mapping bin names to their corresponding
+            IDs.
+
+    Returns:
+        dict: A dictionary mapping bin names to their coverage values.
     """
     loggingC.message(">Reading coverage for each bin from tsv file.", threshold=0)
     bin_coverages = {}
@@ -846,7 +864,14 @@ def bin_coverage_from_tsv(bin_coverage_file: str,
     
 
 def get_bins_in_dir(bins_directory: str) -> list:
-    """
+    """ 
+    Get a dictionary mapping bin names to their corresponding fasta file paths in the given directory.
+
+    Args:
+        bins_directory (str): The directory containing the bin files.
+
+    Returns:
+        dict: A dictionary mapping bin names to their corresponding fasta file paths.
     """
     bin_files = os.listdir(bins_directory)
     bin_name_to_fasta = {}
