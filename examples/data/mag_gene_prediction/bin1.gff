@@ -1,0 +1,14 @@
+##gff-version  3
+# Sequence Data: seqnum=1;seqlen=120;seqhdr="k141_12553"
+# Model Data: version=Prodigal.v2.6.3;run_type=Metagenomic;model="6|Anaplasma_phagocytophilum_HZ|B|41.6|11|1";gc_cont=41.60;transl_table=11;uses_sd=1
+k141_12553	Prodigal_v2.6.3	CDS	1	120	5.7	-	0	ID=1_1;partial=11;start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.367;conf=78.80;score=5.71;cscore=4.10;sscore=1.61;rscore=0.00;uscore=0.00;tscore=1.61;
+# Sequence Data: seqnum=2;seqlen=5940;seqhdr="k141_2510"
+# Model Data: version=Prodigal.v2.6.3;run_type=Metagenomic;model="8|Bacteroides_fragilis_NCTC_9343|B|43.2|11|0";gc_cont=43.20;transl_table=11;uses_sd=0
+k141_2510	Prodigal_v2.6.3	CDS	2	109	18.7	-	0	ID=2_1;partial=10;start_type=ATG;rbs_motif=TAAA;rbs_spacer=12bp;gc_cont=0.417;conf=98.66;score=18.69;cscore=0.82;sscore=17.87;rscore=11.00;uscore=2.75;tscore=4.12;
+k141_2510	Prodigal_v2.6.3	CDS	181	1113	120.8	-	0	ID=2_2;partial=00;start_type=ATG;rbs_motif=TAAAAA;rbs_spacer=10bp;gc_cont=0.407;conf=100.00;score=121.91;cscore=101.28;sscore=20.63;rscore=12.15;uscore=3.26;tscore=4.12;
+k141_2510	Prodigal_v2.6.3	CDS	1130	2203	127.4	-	0	ID=2_3;partial=00;start_type=ATG;rbs_motif=TAAA;rbs_spacer=13bp;gc_cont=0.411;conf=100.00;score=126.72;cscore=112.34;sscore=14.38;rscore=5.41;uscore=5.50;tscore=4.12;
+k141_2510	Prodigal_v2.6.3	CDS	2433	3065	63.7	+	0	ID=2_4;partial=00;start_type=ATG;rbs_motif=AAAAA;rbs_spacer=11bp;gc_cont=0.420;conf=100.00;score=63.66;cscore=49.42;sscore=14.25;rscore=8.87;uscore=1.26;tscore=4.12;
+k141_2510	Prodigal_v2.6.3	CDS	3068	3532	9.1	+	0	ID=2_5;partial=00;start_type=ATG;rbs_motif=AAA;rbs_spacer=5bp;gc_cont=0.338;conf=91.48;score=10.33;cscore=7.94;sscore=2.39;rscore=-3.72;uscore=0.74;tscore=4.12;
+k141_2510	Prodigal_v2.6.3	CDS	3546	4097	46.5	+	0	ID=2_6;partial=00;start_type=ATG;rbs_motif=TAAA;rbs_spacer=12bp;gc_cont=0.384;conf=100.00;score=47.65;cscore=28.60;sscore=19.05;rscore=11.00;uscore=2.80;tscore=4.12;
+k141_2510	Prodigal_v2.6.3	CDS	4090	4653	69.8	+	0	ID=2_7;partial=00;start_type=ATG;rbs_motif=AAAAA;rbs_spacer=12bp;gc_cont=0.417;conf=100.00;score=71.05;cscore=49.12;sscore=21.92;rscore=8.87;uscore=7.68;tscore=4.12;
+k141_2510	Prodigal_v2.6.3	CDS	4797	5939	95.2	+	0	ID=2_8;partial=01;start_type=ATG;rbs_motif=TATAA;rbs_spacer=3bp;gc_cont=0.425;conf=100.00;score=95.19;cscore=82.50;sscore=12.68;rscore=5.35;uscore=3.21;tscore=4.12;
