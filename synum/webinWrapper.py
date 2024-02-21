@@ -71,18 +71,6 @@ def __webin_cli_validate(manifest,
         # Finally, log the exception itself
         loggingC.message(f"\nERROR: Validation failed with error: {e}", threshold=-1)
 
-#    try:
-#        if verbose<1:
-#            subprocess.run(cmd,
-#                           stdout = subprocess.DEVNULL,
-#                           stderr = subprocess.DEVNULL,
-#                           check=True)
-#        else:
-#            subprocess.run(cmd,
-#                           check=True)
-#    except subprocess.CalledProcessError as e:
-#        print(f"\nERROR: Validation failed with error: {e}") 
-
         
 def __webin_cli_submit(manifest,
                        inputdir,

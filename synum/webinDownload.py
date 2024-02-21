@@ -41,18 +41,3 @@ def download_webin_cli(version):
         print("#####")
         print(f">WARNING: Failed to download Webin-CLI. Please download version {version} manually from the ENA website and place it in the same directory as this script.")
         print("#####")
-
-#def main():
-#    """ Checks if Java is installed and downloads the webin-cli .jar file
-#        from the ENA website.
-#    """
-#    toolVersion, webinCliVersion = versions()
-#    print(f">Versions: tool={toolVersion}, webin-cli={webinCliVersion}")
-#    print(">Checking Java installation...")
-#    check_java()
-#    print("")
-#    download_webin_cli(webinCliVersion)
-#    
-#if __name__ == "__main__":
-#    main()
-    
