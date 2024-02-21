@@ -5,7 +5,7 @@ from datetime import datetime
 from synum import loggingC, utility, enaSearching
 from synum.statConf import staticConfig
 from synum.webinWrapper import find_webin_cli_jar
-from synum.binSubmission import query_ena_taxonomy
+from synum.taxQuery import ena_taxonomy_suggestion
 import time
 import csv
 
@@ -275,10 +275,10 @@ def __check_misc(arguments: dict,
     if arguments['submit_assembly']:
         metagenome_scientific_name = utility.from_config(config, 'METAGENOME_SCIENTIFIC_NAME')
         metagenome_taxid = utility.from_config(config, 'METAGENOME_TAXID')
-        taxdata = query_ena_taxonomy(level="metagenome",
-                                     domain="metagenome",
-                                     classification=metagenome_scientific_name,
-                                     filtered=True)
+        taxdata = ena_taxonomy_suggestion(level="metagenome",
+                                          domain="metagenome",
+                                          classification=metagenome_scientific_name,
+                                          filtered=True)
         if len(taxdata) == 0 or len(taxdata) > 1:
             err = f"\nERROR: The scientific name '{metagenome_scientific_name}' is not valid."
             loggingC.message(err, threshold=-1)

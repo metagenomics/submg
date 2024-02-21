@@ -5,14 +5,14 @@ import os
 import time
 import traceback
 
-from synum import loggingC, utility, preflight, configGen, webinDownload, enaSearching
+from synum import loggingC, utility, preflight, configGen, webinDownload, enaSearching, taxQuery
 from synum.statConf import staticConfig
 
 from synum.utility import prepdir
 from synum.sampleSubmission import submit_samples
 from synum.readSubmission import submit_reads
 from synum.assemblySubmission import submit_assembly
-from synum.binSubmission import submit_bins, get_bin_taxonomy, get_bin_quality
+from synum.binSubmission import submit_bins, get_bin_quality
 from synum.magSubmission import submit_mags
 
 
@@ -110,7 +110,7 @@ def main():
                         err += f"\nENA will reject the submission of this bin. Consult the 'Contamination above 100%' of README.md for more information."
                         loggingC.message(err, threshold=-1)
                         exit(1)
-                bin_taxonomy = get_bin_taxonomy(config)
+                bin_taxonomy = taxQuery.get_bin_taxonomy(config)
             
             # Construct depth files if there are .bam files in the config
             if 'BAM_FILES' in config.keys():
