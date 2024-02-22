@@ -1,4 +1,4 @@
-# ABOUT: This is a config for submitting 1 set of paired and reads, an assembly, bins and MAGs
+# ABOUT: This is a config for submitting 1 set of unpaired reads, an assembly, bins and MAGs
 # ABOUT: Coverage is known.
 # ABOUT: Taxonomy is derived from `gtdb_to_ncbi_majority_vote.py` output and a MANUAL_TAXONOMY_FILE
 # ABOUT: Uses the locus tag 'LTAG01' 
