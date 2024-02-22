@@ -24,10 +24,9 @@ Synum aids in the submission of metagenomic experiment data to the European Nucl
 
 Please Note:
 1. The tool will work *only* for metagenomic data.
-2. Right now the tool cannot automatically derive the taxonomy of eukaryotic bins. We are working on it.
-3. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenomic bin. Bins should be submitted before MAGs.
-4. In case you intend to upload results based on third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
-5. Please [report](#support) any issues you have with this tool. We'll get back to you as soon as possible.
+2. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenomic bin. Bins should be submitted before MAGs.
+3. In case you intend to upload results based on third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
+4. Please [report](#support) any issues you have with this tool. We'll get back to you as soon as possible.
 
 # Content
 - [Installation](#installation)
@@ -101,8 +100,8 @@ A MAG assembly can be submitted either as a 'Contig Assembly' or a 'Chromosome A
 If you are submitting MAGs, you need to provide a .tsv file and specify it in the `MAGS_METADATA_FILE` field of your config file. The file needs to specifiy the columns `Bin_id`, `Sample_id`, `Quality_category`, `Flatfile_path` and `Unlocalised_path`. An example of such a file can be found in `./examples/data/mags/mags_metadata.tsv`.
 Depending on your submission, not all columns have to be filled out.
 - `Bin_id`: Identifier of the bin. Has to be identical to the identifier used in the name of the fasta file, the taxonomy .tsv files etc.
-- `Quality_category`: 'finished', 'high' or 'medium' as defined by ENA here https://ena-docs.readthedocs.io/en/latest/faq/metagenomes.html (note the requirements regarding RNA sequences for the 'high' and 'finished' categories).
-- `Flatfile_path`: For chromosome assemblies only. Either a .FASTA file or an [EMBL-Flatfile]https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html) can be [used for MAG submission](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#flat-file). If you leave the field empty, the .FASTA file of the corresponding bin will be used. If you want to provide annotation data, you need to provide a path to a flatfile. [EMBLmyGFF3](https://github.com/NBISweden/EMBLmyGFF3) provides a convenient way to create flatfiles based on your annotation data.
+- `Quality_category`: 'finished', 'high' or 'medium' as defined by ENA [here](https://ena-docs.readthedocs.io/en/latest/faq/metagenomes.html) (note the requirements regarding RNA sequences for the 'high' and 'finished' categories).
+- `Flatfile_path`: For chromosome assemblies only. Either a .FASTA file or an [EMBL-Flatfile](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html) can be [used for MAG submission](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#flat-file). If you leave the field empty, the .FASTA file of the corresponding bin will be used. If you want to provide annotation data, you need to provide a path to a flatfile. [EMBLmyGFF3](https://github.com/NBISweden/EMBLmyGFF3) provides a convenient way to create flatfiles based on your annotation data.
 - `Unlocalised_path`: For chromosome assemblies only. Optional. [Path to a .txt file containing the unlocalised contigs of the bin](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#unlocalised-list-file).
 
 Using the table below, MAG `m1` will be submitted as a medium quality contig assembly without annotation. `m2` will be submitted as a high quality contig assembly and include annotation. MAG `m3` will be submitted as a finished chromosome assembly, including annotation. 
