@@ -105,7 +105,7 @@ Depending on your submission, not all columns have to be filled out.
 - `Unlocalised_path`: For chromosome assemblies only. Optional. [Path to a .txt file containing the unlocalised contigs of the bin](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#unlocalised-list-file).
 
 Using the table below, MAG `m1` will be submitted as a medium quality contig assembly without annotation. `m2` will be submitted as a high quality contig assembly and include annotation. MAG `m3` will be submitted as a finished chromosome assembly, including annotation. 
-|Bin_id|Quality_category|Flatfile_path|Chromosome_path|Unlocalised_path|
+|Bin_id|Quality_category|Flatfile_path|Chromosomes_path|Unlocalised_path|
 |---|---|---|---|---|
 |m1|medium||||
 |m2|high|/path/to/m2_flatfile.tsv|||

@@ -110,7 +110,7 @@ YAMLCOMMENTS = {
     'COVERAGE_VALUE': "Read coverage of the assembly.",
     'COVERAGE_FILE': ".tsv file containing the coverage values of each bin. Columns must be 'Bin_id' and 'Coverage'.",
     'INSERT_SIZE': "Insert size of the paired-end reads (https://www.ebi.ac.uk/fg/annotare/help/seq_lib_spec.html)",
-    'MAG_METADATA_FILE': "A .tsv specifying 'Bin_id', 'Sample_id', 'Quality_category', 'Flatfile_path' and 'Unlocalised_path' for all MAGs. See README for more details."
+    'MAG_METADATA_FILE': "A .tsv specifying 'Bin_id', 'Sample_id', 'Quality_category', 'Flatfile_path', 'Chromosomes_path' and 'Unlocalised_path' for all MAGs. See README for more details."
 }
 
 YAMLEXAMPLES = {
