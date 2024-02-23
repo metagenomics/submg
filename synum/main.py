@@ -223,7 +223,7 @@ def main():
             loggingC.message(msg, threshold=0)
 
             # Cleanup
-            if not args.keep_depth_files:
+            if not args.keep_depth_files and depth_files is not None:
                 loggingC.message(">Deleting depth files to free up disk space.", threshold=0)
                 for depth_file in depth_files:
                     os.remove(depth_file)

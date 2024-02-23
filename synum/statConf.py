@@ -13,7 +13,7 @@ class staticConfig:
     sequence_assembly_type: str = "primary metagenome"
     zipped_fasta_extension: str = ".fna.gz"
     zipped_fastq_extension: str = ".fastq.gz"
-    emblff_extension: str = ".embl"
+    zipped_emblff_extension: str = ".embl.gz"
     fasta_extensions: str = '.fa;.fasta;.fna;.FA;.FASTA;.FNA'
     fastq_extensions: str = '.fq;.fastq;.FQ;.FASTQ'
     bam_extensions: str = '.bam;.BAM;'
@@ -72,7 +72,7 @@ YAMLCOMMENTS = {
     'collection date': "Any ISO compliant time. Can be truncated from the right (e.g. '2023-12-27T16:07' or '2023-12')",
     'geographic location (country and/or sea)': 'See ENA checklists (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000011) for valid values',
     'SAMPLE_ACCESSIONS': "These samples exist in ENA. Your assembly is based on them.",
-    'ADDITIONAL_SAMPLESHEET_FIELDS': "Please add more fields from the ENA samplesheet that most closely matches your experiment",
+    'ADDITIONAL_SAMPLESHEET_FIELDS': "You can add more fields from the ENA samplesheet that most closely matches your experiment",
     'ADDITIONAL_MANIFEST_FIELDS': "You can add additional fields that will be written to the manifest",
     'NAME': "Choose a unique name",
     'SEQUENCING_INSTRUMENT': "One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument",

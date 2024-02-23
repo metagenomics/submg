@@ -67,10 +67,6 @@ def sample_exists(sample_accession: str,
         "fields": "sample_accession"
     }
     response = requests.get(url, params=params)
-    print("URL IS", url)
-    print("PARAMS ARE ", params)
-    print("RESPONSE TEXT IS")
-    print(response.text)
     data = response.text.split('\n')
     if (data[0] != 'sample_accession') or (data[1] not in [sample_accession, '']):
         loggingC.message(f"\nERROR: Unexpected response when querying ENA API for sample accession {sample_accession}.", threshold=-1)

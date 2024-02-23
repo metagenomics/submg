@@ -167,7 +167,7 @@ def read_yaml(file_path):
         loggingC.message(err, threshold=-1)
         exit(1)
     except Exception as e:
-        err = f"\nERROR: An error occurred while reading {file_path}, error is: {e}"
+        err = f"\nERROR: An error occurred while reading {file_path}, error is:\n{e}"
         loggingC.message(err, threshold=-1)
         exit(1)
 

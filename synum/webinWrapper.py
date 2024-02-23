@@ -163,8 +163,8 @@ def webin_cli(manifest,
         receipt = os.path.join(outputdir, context, subdir_name.replace(' ','_'), 'submit', 'receipt.xml')
         if accession is None:
             err =  f"ERROR: The submission failed for {inputdir}."
-            err += f"If the submission failed during validation, please consult the output of Webin-CLI."
-            err += f"Otherwise please check the receipt at {receipt}"
+            err += f" If the submission failed during validation, please consult the output of Webin-CLI."
+            err += f" Otherwise please check the receipt at {receipt}"
             loggingC.message(err, threshold=-1)
             exit(1)
     else:
