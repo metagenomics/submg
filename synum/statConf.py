@@ -15,7 +15,7 @@ class staticConfig:
     fasta_extensions: str = '.fa;.fasta;.fna;.FA;.FASTA;.FNA'
     fastq_extensions: str = '.fq;.fastq;.FQ;.FASTQ'
     bam_extensions: str = '.bam;.BAM;'
-    taxonomic_levels: str = 'species;genus;family;order;class;phylum;kingdom'
+    taxonomic_levels: str = 'species;genus;family;order;class;phylum;domain'
     molecule_types: str = 'genomic DNA;genomic RNA;viral cRNA;viral ssDNA;viral ssRNA;viral dsDNA;viral dsRNA'
     bin_assembly_quality: str = "Many fragments with little to no review of assembly other than reporting of standard assembly statistics."
     bin_investigation_type: str = 'metagenome-assembled genome'

@@ -362,19 +362,44 @@ def __check_assembly(arguments: dict,
         
 
     else:
-        if 'EXISTING_ASSEMBLY_ANAYLSIS_ACCESSION' in config.keys():
+        biological_sample_accessions = utility.from_config(config, 'SAMPLE_ACCESSIONS')
+        if not isinstance(biological_sample_accessions, list):
+            biological_sample_accessions = [biological_sample_accessions]
+        resulting_accession = None
+        if 'EXISTING_ASSEMBLY_ANAYLSIS_ACCESSION' in assembly_data:
+            print("c1")
             assembly_analysis_accession = utility.from_config(config,
                                                               'ASSEMBLY',
                                                               'EXISTING_ASSEMBLY_ANAYLSIS_ACCESSION')
-            sample_accessions = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession, testmode)
-        elif 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in config.keys():
+            if not assembly_analysis_accession is None or assembly_analysis_accession == '':
+                resulting_accession = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession, testmode)
+                if not len(biological_sample_accessions) == 1:
+                    err = f"\nERROR: When providing an existing assembly analysis accession, you need to provide exactly one biological sample accession in the SAMPLE_ACCESSIONS field."
+                    loggingC.message(err, threshold=-1)
+                    exit(1) 
+            else:
+                resulting_accession = None
+        if resulting_accession is None and 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data:
             sample_accessions = utility.from_config(config, 'ASSEMBLY', 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION')
-            if not enaSearching.sample_exists(sample_accessions, testmode):
-                err = f"\nERROR: The co-assembly sample accession '{sample_accessions}' could not be found on the {servertype} ENA server."
-                loggingC.message(err, threshold=-1)
-                exit(1)
-        else:
+            if not sample_accessions is None or sample_accessions == '':
+                if not enaSearching.sample_exists(sample_accessions, testmode):
+                    err = f"\nERROR: The co-assembly sample accession '{sample_accessions}' could not be found on the {servertype} ENA server."
+                    loggingC.message(err, threshold=-1)
+                    exit(1)
+                else:
+                    resulting_accession = sample_accessions
+                    if len(biological_sample_accessions) < 2:
+                        err = f"\nERROR: When providing an existing co-assembly sample accession, you need to provide at least two biological sample accessions in the SAMPLE_ACCESSIONS field."
+                        loggingC.message(err, threshold=-1)
+                        exit(1)
+            else:
+                resulting_accession = None
+        if (not 'EXISTING_ASSEMBLY_ANAYLSIS_ACCESSION' in assembly_data) and (not 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data):
             err = f"\nERROR: You chose not to submit an assembly, but did not provide an assembly accession."
+            loggingC.message(err, threshold=-1)
+            exit(1)
+        if resulting_accession is None:
+            err = f"\nPlease provide either an existing assembly analysis accession or an existing co-assembly sample accession."
             loggingC.message(err, threshold=-1)
             exit(1)
 
@@ -407,6 +432,10 @@ def __check_bins(arguments: dict,
     
     # Check quality file existence and columns
     quality_file = bin_data['QUALITY_FILE']
+    if quality_file is None or quality_file == '':
+        err = f"\nERROR: No QUALITY_FILE was provided in the BINS section."
+        loggingC.message(err, threshold=-1)
+        exit(1)
     __check_tsv(quality_file, staticConfig.bin_quality_columns.split(';'))
 
 
@@ -439,6 +468,11 @@ def __check_bins(arguments: dict,
             loggingC.message(err, threshold=-1)
             exit(1)
         if not bin_data['MANUAL_TAXONOMY_FILE'] is None:
+            if bin_data['MANUAL_TAXONOMY_FILE'] == '':
+                err = f"\nERROR: Ane empty string was provided as MANUAL_TAXONOMY_FILE in the BINS section."
+                err += f"\nPlease provide a valid file path or remove the field from the config file."
+                loggingC.message(err, threshold=-1)
+                exit(1)
             __check_tsv(bin_data['MANUAL_TAXONOMY_FILE'], staticConfig.manual_taxonomy_columns.split(';'))
             tax_files.append(bin_data['MANUAL_TAXONOMY_FILE'])
     # And if the headers of the MANUAL_TAXONOMY_FILE are correct
@@ -499,6 +533,10 @@ def __check_mags(arguments: dict,
 
     # Check the metadata file
     metadata_file = utility.from_config(config, 'MAGS', 'MAG_METADATA_FILE')
+    if metadata_file is None or metadata_file == '':
+        err = f"\nERROR: No MAG_METADATA_FILE was provided in the MAGS section."
+        loggingC.message(err, threshold=-1)
+        exit(1)
     __check_tsv(metadata_file, staticConfig.mag_metadata_columns.split(';'))
 
     # Check fields in ASSEMBLY section
@@ -568,6 +606,10 @@ def __check_coverage(arguments: dict,
         else:
             # Check if the coverage file exists and has valid headers
             bin_coverage_file = bin_data['COVERAGE_FILE']
+            if bin_coverage_file is None or bin_coverage_file == '':
+                err = f"\nERROR: The field COVERAGE_FILE in the BINS section is empty."
+                loggingC.message(err, threshold=-1)
+                exit(1)
             __check_tsv(bin_coverage_file, staticConfig.bin_coverage_columns.split(';'))
 
     # Are there bam files?

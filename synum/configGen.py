@@ -165,7 +165,7 @@ def __make_config_dict(submit_samples: int,
     # Metagenome taxonomy
     # We need the scientific & taxid name for everything except reads
     # If the assembly was already submitted, we can derive the taxonomy from the assembly
-    if submit_assembly:
+    if submit_assembly or submit_bins or submit_mags:
         config['METAGENOME_SCIENTIFIC_NAME'] = None
         config['METAGENOME_TAXID'] = None
 
@@ -258,6 +258,7 @@ def __make_config_dict(submit_samples: int,
         assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = None
         assembly['ADDITIONAL_MANIFEST_FIELDS'] = None
     if submit_mags: # Since we need this for MAGs, we might as well ask for it here
+        assembly['ISOLATION_SOURCE'] = None
         assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = {
             'broad-scale environmental context': None,
             'local environmental context': None,
