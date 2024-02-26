@@ -4,8 +4,6 @@ from dataclasses import dataclass, field
 class staticConfig:
     synum_version: str = '0.2.1'
     webin_cli_version: str = '7.0.1'
-    #ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/webin-v2/submit/'
-    #ena_test_dropbox_url: str = 'https://wwwdev.ebi.ac.uk/ena/submit/webin-v2/submit/'
     ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/drop-box/submit/'
     ena_test_dropbox_url: str = 'https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/'
     ena_search_url: str = 'https://www.ebi.ac.uk/ena/portal/api/search'
@@ -104,8 +102,6 @@ YAMLCOMMENTS = {
     'BINNING_SOFTWARE': "The program that was used for binning.",
     'binning parameters': "For more information consult an appropriate ENA samplesheet template (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000047)",
     'taxonomic identity marker': "For more information consult an appropriate ENA samplesheet template (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000047)",
-#    'MAG_NAMES_FILE': "A .txt file specifying which of the bins are MAGs. One bin_id per line. No header.",
-#    'MAG_QCATEGORY_FILE': ".tsv file containing the quality category of each MAG. Columns must be 'Bin_id' and 'Quality_category'.",
     'BAM_FILES': "The reads from your experiment mapped back to the assembly",
     'COVERAGE_VALUE': "Read coverage of the assembly.",
     'COVERAGE_FILE': ".tsv file containing the coverage values of each bin. Columns must be 'Bin_id' and 'Coverage'.",
@@ -153,8 +149,6 @@ YAMLEXAMPLES = {
         'BINNING_SOFTWARE': '\"metabat2\"',
         'binning parameters': '\"default\"',
         'taxonomic identity marker': '\"multi marker approach\"',
-#        'MAG_NAMES_FILE': '\"/mnt/data/mags.txt\"',
-#        'MAG_QCATEGORY_FILE': '\"/mnt/data/mag_qcat.tsv\"',
         'MAG_METADATA_FILE': '\"/mnt/data/mag_data.tsv\"',
         'INSERT_SIZE': '\"300\"',
     }
