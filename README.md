@@ -27,6 +27,7 @@ Please Note:
 2. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenomic bin. Bins should be submitted before MAGs.
 3. In case you intend to upload results based on third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
 4. Please [report](#support) any issues you have with this tool. We'll get back to you as soon as possible.
+5. If the tool doesn't cover your use case, let us know. We are happy to expand functionality.
 
 # Content
 - [Installation](#installation)
