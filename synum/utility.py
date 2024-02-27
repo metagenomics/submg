@@ -52,30 +52,6 @@ def construct_depth_files(staging_dir: str,
 
     return depth_files
 
-# def construct_depth_files(staging_dir: str,
-#                           threads: int,
-#                           config: dict) -> dict:
-#     """
-#     Construct depth files from bam files.
-
-#     Args:
-#         staging_dir: The staging directory.
-#         threads: The number of threads to use.
-#         config:  The config file as a dictionary.
-#     """
-#     loggingC.message(f">Constructing depth files from bam files using {threads} threads. This might be stuck at 0% for a while.", threshold=0)
-#     depth_files = []
-#     depth_directory = os.path.join(staging_dir, 'depth')
-#     os.makedirs(depth_directory)
-#     bam_files = from_config(config, 'BAM_FILES')
-#     if not type(bam_files) == list:
-#         bam_files = [bam_files]
-#     for bam_file in tqdm(bam_files, leave=False):
-#         depth_file = make_depth_file(bam_file,
-#                                              depth_directory,
-#                                              num_threads=threads)
-#         depth_files.append(depth_file)
-#     return depth_files
 
 def build_sample_submission_xml(outpath: str,
                                   hold_until_date: str = None):
@@ -241,18 +217,11 @@ def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
         return __strcast(config[key][subkey])
     return __strcast(config[key])
 
-def optional_from_config(config, key, subkey=None):
-    if not key in config:
+def optional_from_config(config, key, subkey=None, subsubkey=None):
+    try:
+        return from_config(config, key, subkey, subsubkey, supress_errors=True)
+    except:
         return ''
-    if not config[key]:
-        return ''
-    if subkey:
-        if not subkey in config[key]:
-            return ''
-        if not config[key][subkey]:
-            return ''
-        return config[key][subkey]
-    return config[key]
 
 # def calculate_assembly_length(fasta_file):
 #     """
@@ -483,97 +452,6 @@ def calculate_coverage(depth_files: list,
         loggingC.message(f"\t...coverage is {str(average_coverage)}", threshold+1)
 
     return average_coverage
-
-# def calculate_coverage(depth_files: list,
-#                        target_contigs: str = None,
-#                        threads=4):
-#     """
-#     Calculate the average coverage of an assembly based on multiple depth files.
-
-#     Args:
-#     depth_files (list of str): List of file paths to depth files.
-#     target_contigs (list of str): List of contigs to calculate coverage for.
-
-#     Returns:
-#     float: Average depth of coverage of the assembly.
-#     """
-#     total_coverage = 0.0
-#     total_length = 0.0
-
-#     loggingC.message(">Calculating coverage from depth files. This might take a while.", threshold=0)
-
-#     for depth_file in tqdm(depth_files, leave=False):
-#         with open(depth_file, 'r') as depth:
-#             contig_coverage, contig_length = contigs_coverage(depth)
-#             for contig in contig_coverage:
-#                 if target_contigs is not None:
-#                     if not contig in target_contigs:
-#                         continue
-#                 total_coverage += contig_coverage[contig]
-#                 total_length += contig_length[contig]
-
-#     average_coverage = total_coverage / total_length
-
-#     loggingC.message(f"\t...all depth files processed, coverage is {str(average_coverage)}", threshold=0)
-
-#     return average_coverage
-
-'''
-def calculate_coverage(bam_files, fasta_file, num_threads=4):
-    """
-    Calculate the average coverage of an assembly based on multiple .BAM files.
-
-    Args:
-    bam_files (list of str): List of file paths to .BAM files.
-    fasta_file (str): File path to the FASTA file for the assembly.
-
-    Returns:
-    float: Average depth of coverage of the assembly.
-    """
-    assembly_length = calculate_assembly_length(fasta_file)
-    total_coverage = 0.0
-    print(">Trying to calculate coverage (might be stuck at 0% for a long time)")
-
-    with yaspin(text=" ", color="yellow", spinner="dots") as spinner:
-        counter = -1
-        for bam_file in bam_files:
-            counter += 1
-            spinner.text = f"\t\t{counter} of {len(bam_files)} .bam files processed.   "
-            # Check the file ending
-            if bam_file.endswith('.BAM'):   
-                file_ending = '.BAM'
-            elif bam_file.endswith('.bam'):
-                file_ending = '.bam'
-            else:
-                ext = bam_file.split('.')[-1]
-                print(f"\nERROR: The file {bam_file} has the unexpected extension {ext} (expected .bam or .BAM).   ")
-                exit(1)
-
-            # Check if BAM file is sorted, sort it if not
-            sorted_bam_file = bam_file
-            try:
-                pysam.index(sorted_bam_file, "-@", str(num_threads))
-            except: # This might mean the bam file is not sorted, so we try that
-                time.sleep(1)
-                print(f"Error: Cannot read {bam_file}. The file might be unsorted, trying to sort...")
-                sorted_bam_file = bam_file.replace(file_ending, '.tmp.sorted'+file_ending)
-                pysam.sort("-o", sorted_bam_file, bam_file, "-@", str(num_threads))
-                time.sleep(1)
-                pysam.index(sorted_bam_file)
-                time.sleep(1)                
-
-            with pysam.AlignmentFile(sorted_bam_file, "rb") as bam:
-                for read in bam.fetch():
-                    if not read.is_unmapped:
-                        total_coverage += read.reference_length
-
-        counter += 1             
-        spinner.text = f"\t\t{counter} of {len(bam_files)} .bam files processed.   "
-    
-    average_coverage = total_coverage / assembly_length
-    print(f"\t...all bam files processed, coverage is {str(average_coverage)}")
-    return average_coverage
-'''
 
 
 def read_receipt(receipt_path: str) -> str:

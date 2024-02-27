@@ -366,21 +366,20 @@ def __check_assembly(arguments: dict,
         if not isinstance(biological_sample_accessions, list):
             biological_sample_accessions = [biological_sample_accessions]
         resulting_accession = None
-        if 'EXISTING_ASSEMBLY_ANAYLSIS_ACCESSION' in assembly_data:
-            print("c1")
-            assembly_analysis_accession = utility.from_config(config,
-                                                              'ASSEMBLY',
-                                                              'EXISTING_ASSEMBLY_ANAYLSIS_ACCESSION')
+        if 'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION' in assembly_data:
+            assembly_analysis_accession = utility.optional_from_config(config,
+                                                                       'ASSEMBLY',
+                                                                       'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION')
             if not assembly_analysis_accession is None or assembly_analysis_accession == '':
                 resulting_accession = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession, testmode)
                 if not len(biological_sample_accessions) == 1:
-                    err = f"\nERROR: When providing an existing assembly analysis accession, you need to provide exactly one biological sample accession in the SAMPLE_ACCESSIONS field."
+                    err = f"\nERROR: When providing an existing assembly analysis accession, you need to provide exactly one biological sample accession in the SAMPLE_ACCESSIONS field. If the assembly stems from 2 or more samples, please provide a co-assembly accession instead."
                     loggingC.message(err, threshold=-1)
                     exit(1) 
             else:
                 resulting_accession = None
         if resulting_accession is None and 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data:
-            sample_accessions = utility.from_config(config, 'ASSEMBLY', 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION')
+            sample_accessions = utility.optional_from_config(config, 'ASSEMBLY', 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION')
             if not sample_accessions is None or sample_accessions == '':
                 if not enaSearching.sample_exists(sample_accessions, testmode):
                     err = f"\nERROR: The co-assembly sample accession '{sample_accessions}' could not be found on the {servertype} ENA server."
@@ -394,7 +393,7 @@ def __check_assembly(arguments: dict,
                         exit(1)
             else:
                 resulting_accession = None
-        if (not 'EXISTING_ASSEMBLY_ANAYLSIS_ACCESSION' in assembly_data) and (not 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data):
+        if (not 'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION' in assembly_data) and (not 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data):
             err = f"\nERROR: You chose not to submit an assembly, but did not provide an assembly accession."
             loggingC.message(err, threshold=-1)
             exit(1)
@@ -697,5 +696,8 @@ def preflight_checks(arguments: dict) -> None:
         err = f"\nERROR: Staging directory is not empty: {arguments['staging_dir']}"
         loggingC.message(err, threshold=-1)
         exit(1)
+
+    msg = f">All preflight checks passed."
+    loggingC.message(msg, threshold=0)
 
     return config

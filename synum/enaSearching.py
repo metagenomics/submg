@@ -75,36 +75,6 @@ def sample_exists(sample_accession: str,
         return True
     return False
 
-# def sample_exists_post(sample_accession: str,
-#                        testmode: bool) -> bool:
-#     if testmode:
-#         #url = "https://wwwdev.ebi.ac.uk/ena/portal/api/search"
-#         url = staticConfig.ena_search_url
-#     else:
-#         #url = "https://www.ebi.ac.uk/ena/portal/api/search"
-#         url = staticConfig.ena_test_search_url
-#     data = {
-#         'result': 'sample',
-#         'fields': 'sample_accession',
-#         'query': f'sample_accession=\"{sample_accession}\"'
-#     }
-#     headers = {
-#         'Content-Type': 'application/x-www-form-urlencoded',
-#         'Accept': '*/*'
-#     }
-#     auth = utility.get_login()
-#     response = requests.post(url, data=data, auth=auth, headers=headers)
-#     print("URL IS", url)
-#     print("DATA IS ", data)
-#     print("RESPONSE TEXT IS")
-#     print(response.text)
-#     data = response.text.split('\n')
-#     if (data[0] != 'sample_accession') or (data[1] not in [sample_accession, '']):
-#         loggingC.message(f"\nERROR: Unexpected response when querying ENA API for sample accession {sample_accession}.", threshold=-1)
-#         exit(1)
-#     if data[1] == sample_accession:
-#         return True
-#     return False
 
 
 def search_samples_by_assembly_analysis(assembly_analysis_accession: str,
@@ -164,7 +134,6 @@ def search_scientific_name_by_sample(sample_accession: str,
         "fields": "scientific_name"
     }
     response = requests.get(url, params=params)
-    #print(response.text)
 
     try:
         scientific_name = response.text.split('\n')[1:-1][0]

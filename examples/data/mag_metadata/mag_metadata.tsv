@@ -1,4 +1,4 @@
-Bin_id	Quality_category	Flatfile_path	Unlocalised_path
+Bin_id	Quality_category	Flatfile_path	Chromosomes_path	Unlocalised_path
 bin1	medium
 bin2	medium
 bin3	high
