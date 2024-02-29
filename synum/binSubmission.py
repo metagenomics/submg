@@ -854,7 +854,7 @@ def bin_coverage_from_tsv(bin_coverage_file: str,
         reader = csv.DictReader(f, delimiter='\t')
         for row in reader:
             bin_name = row['Bin_id']
-            coverage = float(row['coverage'])
+            coverage = float(row['Coverage'])
             bin_coverages[bin_name] = coverage
     for known_name in bin_names:
         if not known_name in bin_coverages:

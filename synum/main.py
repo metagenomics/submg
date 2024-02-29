@@ -218,12 +218,12 @@ def main():
                             test=args.development_service)
 
             msg =  "\n>All submissions completed."
-            msg += "\n>You will receiv final accessions once your submission has been processed by ENA."
+            msg += "\n>You will receive final accessions once your submission has been processed by ENA."
             msg += "\n>ENA will send those final accession by email to the contact adress of your ENA account."
             loggingC.message(msg, threshold=0)
 
             # Cleanup
-            if not args.keep_depth_files:
+            if not args.keep_depth_files and depth_files is not None:
                 loggingC.message(">Deleting depth files to free up disk space.", threshold=0)
                 for depth_file in depth_files:
                     os.remove(depth_file)

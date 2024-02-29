@@ -42,6 +42,7 @@ def __check_tsv(tsvfile: str,
 
 def __check_fields(items: list,
                    mandatory_fields: list,
+                   optional: bool = False,
                    category_name: str = "item"):
     """
     Check if the mandatory fields are present and not empty in each item of the
@@ -49,21 +50,33 @@ def __check_fields(items: list,
     
     Args:
         items (list): The list of items to check.
-        mandatory_fields (list): The list of fields that must be present in each
-            item.
+        mandatory_fields (list): List of tuples containing the name of a field
+            and the type it should be. Each field must be present in each item
+            of the list.
+        optional (bool, optional): Whether or not the fields are optional. If
+            True, the function will only checks if existing fields are of the
+            correct type. Defaults to False.
         category_name (str, optional): The name of the category being checked.
             Only used for error messages. Defaults to "item".
     """
     if not isinstance(items, list):
         items = [items]
     for item in items:
-        for field in mandatory_fields:
+        for field, field_type in mandatory_fields:
             if not field in item.keys():
-                err = f"\nERROR: A '{field}' field is missing in the {category_name} section (or one of the items in this section)."
-                loggingC.message(err, threshold=-1)
-                exit(1)
-            if item[field] is None or item[field] == '':
-                err = f"\nERROR: A '{field}' field is empty in the {category_name} section (or one of the items in this section)."
+                if not optional:
+                    err = f"\nERROR: A '{field}' field is missing in the {category_name} section (or one of the items in this section)."
+                    loggingC.message(err, threshold=-1)
+                    exit(1)
+            elif item[field] is None or item[field] == '':
+                if not optional:
+                    err = f"\nERROR: A '{field}' field is empty in the {category_name} section (or one of the items in this section)."
+                    loggingC.message(err, threshold=-1)
+                    exit(1)
+            elif not isinstance(item[field], field_type):
+                found_type = type(item[field]).__name__
+                desired_type = field_type.__name__
+                err = f"\nERROR: The '{field}' field in the {category_name} section (or one of the items in this section) is not of the correct type (type is <{found_type}> but should be <{desired_type}>)."
                 loggingC.message(err, threshold=-1)
                 exit(1)
 
@@ -147,7 +160,8 @@ def __check_samples(arguments: dict,
         err = f"\nERROR: You chose to submit samples, but did not provide any sample data."
         loggingC.message(err, threshold=-1)
         exit(1)
-    mandatory_fields = ['collection date', 'geographic location (country and/or sea)']
+    mandatory_fields = [('collection date', str),
+                        ('geographic location (country and/or sea)', str)]
     __check_fields(sample_items, mandatory_fields, category_name="NEW_SAMPLE")
     for s in sample_items:
         __check_date(s['collection date'])
@@ -175,19 +189,19 @@ def __check_read_type(paired: bool,
         err = f"\nERROR: You chose to submit {type}, but did not provide any data in the config."
         loggingC.message(err, threshold=-1)
         exit(1)
-    mandatory_fields = ['NAME',
-                        'LIBRARY_SOURCE',
-                        'LIBRARY_SELECTION',
-                        'LIBRARY_STRATEGY']
+    mandatory_fields = [('NAME', str),
+                        ('LIBRARY_SOURCE', str),
+                        ('LIBRARY_SELECTION', str),
+                        ('LIBRARY_STRATEGY', str),]
     if paired:
-        mandatory_fields.extend(['FASTQ1_FILE',
-                                 'FASTQ2_FILE'])
+        mandatory_fields.extend([('FASTQ1_FILE', str),
+                                 ('FASTQ2_FILE', str),])
     else:
-        mandatory_fields.append('FASTQ_FILE')
+        mandatory_fields.append(('FASTQ_FILE',  str))
     if arguments['submit_samples']:
-        mandatory_fields.append('RELATED_SAMPLE_TITLE')
+        mandatory_fields.append(('RELATED_SAMPLE_TITLE', str),)
     else:
-        mandatory_fields.append('RELATED_SAMPLE_ACCESSION')
+        mandatory_fields.append(('RELATED_SAMPLE_ACCESSION',  str),)
 
     for s in read_items:
         # Check if all fields are present and not empty
@@ -329,12 +343,12 @@ def __check_assembly(arguments: dict,
             loggingC.message(err, threshold=-1)
             exit(1)
         mandatory_fields = [
-            'ASSEMBLY_NAME',
-            'ASSEMBLY_SOFTWARE',
-            'ISOLATION_SOURCE',
-            'FASTA_FILE',
-            'collection date',
-            'geographic location (country and/or sea)',
+            ('ASSEMBLY_NAME', str),
+            ('ASSEMBLY_SOFTWARE', str),
+            ('ISOLATION_SOURCE', str),
+            ('FASTA_FILE', str),
+            ('collection date', str),
+            ('geographic location (country and/or sea)', str),
         ]
         __check_fields(assembly_data, mandatory_fields, category_name="ASSEMBLY")
         __check_date(assembly_data['collection date'])
@@ -348,19 +362,43 @@ def __check_assembly(arguments: dict,
         
 
     else:
-        if 'EXISTING_ASSEMBLY_ANAYLSIS_ACCESSION' in config.keys():
-            assembly_analysis_accession = utility.from_config(config,
-                                                              'ASSEMBLY',
-                                                              'EXISTING_ASSEMBLY_ANAYLSIS_ACCESSION')
-            sample_accessions = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession, testmode)
-        elif 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in config.keys():
-            sample_accessions = utility.from_config(config, 'ASSEMBLY', 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION')
-            if not enaSearching.sample_exists(sample_accessions, testmode):
-                err = f"\nERROR: The co-assembly sample accession '{sample_accessions}' could not be found on the {servertype} ENA server."
-                loggingC.message(err, threshold=-1)
-                exit(1)
-        else:
+        biological_sample_accessions = utility.from_config(config, 'SAMPLE_ACCESSIONS')
+        if not isinstance(biological_sample_accessions, list):
+            biological_sample_accessions = [biological_sample_accessions]
+        resulting_accession = None
+        if 'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION' in assembly_data:
+            assembly_analysis_accession = utility.optional_from_config(config,
+                                                                       'ASSEMBLY',
+                                                                       'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION')
+            if not assembly_analysis_accession is None or assembly_analysis_accession == '':
+                resulting_accession = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession, testmode)
+                if not len(biological_sample_accessions) == 1:
+                    err = f"\nERROR: When providing an existing assembly analysis accession, you need to provide exactly one biological sample accession in the SAMPLE_ACCESSIONS field. If the assembly stems from 2 or more samples, please provide a co-assembly accession instead."
+                    loggingC.message(err, threshold=-1)
+                    exit(1) 
+            else:
+                resulting_accession = None
+        if resulting_accession is None and 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data:
+            sample_accessions = utility.optional_from_config(config, 'ASSEMBLY', 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION')
+            if not sample_accessions is None or sample_accessions == '':
+                if not enaSearching.sample_exists(sample_accessions, testmode):
+                    err = f"\nERROR: The co-assembly sample accession '{sample_accessions}' could not be found on the {servertype} ENA server."
+                    loggingC.message(err, threshold=-1)
+                    exit(1)
+                else:
+                    resulting_accession = sample_accessions
+                    if len(biological_sample_accessions) < 2:
+                        err = f"\nERROR: When providing an existing co-assembly sample accession, you need to provide at least two biological sample accessions in the SAMPLE_ACCESSIONS field."
+                        loggingC.message(err, threshold=-1)
+                        exit(1)
+            else:
+                resulting_accession = None
+        if (not 'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION' in assembly_data) and (not 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data):
             err = f"\nERROR: You chose not to submit an assembly, but did not provide an assembly accession."
+            loggingC.message(err, threshold=-1)
+            exit(1)
+        if resulting_accession is None:
+            err = f"\nPlease provide either an existing assembly analysis accession or an existing co-assembly sample accession."
             loggingC.message(err, threshold=-1)
             exit(1)
 
@@ -385,14 +423,18 @@ def __check_bins(arguments: dict,
         err = f"\nERROR: You chose to submit bins, but did not provide any bin data."
         loggingC.message(err, threshold=-1)
         exit(1)
-    mandatory_fields = ['BINS_DIRECTORY',
-                        'COMPLETENESS_SOFTWARE',
-                        'QUALITY_FILE',
-                        'BINNING_SOFTWARE']
+    mandatory_fields = [('BINS_DIRECTORY', str),
+                        ('COMPLETENESS_SOFTWARE', str),
+                        ('QUALITY_FILE', str),
+                        ('BINNING_SOFTWARE', str),]
     __check_fields(bin_data, mandatory_fields, category_name="BINS")
     
     # Check quality file existence and columns
     quality_file = bin_data['QUALITY_FILE']
+    if quality_file is None or quality_file == '':
+        err = f"\nERROR: No QUALITY_FILE was provided in the BINS section."
+        loggingC.message(err, threshold=-1)
+        exit(1)
     __check_tsv(quality_file, staticConfig.bin_quality_columns.split(';'))
 
 
@@ -425,6 +467,11 @@ def __check_bins(arguments: dict,
             loggingC.message(err, threshold=-1)
             exit(1)
         if not bin_data['MANUAL_TAXONOMY_FILE'] is None:
+            if bin_data['MANUAL_TAXONOMY_FILE'] == '':
+                err = f"\nERROR: Ane empty string was provided as MANUAL_TAXONOMY_FILE in the BINS section."
+                err += f"\nPlease provide a valid file path or remove the field from the config file."
+                loggingC.message(err, threshold=-1)
+                exit(1)
             __check_tsv(bin_data['MANUAL_TAXONOMY_FILE'], staticConfig.manual_taxonomy_columns.split(';'))
             tax_files.append(bin_data['MANUAL_TAXONOMY_FILE'])
     # And if the headers of the MANUAL_TAXONOMY_FILE are correct
@@ -458,9 +505,9 @@ def __check_bins(arguments: dict,
 
     # Check if the required arguments in ASSEMBLY section are present
     assembly_data = utility.from_config(config, 'ASSEMBLY')
-    mandatory_fields = ['ASSEMBLY_SOFTWARE',
-                        'collection date',
-                        'geographic location (country and/or sea)',]
+    mandatory_fields = [('ASSEMBLY_SOFTWARE', str),
+                        ('collection date', str),
+                        ('geographic location (country and/or sea)', str),]
     __check_fields(assembly_data, mandatory_fields, category_name="ASSEMBLY")
     __check_date(assembly_data['collection date'])
     __check_country_sea_location(assembly_data['geographic location (country and/or sea)'])
@@ -485,31 +532,35 @@ def __check_mags(arguments: dict,
 
     # Check the metadata file
     metadata_file = utility.from_config(config, 'MAGS', 'MAG_METADATA_FILE')
+    if metadata_file is None or metadata_file == '':
+        err = f"\nERROR: No MAG_METADATA_FILE was provided in the MAGS section."
+        loggingC.message(err, threshold=-1)
+        exit(1)
     __check_tsv(metadata_file, staticConfig.mag_metadata_columns.split(';'))
 
     # Check fields in ASSEMBLY section
     assembly_data = utility.from_config(config, 'ASSEMBLY')
-    mandatory_fields = ['ASSEMBLY_SOFTWARE',
-                        'collection date',
-                        'geographic location (country and/or sea)',]
+    mandatory_fields = [('ASSEMBLY_SOFTWARE', str),
+                        ('collection date', str),
+                        ('geographic location (country and/or sea)', str),]
     __check_fields(assembly_data, mandatory_fields, category_name="ASSEMBLY")
     __check_date(assembly_data['collection date'])
     __check_country_sea_location(assembly_data['geographic location (country and/or sea)'])
     assembly_additional_data = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS')
     mandatory_fields = [
-        'broad-scale environmental context',
-        'local environmental context',
-        'environmental medium',
-        'geographic location (latitude)',
-        'geographic location (longitude)',
+        ('broad-scale environmental context', str),
+        ('local environmental context', str),
+        ('environmental medium', str),
+        ('geographic location (latitude)', str),
+        ('geographic location (longitude)', str),
     ]
     __check_fields(assembly_additional_data, mandatory_fields, category_name="ASSEMBLY")
 
     # Check the BINS section (basic checks will already have been done in __check_bins)
     bins_additional_data = utility.from_config(config, 'BINS', 'ADDITIONAL_SAMPLESHEET_FIELDS')
     mandatory_fields = [
-        'binning parameters',
-        'taxonomic identity marker',
+        ('binning parameters', str),
+        ('taxonomic identity marker', str),
     ]
     __check_fields(bins_additional_data, mandatory_fields, category_name="BINS")
 
@@ -554,6 +605,10 @@ def __check_coverage(arguments: dict,
         else:
             # Check if the coverage file exists and has valid headers
             bin_coverage_file = bin_data['COVERAGE_FILE']
+            if bin_coverage_file is None or bin_coverage_file == '':
+                err = f"\nERROR: The field COVERAGE_FILE in the BINS section is empty."
+                loggingC.message(err, threshold=-1)
+                exit(1)
             __check_tsv(bin_coverage_file, staticConfig.bin_coverage_columns.split(';'))
 
     # Are there bam files?
@@ -641,5 +696,8 @@ def preflight_checks(arguments: dict) -> None:
         err = f"\nERROR: Staging directory is not empty: {arguments['staging_dir']}"
         loggingC.message(err, threshold=-1)
         exit(1)
+
+    msg = f">All preflight checks passed."
+    loggingC.message(msg, threshold=0)
 
     return config

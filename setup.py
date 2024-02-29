@@ -10,7 +10,7 @@ class CustomInstall(install):
 
 setup(
     name='synum',
-    version='0.2.2',
+    version='0.3.0',
     packages=find_packages(),
     install_requires=[
         'pysam>=0.19.1',

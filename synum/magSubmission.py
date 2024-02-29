@@ -33,6 +33,7 @@ def __read_mag_metadata(mag_metadata_file: str) -> dict:
             #fasta_path = row['Fasta_path']
             flatfile_path = row['Flatfile_path']
             unlocalised_path = row['Unlocalised_path']
+            chromosomes_path = row['Chromosomes_path']
 
             for fieldname in ['Bin_id', 'Quality_category']:
                 if row['Bin_id'] is None:
@@ -48,7 +49,8 @@ def __read_mag_metadata(mag_metadata_file: str) -> dict:
                 'Quality_category': quality_category,
                 'Flatfile_path': flatfile_path,
                 #'Fasta_path': fasta_path,
-                'Unlocalised_path': unlocalised_path
+                'Unlocalised_path': unlocalised_path,
+                'Chromosomes_path': chromosomes_path,
             }
     
     return metadata
@@ -271,8 +273,32 @@ def __stage_mag_submission(metadata,
         ['RUN_REF', run_accessions],
     ]
 
+
+    # Add chromosome info & stage chromosome files
+    if not metadata['Chromosomes_path'] is None:
+        chromsomes_target = os.path.join(staging_directory, 'CHROMOSOMES.tsv.gz')
+        chromosomes_source = metadata['Chromosomes_path']
+        if chromosomes_source.endswith('.gz'):
+            shutil.copyfile(chromosomes_source, chromsomes_target)
+        else:
+            with open(chromosomes_source, 'rb') as f_in:
+                with gzip.open(chromsomes_target, 'wb', compresslevel=5) as f_out:
+                    f_out.writelines(f_in)
+        rows.append(['CHROMOSOME_LIST', chromsomes_target])
+        if not metadata['Unlocalised_path'] is None:
+            unlocalised_target = os.path.join(staging_directory, 'UNLOCALISED.tsv.gz')
+            unlocalised_source = metadata['Unlocalised_path']
+            if unlocalised_source.endswith('.gz'):
+                shutil.copyfile(unlocalised_source, unlocalised_target)
+            else:
+                with open(unlocalised_source, 'rb') as f_in:
+                    with gzip.open(unlocalised_target, 'wb', compresslevel=5) as f_out:
+                        f_out.writelines(f_in)
+            rows.append(['UNLOCALISED_LIST', unlocalised_target])
+
+
     # Stage the fasta- or flatfile and add them to rows
-    if metadata['Flatfile_path'] is None:
+    if metadata['Flatfile_path'] is None or metadata['Flatfile_path'] == "":
         gzipped_fasta_path = os.path.join(staging_directory, "mag"+f"assembly_upload{staticConfig.zipped_fasta_extension}")
         #fasta = metadata['Fasta_path']
         # Get the fasta file of the bin with the matching name
@@ -287,9 +313,15 @@ def __stage_mag_submission(metadata,
                     f_out.writelines(f_in)
         rows.append(['FASTA', gzipped_fasta_path])
     else:
-        flatfile_target = os.path.join(staging_directory, "mag"+f"assembly_upload{staticConfig.emblff_extension}")
-        shutil.copyfile(metadata['Flatfile_path'], flatfile_target)
-        rows.append(['FLATFILE', flatfile_target])
+        flatfile_path = metadata['Flatfile_path']
+        gzipped_flatfile_target = os.path.join(staging_directory, "mag"+f"asmbly_upload{staticConfig.zipped_emblff_extension}")
+        if flatfile_path.endswith('.gz'):
+            shutil.copyfile(flatfile_path, gzipped_flatfile_target)
+        else:
+            with open(flatfile_path, 'rb') as f_in:
+                with gzip.open(gzipped_flatfile_target, 'wb', compresslevel=5) as f_out:
+                    f_out.writelines(f_in)
+        rows.append(['FLATFILE', gzipped_flatfile_target])
     
     # Write the Manifest
     manifest_path = os.path.join(staging_directory, 'MANIFEST')

@@ -24,7 +24,7 @@ def __report_tax_issues(issues):
     problematic_bins = set(problematic_bins)
     msg = '\n'.join(problematic_bins)
     loggingC.message(msg, threshold=-1)
-    msg = f"Please manually enter taxonomy data for these bins into a .tsv file and specify it in the MANUAL_TAXONOMY_FILE field in the config file."
+    msg = "Please consult the README. You can manually enter taxonomy data for these bins into a .tsv file and specify it in the MANUAL_TAXONOMY_FILE field in the config file."
     loggingC.message(msg, threshold=-1) 
 
     # Give a detailed listing of the issues
