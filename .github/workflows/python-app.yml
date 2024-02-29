@@ -44,7 +44,7 @@ jobs:
       run: |
         cd examples
         CFG=01_samples_reads_assembly_bins_mags.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
@@ -62,7 +62,7 @@ jobs:
       run: |
         cd examples
         CFG=02_samples_reads_assembly_bins.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
@@ -79,7 +79,7 @@ jobs:
       run: |
         cd examples
         CFG=03_samples_reads_assembly.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
@@ -95,7 +95,7 @@ jobs:
       run: |
         cd examples
         CFG=04_reads_assembly_bins_mags.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
@@ -112,7 +112,7 @@ jobs:
       run: |
         cd examples
         CFG=05_reads_assembly_bins.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
@@ -128,7 +128,7 @@ jobs:
       run: |
         cd examples
         CFG=06_reads_assembly.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
@@ -143,7 +143,7 @@ jobs:
       run: |
         cd examples
         CFG=07_assembly_bins_mags.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
@@ -159,7 +159,7 @@ jobs:
       run: |
         cd examples
         CFG=08_assembly_bins.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
@@ -174,7 +174,7 @@ jobs:
       run: |
         cd examples
         CFG=09_assembly.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
@@ -188,7 +188,7 @@ jobs:
       run: |
         cd examples
         CFG=10_bins_mags.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
@@ -203,7 +203,7 @@ jobs:
       run: |
         cd examples
         CFG=11_bins.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
@@ -217,7 +217,7 @@ jobs:
       run: |
         cd examples
         CFG=12_mags.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
