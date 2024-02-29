@@ -45,7 +45,7 @@ jobs:
         cd examples
         CFG=01_samples_reads_assembly_bins_mags.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example01/staging \
@@ -63,7 +63,7 @@ jobs:
         cd examples
         CFG=02_samples_reads_assembly_bins.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example02/staging \
@@ -80,7 +80,7 @@ jobs:
         cd examples
         CFG=03_samples_reads_assembly.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example03/staging \
@@ -96,7 +96,7 @@ jobs:
         cd examples
         CFG=04_reads_assembly_bins_mags.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example04/staging \
@@ -113,7 +113,7 @@ jobs:
         cd examples
         CFG=05_reads_assembly_bins.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example05/staging \
@@ -129,7 +129,7 @@ jobs:
         cd examples
         CFG=06_reads_assembly.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example06/staging \
@@ -144,7 +144,7 @@ jobs:
         cd examples
         CFG=07_assembly_bins_mags.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example07/staging \
@@ -160,7 +160,7 @@ jobs:
         cd examples
         CFG=08_assembly_bins.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example08/staging \
@@ -175,7 +175,7 @@ jobs:
         cd examples
         CFG=09_assembly.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example09/staging \
@@ -189,7 +189,7 @@ jobs:
         cd examples
         CFG=10_bins_mags.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example10/staging \
@@ -204,7 +204,7 @@ jobs:
         cd examples
         CFG=11_bins.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example11/staging \
@@ -218,7 +218,7 @@ jobs:
         cd examples
         CFG=12_mags.yaml
         RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
-        sed -i 's/idx00/${RANDOM_STR}/g' $CFG
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         synum submit \
           --config $CFG \
           --staging_dir example12/staging \
