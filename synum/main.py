@@ -218,8 +218,14 @@ def main():
                             test=args.development_service)
 
             msg =  "\n>All submissions completed."
-            msg += "\n>You will receive final accessions once your submission has been processed by ENA."
-            msg += "\n>ENA will send those final accession by email to the contact adress of your ENA account."
+            if args.development_service:
+                msg += "\n>This was a TEST submission to the ENA development server."
+                msg += "\n>You can check the status of your submission by logging into the development instance of the ENA submission website."
+                msg += "\n>Since this was a test submission, you will not receive final accessions via mail."
+                msg += "\n>Your data will be removed from the development server during the next 24 hours."
+            else:
+                msg += "\n>You will receive final accessions once your submission has been processed by ENA."
+                msg += "\n>ENA will send those final accession by email to the contact adress of your ENA account."
             loggingC.message(msg, threshold=0)
 
             # Cleanup
