@@ -25,51 +25,51 @@ def main():
     subparsers = parser.add_subparsers(dest='mode')
 
     subparsers.add_parser('download_webin',
-                          help='Download a compatible \
-                          version of the webin-cli .jar file')
+                          help='Download a compatible '
+                          'version of the webin-cli .jar file')
 
     parser_submit = subparsers.add_parser('submit',
-                                          help='Stage your data and submit it \
-                                           to either the ENA development or \
-                                           production server')
+                                          help='Stage your data and submit it '
+                                          'to either the ENA development or '
+                                          'production server')
     parser_submit.add_argument("-x",
                                "--config",
                                required=True,
-                               help="Path to the YAML file containing \
-                                metadata and filepaths. Mandatory")
+                               help="Path to the YAML file containing "
+                               "metadata and filepaths. Mandatory")
     parser_submit.add_argument("-g",
                                "--staging_dir",
                                required=True,
-                               help="Directory where files will be staged for \
-                                upload. Must be empty. May use up a lot of \
-                                disk space. Mandatory.")
+                               help="Directory where files will be staged for "
+                               "upload. Must be empty. May use up a lot of "
+                               "disk space. Mandatory.")
     parser_submit.add_argument("-l", "--logging_dir",
                                required=True,
-                               help="Directory where log files will be \
-                                stored. Must be empty. Mandatory.")
+                               help="Directory where log files will be "
+                               "stored. Must be empty. Mandatory.")
     parser_submit.add_argument("-y", "--verbosity",
                                type=int,
                                choices=[0, 1, 2],
                                default=1,
-                               help="Control the amount of logging to stdout. \
-                                [default 1]")
+                               help="Control the amount of logging to stdout. "
+                               "[default 1]")
     parser_submit.add_argument("-d",
                                "--development_service",
                                type=int,
                                choices=[0, 1],
                                default=1,
-                               help="Make submissions to the ENA dev test \
-                                server. [default 1/true]")
+                               help="Make submissions to the ENA dev test "
+                               "server. [default 1/true]")
     parser_submit.add_argument("-t",
                                "--threads",
                                type=int,
                                default=4,
-                               help="Number of threads used to process .bam \
-                                files. [default 4]")
+                               help="Number of threads used to process .bam "
+                               "files. [default 4]")
     parser_submit.add_argument("--keep_depth_files",
                                action="store_true",
-                               help="Do not delete depth files after running. \
-                                [default false]")
+                               help="Do not delete depth files after running. "
+                               "[default false]")
     parser_submit.add_argument("-r",
                                "--submit_reads",
                                action="store_true",
@@ -79,93 +79,93 @@ def main():
                                "--submit_samples",
                                action="store_true",
                                default=False,
-                               help="Use if you want to submit (biological) \
-                                sample objects.")
+                               help="Use if you want to submit (biological) "
+                               "sample objects.")
     parser_submit.add_argument("-a",
                                "--submit_assembly",
                                action="store_true",
                                default=False,
-                               help="Use if you want to submit one assembly. \
-                                To submit multiple assemblies, you need to \
-                                use the tool multiple times.")
+                               help="Use if you want to submit one assembly. "
+                               "To submit multiple assemblies, you need to "
+                               "use the tool multiple times.")
     parser_submit.add_argument("-b",
                                "--submit_bins",
                                action="store_true",
                                default=False,
-                               help="Use if you want to submit metagenome \
-                                bins (note that bins are different from MAGs \
-                                in the ENA definition).")
+                               help="Use if you want to submit metagenome "
+                               "bins (note that bins are different from MAGs "
+                               "in the ENA definition).")
     parser_submit.add_argument("-m",
                                "--submit_mags",
                                action="store_true",
                                default=False,
-                               help="Use if you want to submit\
-                                metagenome-assembled genomes (MAGs).")
+                               help="Use if you want to submit "
+                               "metagenome-assembled genomes (MAGs).")
     parser_submit.add_argument("--skip_checks",
                                action="store_true",
                                default=False,
                                help="Skip preflight checks. Use with caution.")
 
     parser_makecfg = subparsers.add_parser('makecfg',
-                                           help='Create a .yml file \
-                                            containing the fields you need to \
-                                            fill out prior to submission')
+                                           help='Create a .yml file '
+                                           'containing the fields you need to '
+                                           'fill out prior to submission')
     parser_makecfg.add_argument("-o",
                                 "--outfile",required=True,
-                                help="Path to the empty config that will be \
-                                 generated.")
+                                help="Path to the empty config that will be "
+                                "generated.")
     parser_makecfg.add_argument("-c",
                                 "--no_comments",
                                 action="store_true",
                                 default=False,
-                                help="Do not include field descriptions in \
-                                 the config file.")
+                                help="Do not include field descriptions in "
+                                "the config file.")
     parser_makecfg.add_argument("-s",
                                 "--submit_samples",
                                 type=int, default=0,
-                                help="If you want to submit (biological) \
-                                 sample objects, specify how many.")    
+                                help="If you want to submit (biological) "
+                                "sample objects, specify how many.")    
     parser_makecfg.add_argument("-rs",
                                 "--submit_single_reads",
                                 type=int,
                                 default=0,
-                                help="If you want to submit non-paired read \
-                                 files, specify how many.")
+                                help="If you want to submit non-paired read "
+                                "files, specify how many.")
     parser_makecfg.add_argument("-rp",
                                 "--submit_paired_end_reads",
                                 type=int,
                                 default=0,
-                                help="If you want to submit paired-end read \
-                                 files, specify how many.")
+                                help="If you want to submit paired-end read "
+                                "files, specify how many.")
     parser_makecfg.add_argument("-b",
                                 "--submit_bins",
                                 action="store_true",
                                 default=False,
-                                help="Use if you want to submit metagenome \
-                                 bins (note that bins are different from MAGs in the ENA definition).")
+                                help="Use if you want to submit metagenome "
+                                "bins (note that bins are different from MAGs in the ENA definition).")
     parser_makecfg.add_argument("-m",
                                 "--submit_mags",
                                 action="store_true",
                                 default=False,
-                                help="Use if you want to submit \
-                                 metagenome-assembled genomes (MAGs).")
+                                help="Use if you want to submit "
+                                "metagenome-assembled genomes (MAGs).")
     parser_makecfg.add_argument("-a",
                                 "--submit_assembly",
                                 action="store_true",
                                 default=False,
-                                help="Use if you want to submit one assembly. \
-                                 To submit multiple assemblies, you need to \
-                                 use the tool multiple times.")
+                                help="Use if you want to submit one assembly. "
+                                "To submit multiple assemblies, you need to "
+                                "use the tool multiple times.")
 
     coverage_group = parser_makecfg.add_mutually_exclusive_group(required=True)
     coverage_group.add_argument("--coverage_from_bam",
                                 action="store_true",
-                                help="Coverages will be calculated from a \
-                                 list of .bam files that you provide.")
+                                help="Coverages will be calculated from a "
+                                "list of .bam files that you provide.")
     coverage_group.add_argument("--known_coverage",
                                 action="store_true",
-                                help="Coverages are already known and you \
-                                 provide them as a .bam file.")
+                                help="Coverages are already known and you "
+                                "provide them as a .bam file.")
 
     args = parser.parse_args()
 
@@ -201,11 +201,11 @@ def main():
             wver = staticConfig.webin_cli_version
             loggingC.message(f">Running synum {sver} with webin-cli {wver}", 0)
             if args.development_service == 1:
-                loggingC.message(">Initializing a test submission to \
-                                   the ENA dev server.", 0)
+                loggingC.message((">Initializing a test submission to \
+                                   the ENA dev server."), 0)
             else:
-                loggingC.message(">Initializing a LIVE SUBMISSION to \
-                                   the ENA production server.", 0)
+                loggingC.message((">Initializing a LIVE SUBMISSION to \
+                                   the ENA production server."), 0)
                 time.sleep(5)
 
             if not args.skip_checks:
@@ -226,12 +226,16 @@ def main():
                 for name in bin_quality.keys():
                     contamination = bin_quality[name]['contamination']
                     if contamination > staticConfig.max_contamination:
-                        err = f"\nERROR: Bin {name} has a contamination score \
-                                of {contamination} which is higher than \
-                                {staticConfig.max_contamination}"
-                        err += "\nENA will reject the submission of this \
-                                bin. Consult the 'Contamination above 100%' \
-                                of README.md for more information."
+                        err = (
+                            f"\nERROR: Bin {name} has a contamination score "
+                            f"of {contamination} which is higher than "
+                            f"{staticConfig.max_contamination}"
+                        )
+                        err += (
+                            "\nENA will reject the submission of this "
+                            "bin. Consult the 'Contamination above 100%' "
+                            "of README.md for more information."
+                        )
                         loggingC.message(err, threshold=-1)
                         exit(1)
                 bin_taxonomy = taxQuery.get_bin_taxonomy(config)
@@ -344,22 +348,26 @@ def main():
                             threads=args.threads,
                             test=args.development_service)
 
-            msg =  "\n>All submissions completed."
+            msg = "\n>All submissions completed."
             if args.development_service:
-                msg += "\n>This was a TEST submission to the ENA development \
-                           server."
-                msg += "\n>You can check the status of your submission by \
-                           logging into the development instance of the ENA \
-                           submission website."
-                msg += "\n>Since this was a test submission, you will not \
-                           receive final accessions via mail."
-                msg += "\n>Your data will be removed from the development \
-                           server during the next 24 hours."
+                msg += (
+                    "\n>This was a TEST submission to the ENA development "
+                    "server."
+                    "\n>You can check the status of your submission by "
+                    "logging into the development instance of the ENA "
+                    "submission website."
+                    "\n>Since this was a test submission, you will not "
+                    "receive final accessions via mail."
+                    "\n>Your data will be removed from the development "
+                    "server during the next 24 hours."
+                )
             else:
-                msg += "\n>You will receive final accessions once your \
-                           submission has been processed by ENA."
-                msg += "\n>ENA will send those final accession by email to \
-                           the contact adress of your ENA account."
+                msg += (
+                    "\n>You will receive final accessions once your "
+                    "submission has been processed by ENA."
+                    "\n>ENA will send those final accession by email to "
+                    "the contact adress of your ENA account."
+                )
             loggingC.message(msg, threshold=0)
 
             # Cleanup
