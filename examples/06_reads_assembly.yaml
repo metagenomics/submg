@@ -10,7 +10,7 @@ METAGENOME_TAXID: "718289"                                                      
 SEQUENCING_PLATFORMS: ["ILLUMINA"]                                                          # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#platform >>EXAMPLE: ["ILLUMINA","OXFORD_NANOPORE"]
 SAMPLE_ACCESSIONS: ['SAMEA113417017']                                                       # These samples exist in ENA. Your assembly is based on them. >>EXAMPLE: ["ERS15898933","ERS15898932"]
 SINGLE_READS:                                     
-- NAME: "s01_se_reads"                                                                      # Choose a unique name >>EXAMPLE: "Bioreactor_2_replicate_1"
+- NAME: "idx00_s01_se_reads"                                                                      # Choose a unique name >>EXAMPLE: "Bioreactor_2_replicate_1"
   SEQUENCING_INSTRUMENT: 'Illumina MiSeq'                                                   # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument >>EXAMPLE: ["Illumina HiSeq 1500", "GridION"]
   LIBRARY_SOURCE: 'METAGENOMIC'                                                             # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "GENOMIC"
   LIBRARY_SELECTION: 'RANDOM'                                                               # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "RANDOM"
@@ -19,7 +19,7 @@ SINGLE_READS:
   RELATED_SAMPLE_ACCESSION: 'SAMEA113417017'                                                # The accession of the sample that these reads originate from >>EXAMPLE: "ERS15898933"
   ADDITIONAL_MANIFEST_FIELDS:                                                               # You can add additional fields that will be written to the manifest
 PAIRED_END_READS:                                 
-- NAME: "s01_pe_reads"                                                                      # Choose a unique name >>EXAMPLE: "Bioreactor_2_replicate_1"
+- NAME: "idx00_s01_pe_reads"                                                                      # Choose a unique name >>EXAMPLE: "Bioreactor_2_replicate_1"
   SEQUENCING_INSTRUMENT: 'Illumina MiSeq'                                                   # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument >>EXAMPLE: ["Illumina HiSeq 1500", "GridION"]
   LIBRARY_SOURCE: 'METAGENOMIC'                                                             # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "GENOMIC"
   LIBRARY_SELECTION: 'RANDOM'                                                               # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "RANDOM"
