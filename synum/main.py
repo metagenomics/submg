@@ -201,11 +201,11 @@ def main():
             wver = staticConfig.webin_cli_version
             loggingC.message(f">Running synum {sver} with webin-cli {wver}", 0)
             if args.development_service == 1:
-                loggingC.message((">Initializing a test submission to \
-                                   the ENA dev server."), 0)
+                loggingC.message((">Initializing a test submission to" \
+                                   "the ENA dev server."), 0)
             else:
-                loggingC.message((">Initializing a LIVE SUBMISSION to \
-                                   the ENA production server."), 0)
+                loggingC.message((">Initializing a LIVE SUBMISSION to" \
+                                   "the ENA production server."), 0)
                 time.sleep(5)
 
             if not args.skip_checks:

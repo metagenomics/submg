@@ -11,8 +11,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -30,8 +30,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -48,8 +48,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -65,8 +65,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -83,8 +83,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -100,8 +100,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -116,8 +116,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -133,8 +133,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -149,8 +149,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -164,8 +164,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -180,8 +180,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -195,8 +195,8 @@ RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
 sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "Running CFG: $CFG"
 synum submit \
 --config $LOCAL \
@@ -206,8 +206,8 @@ synum submit \
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 echo ""
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"
 echo "All examples submitted"
-echo "######################"
-echo "######################"
+echo "##################################################################"
+echo "##################################################################"

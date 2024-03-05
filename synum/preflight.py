@@ -569,9 +569,9 @@ def __check_mags(arguments: dict,
     cols = staticConfig.mag_metadata_columns.split(';')
     __check_tsv(metadata_file, cols)
     with open(metadata_file, 'r') as f:
-        reader = csv.DictReader(f, delimiter='\t')^
+        reader = csv.DictReader(f, delimiter='\t')
         for row in reader:
-            bin_id = row['Bin_id'].strip():
+            bin_id = row['Bin_id'].strip()
             if bin_id == '' or bin_id is None:
                 err = f"\nERROR: The metadata file '{metadata_file}' contains an empty bin_id field."
                 loggingC.message(err, threshold=-1)
@@ -581,10 +581,8 @@ def __check_mags(arguments: dict,
                 err = f"\nERROR: The metadata file '{metadata_file}' contains an empty Quality_category field."
                 loggingC.message(err, threshold=-1)
                 exit(1)
-            chromosomes_path = row['Chromosomes_path'].strip()
-            unlocalised_path = row['Unlocalised_path'].strip()
-            if chromosomes_path == '' or chromosomes_path is None:
-                if unlocalised_path:
+            if not row['Chromosomes_path']:
+                if row['Unlocalised_path']:
                     err = f"\nERROR: Error reading '{metadata_file}' at Bin_id {bin_id}. If you provide an Unlocalised_path, you need to provide a Chromosomes_path as well."
                     loggingC.message(err, threshold=-1)
                     exit(1)
