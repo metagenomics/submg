@@ -40,6 +40,7 @@ class staticConfig:
     mag_qstring_high: str = 'Multiple fragments where gaps span repetitive regions. Presence of the 23S, 16S and 5S rRNA genes and at least 18 tRNAs.'
     mag_qstring_medium: str = 'Many fragments with little to no review of assembly other than reporting of standard assembly statistics.'
     max_assembly_name_length: int = 50 - len('webin-genome-' + '_SAMEA________')
+    ena_rest_rate_limit: int = 50 # requests per second
     submission_modes_message: str = """
         The following modes of submission are supported:
 
