@@ -210,8 +210,10 @@ def main():
 
             if not args.skip_checks:
                 utility.validate_parameter_combination(args.submit_samples,
-                                                       args.submit_single_reads,
-                                                       )
+                                                       args.submit_reads,
+                                                       args.submit_assembly,
+                                                       args.submit_bins,
+                                                       args.submit_mags)
 
             config = preflight.preflight_checks(vars(args))
 
