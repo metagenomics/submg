@@ -5,9 +5,10 @@ from datetime import datetime
 from synum import loggingC, utility, enaSearching
 from synum.statConf import staticConfig
 from synum.webinWrapper import find_webin_cli_jar
-from synum.taxQuery import ena_taxonomy_suggestion
+from synum.taxQuery import taxid_from_scientific_name
 import time
 import csv
+
 
 def __check_tsv(tsvfile: str,
                 required_columns: list):
@@ -27,7 +28,7 @@ def __check_tsv(tsvfile: str,
     with open(tsvfile, 'r') as f:
         header = f.readline().strip().split('\t')
     for col in required_columns:
-        if not col in header:
+        if col not in header:
             err = f"\nERROR: The .tsv file '{tsvfile}' is missing the column '{col}'."
             loggingC.message(err, threshold=-1)
             exit(1)
@@ -63,7 +64,7 @@ def __check_fields(items: list,
         items = [items]
     for item in items:
         for field, field_type in mandatory_fields:
-            if not field in item.keys():
+            if field not in item.keys():
                 if not optional:
                     err = f"\nERROR: A '{field}' field is missing in the {category_name} section (or one of the items in this section)."
                     loggingC.message(err, threshold=-1)
@@ -169,6 +170,7 @@ def __check_samples(arguments: dict,
 
 
 def __check_read_type(paired: bool,
+                      config: dict,
                       read_items: list,
                       arguments: dict,
                       testmode: bool):
@@ -209,13 +211,35 @@ def __check_read_type(paired: bool,
                        mandatory_fields,
                        category_name=read_type)
         
-        # Check if the sample accession exists
-        if not arguments['submit_samples']:
+        # Check if sample accessions are coherent
+        if arguments['submit_samples']:
+            sample_title = s['RELATED_SAMPLE_TITLE']
+            # Does one of the samples have the same title
+            titles = []
+            for sample in utility.from_config(config, 'NEW_SAMPLES'):
+                titles.append(sample['TITLE'])
+            if sample_title not in titles:
+                err = f"\nERROR: The sample title '{sample_title}' was provided in the reads section but not matching sample exist in the NEW_SAMPLES section."
+                loggingC.message(err, threshold=-1)
+                exit(1)
+        else:
             sample_accession = s['RELATED_SAMPLE_ACCESSION']
+            # Do the samples exist in ENA
             if not enaSearching.sample_exists(sample_accession, testmode):
                 err = f"\nERROR: The sample accession '{sample_accession}' was provided in the reads section but does not exist on the ENA server."
                 loggingC.message(err, threshold=-1)
                 exit(1)
+            # Is it the same samples from the sample_accessions field
+            if 'SAMPLE_ACCESSIONS' in config:
+                sample_accessions = utility.from_config(config, 'SAMPLE_ACCESSIONS')
+                if not isinstance(sample_accessions, list):
+                    sample_accessions = [sample_accessions]
+                if not sample_accession in sample_accessions:
+                    err = f"\nERROR: The sample accession '{sample_accession}' was provided in the reads section but does not exist in the SAMPLE_ACCESSIONS field."
+                    loggingC.message(err, threshold=-1)
+                    exit(1)
+                
+            
 
         # Check if the FASTQ file exists and has a valid file extension
         if paired:
@@ -242,6 +266,7 @@ def __check_reads(arguments: dict,
         reads_present = True
         read_items = utility.from_config(config, 'SINGLE_READS')
         __check_read_type(paired=False,
+                          config=config,
                           read_items=read_items,
                           arguments=arguments,
                           testmode=testmode)
@@ -250,6 +275,7 @@ def __check_reads(arguments: dict,
         reads_present = True
         read_items = utility.from_config(config, 'PAIRED_END_READS')
         __check_read_type(paired=True,
+                          config=config,
                           read_items=read_items,
                           arguments=arguments,
                           testmode=testmode)
@@ -287,23 +313,23 @@ def __check_misc(arguments: dict,
 
     # Metagenome taxonomy
     if arguments['submit_assembly']:
-        metagenome_scientific_name = utility.from_config(config, 'METAGENOME_SCIENTIFIC_NAME')
+        metagenome_scientific_name = utility.from_config(config,
+                                                         'METAGENOME_SCIENTIFIC_NAME')
         metagenome_taxid = utility.from_config(config, 'METAGENOME_TAXID')
-        taxdata = ena_taxonomy_suggestion(level="metagenome",
-                                          domain="metagenome",
-                                          classification=metagenome_scientific_name,
-                                          filtered=True)
-        if len(taxdata) == 0 or len(taxdata) > 1:
-            err = f"\nERROR: The scientific name '{metagenome_scientific_name}' is not valid."
+        ena_taxid = taxid_from_scientific_name(metagenome_scientific_name)
+        if ena_taxid is None:
+            err = f"\nERROR: METAGENOME_SCIENTIFIC_NAME was specified as \
+                      '{metagenome_scientific_name}' but could not be mapped \
+                        to an NCBI tax id."
             loggingC.message(err, threshold=-1)
             exit(1)
-        taxdata = taxdata[0]
-        if not taxdata['tax_id'] == metagenome_taxid:
-            err = f"\nERROR: The taxid '{metagenome_taxid}' does not match the scientific name '{metagenome_scientific_name}'."
-            loggingC.message(err, threshold=-1)
-            exit(1)
+        else:
+            msg = f"Matched METAGENOME_SCIENTIFIC_NAME \
+                    '{metagenome_scientific_name}' to NCBI tax id {ena_taxid}."
+            loggingC.message(msg, threshold=1)
 
-def __check_assembly_name(assembly_name: str):
+
+def __check_assembly_name(assembly_name):
     """
     Check if the assembly name is too long. The submission limit is 50 characters,
     but webin cli will introduce add a prefix before submission.
@@ -311,11 +337,16 @@ def __check_assembly_name(assembly_name: str):
     Args:
         assembly_name:    The assembly name read from the config.
     """
+    if not isinstance(assembly_name, str):
+        err = f"\nERROR: Please provide a string as the assembly name (found {type(assembly_name).__name__})."
+        loggingC.message(err, threshold=-1)
+        exit(1)
     max_length = staticConfig.max_assembly_name_length
     if len(assembly_name) > max_length:
         err = f"\nERROR: The assembly name '{assembly_name}' is too long. The maximum length is {max_length} characters."
         loggingC.message(err, threshold=-1)
         exit(1)
+
 
 def __check_assembly(arguments: dict,
                      config: dict,
@@ -359,7 +390,6 @@ def __check_assembly(arguments: dict,
             err = f"\nERROR: The assembly fasta file '{assembly_data['FASTA_FILE']}' does not exist or does not have a valid file extensions. Valid extensions are {'|'.join(valid_extensions)} and {'|'.join(gz_extensions)}." 
             loggingC.message(err, threshold=-1)
             exit(1)
-        
 
     else:
         biological_sample_accessions = utility.from_config(config, 'SAMPLE_ACCESSIONS')
@@ -536,7 +566,26 @@ def __check_mags(arguments: dict,
         err = f"\nERROR: No MAG_METADATA_FILE was provided in the MAGS section."
         loggingC.message(err, threshold=-1)
         exit(1)
-    __check_tsv(metadata_file, staticConfig.mag_metadata_columns.split(';'))
+    cols = staticConfig.mag_metadata_columns.split(';')
+    __check_tsv(metadata_file, cols)
+    with open(metadata_file, 'r') as f:
+        reader = csv.DictReader(f, delimiter='\t')
+        for row in reader:
+            bin_id = row['Bin_id'].strip()
+            if bin_id == '' or bin_id is None:
+                err = f"\nERROR: The metadata file '{metadata_file}' contains an empty bin_id field."
+                loggingC.message(err, threshold=-1)
+                exit(1)
+            quality_category = row['Quality_category'].strip()
+            if quality_category == '' or quality_category is None:
+                err = f"\nERROR: The metadata file '{metadata_file}' contains an empty Quality_category field."
+                loggingC.message(err, threshold=-1)
+                exit(1)
+            if not row['Chromosomes_path']:
+                if row['Unlocalised_path']:
+                    err = f"\nERROR: Error reading '{metadata_file}' at Bin_id {bin_id}. If you provide an Unlocalised_path, you need to provide a Chromosomes_path as well."
+                    loggingC.message(err, threshold=-1)
+                    exit(1)
 
     # Check fields in ASSEMBLY section
     assembly_data = utility.from_config(config, 'ASSEMBLY')

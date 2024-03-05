@@ -488,3 +488,45 @@ def read_receipt(receipt_path: str) -> str:
     loggingC.message(f"\nERROR: Unknown receipt type. Cannot extract accession.", threshold=-1)
 
     return None
+
+
+def validate_parameter_combination(submit_samples: bool,
+                                   submit_reads: bool,
+                                   submit_assembly: bool,
+                                   submit_bins: bool,
+                                   submit_mags: bool) -> bool:
+    """
+    Check if the parameters in their combination are valid. If not, fail
+    gracefully.
+
+    Args:
+        submit_samples (bool): Submit samples.
+        submit_single_reads (bool): Submit single reads.
+        submit_paired_end_reads (bool): Submit paired-end reads.
+        submit_assembly (bool): Submit assembly.
+        submit_bins (bool): Submit bins.
+        submit_mags (bool): Submit mags.
+    """
+    # Check if the user has specified a valid mode
+    is_valid = False
+    if ((submit_mags and not submit_bins) and (submit_samples or submit_reads or submit_assembly)): # MAGs can only be submitted with bins or alone
+        is_valid = False
+    elif (submit_samples and submit_reads and submit_assembly): # Mode 1-3
+        is_valid = True
+    elif (submit_reads and submit_assembly and not submit_samples): # Mode 4-6
+        is_valid = True
+    if (submit_assembly and submit_bins and not submit_samples and not submit_reads): # Mode 7-8
+        is_valid = True
+    elif (submit_assembly and not submit_bins and not submit_mags and not submit_samples and not submit_reads): # Mode 9
+        is_valid = True
+    if (submit_bins and submit_mags and not submit_assembly and not submit_samples and not submit_reads): # Mode 10
+        is_valid = True 
+    if ((submit_bins or submit_mags) and not submit_assembly and not submit_samples and not submit_reads): # Mode 11
+        is_valid = True
+
+    if not is_valid:
+        print(f"\nERROR: The combination of parameters you have specified is not valid.")
+        print(staticConfig.submission_modes_message)
+        exit(1)
+
+    return True

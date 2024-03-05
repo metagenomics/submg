@@ -76,7 +76,6 @@ def sample_exists(sample_accession: str,
     return False
 
 
-
 def search_samples_by_assembly_analysis(assembly_analysis_accession: str,
                                         testmode: bool) -> list:
     """
@@ -148,7 +147,8 @@ def search_scientific_name_by_sample(sample_accession: str,
 
     return scientific_name
 
-#For debugging
+
+# For debugging
 #print(sample_exists('SAMEA113417025', True))
 #print(sample_exists('ERS28162653', True))
 #print(study_exists("PRJEB71644", True))

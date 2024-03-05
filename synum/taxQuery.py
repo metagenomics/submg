@@ -1,12 +1,12 @@
 import os
 import csv
 import requests
+import time
 
 from tqdm import tqdm
 from synum import utility, loggingC
 from synum.statConf import staticConfig
 
-# get_bin_taxonomy aus binSubmission.py wird in main.py aufgerufen
 
 def __report_tax_issues(issues):
     """
@@ -328,6 +328,7 @@ def __parse_classification_tsvs(ncbi_taxonomy_files: list) -> dict:
         all_classifications.update(best_ncbi_classification)
     return all_classifications
 
+
 def get_bin_taxonomy(config) -> dict:
     """
     Based on the NCBI taxonomy files and manual taxonomy file defined in the
@@ -388,7 +389,18 @@ def get_bin_taxonomy(config) -> dict:
     loggingC.message(">Querying ENA for taxids and scientific names for each bin.", threshold=0)
 
     issues = []
+    min_interval = 1.0 / staticConfig.ena_rest_rate_limit
+    last_request_time = time.time() - min_interval
+
     for bin_name, taxonomy in tqdm(annotated_bin_taxonomies.items(), leave=False):
+        # Make sure we don't run into the ENA API rate limit
+        current_time = time.time()
+        time_since_last_request = current_time - last_request_time
+        if time_since_last_request < min_interval:
+            time.sleep(min_interval - time_since_last_request)
+        last_request_time = time.time()
+
+        # Get Taxonomy
         if bin_name in upload_taxonomy_data:
             loggingC.message(f">INFO: Bin {bin_name} was found in the manual taxonomy file and will be skipped.", threshold=1)
             continue
@@ -435,3 +447,22 @@ def get_bin_taxonomy(config) -> dict:
         exit(1)
 
     return upload_taxonomy_data
+
+
+def taxid_from_scientific_name(scientific_name: str) -> str:
+    """
+    Get the taxid for a given scientific name from the ENA API. Returns None
+    if no taxid is found.
+
+    Args:
+        scientific_name (str): The scientific name to query for.
+    """
+    url = f"https://www.ebi.ac.uk/ena/taxonomy/rest/scientific-name/{scientific_name}"
+    response = requests.get(url)
+    items = response.json()
+    if not (len(items) == 1):
+        return None
+    if not (scientific_name == items[0]['scientificName']):
+        return None
+    tax_id = items[0]['taxId']
+    return tax_id

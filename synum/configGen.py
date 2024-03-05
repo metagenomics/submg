@@ -1,6 +1,8 @@
 import os
 import yaml
 
+from synum import utility
+
 from synum.statConf import YAMLCOMMENTS, YAMLEXAMPLES, staticConfig
 
 
@@ -65,17 +67,15 @@ def __write_yaml(data: dict,
     print(f">Config with empty fields written to {outpath}")
            
 
-
-
 def __check_parameters(outpath: str,
-                submit_samples: int,
-                submit_single_reads: int,
-                submit_paired_end_reads: int,
-                coverage_from_bam: bool,
-                known_coverage: bool,
-                submit_assembly: bool,
-                submit_bins: bool,
-                submit_mags: bool) -> None:
+                       submit_samples: int,
+                       submit_single_reads: int,
+                       submit_paired_end_reads: int,
+                       coverage_from_bam: bool,
+                       known_coverage: bool,
+                       submit_assembly: bool,
+                       submit_bins: bool,
+                       submit_mags: bool) -> None:
     """
     Check if the parameters in their combination are valid. If not, fail
     gracefully.
@@ -97,41 +97,22 @@ def __check_parameters(outpath: str,
         print(f"\nERROR: The directory '{output_directory}' where '{outpath}' should be written does not exist.")
         exit(1)
 
-    # The valid submission modes we support are 
-    submission_modes = staticConfig.submission_modes_message
-
-    # Do we lack coverage data or have redundancy
-    if (coverage_from_bam + known_coverage) != 1:
-        print(f"\nERROR: You must specify exactly one of --coverage-from-bam or --known-coverage.")
-        exit(1)
-
     # Are we submitting any reads?
     if submit_single_reads or submit_paired_end_reads:
         submit_reads = True
     else:
         submit_reads = False
 
-    # Check if the user has specified a valid mode
-    is_valid = False
-    if ((submit_mags and not submit_bins) and (submit_samples or submit_reads or submit_assembly)): # MAGs can only be submitted with bins or alone
-        is_valid = False
-    elif (submit_samples and submit_reads and submit_assembly): # Mode 1-3
-        is_valid = True
-    elif (submit_reads and submit_assembly and not submit_samples): # Mode 4-6
-        is_valid = True
-    if (submit_assembly and submit_bins and not submit_samples and not submit_reads): # Mode 7-8
-        is_valid = True
-    elif (submit_assembly and not submit_bins and not submit_mags and not submit_samples and not submit_reads): # Mode 9
-        is_valid = True
-    if (submit_bins and submit_mags and not submit_assembly and not submit_samples and not submit_reads): # Mode 10
-        is_valid = True 
-    if ((submit_bins or submit_mags) and not submit_assembly and not submit_samples and not submit_reads): # Mode 11
-        is_valid = True
-
-    if not is_valid:
-        print(f"\nERROR: The combination of parameters you have specified is not valid.")
-        print(submission_modes)
+    # Do we lack coverage data or have redundancy
+    if (coverage_from_bam + known_coverage) != 1:
+        print("\nERROR: You must specify exactly one of --coverage-from-bam or --known-coverage.")
         exit(1)
+
+    utility.validate_parameter_combination(submit_samples,
+                                           submit_reads,
+                                           submit_assembly,
+                                           submit_bins,
+                                           submit_mags)
 
 
 def __make_config_dict(submit_samples: int,
@@ -337,6 +318,7 @@ def make_config(outpath: str,
         submit_bins (bool): Whether bins should be submitted
         submit_mags (bool): Whether MAGs should be submitted
     """
+    # Test if this is a valid combination of parameters
     __check_parameters(outpath,
                        submit_samples,
                        submit_single_reads,
