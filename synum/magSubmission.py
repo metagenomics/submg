@@ -91,7 +91,7 @@ def __prep_mags_samplesheet(config: dict,
     #completeness_software = utility.from_config(config, 'BINS', 'COMPLETENESS_SOFTWARE')
     binning_software = utility.from_config(config, 'BINS', 'BINNING_SOFTWARE')
     binning_parameters = utility.from_config(config, 'BINS', 'ADDITIONAL_SAMPLESHEET_FIELDS', 'binning parameters')
-    project_name = utility.from_config(config, 'PROJECT_NAME')
+    project_name = utility.stamped_from_config(config, 'PROJECT_NAME')
     taxonomic_identity_marker = utility.from_config(config,
                                                     'BINS',
                                                     'ADDITIONAL_SAMPLESHEET_FIELDS',
@@ -104,7 +104,7 @@ def __prep_mags_samplesheet(config: dict,
     env_context_broad = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS','broad-scale environmental context')
     env_context_local = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS','local environmental context')
     env_medium = utility.from_config(config, 'ASSEMBLY', 'ADDITIONAL_SAMPLESHEET_FIELDS','environmental medium')
-    assembly_name = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
+    assembly_name = utility.stamped_from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
     derived_from = ",".join([x['accession'] for x in sample_accession_data])
 
 
@@ -246,9 +246,22 @@ def __stage_mag_submission(metadata,
                            coverage: float,
                            run_accessions: list) -> str:
     """
+    Stages all files needed for MAG submission and writes a MANIFEST file.
+
+    Args:
+        metadata (dict): The metadata for the MAG.
+        staging_directory (str): The directory where the files will be staged.
+        mag_id (str): The id of the MAG.
+        config (dict): The config dictionary.
+        mag_sample_accession (str): The sample accession for the MAG.
+        coverage (float): The coverage of the MAG.
+        run_accessions (list): A list of the run accessions.
+
+    Returns:
+        str: The path to the MANIFEST file.
     """
     # Prepare some data
-    assembly_name = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME')
+    assembly_name = utility.stamped_from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME')
     assembly_name = assembly_name.replace(' ', '_')
     mag_assembly_name = f"{assembly_name}_{mag_sample_accession}"
 
@@ -416,7 +429,7 @@ def submit_mags(config: dict,
 
 
     # Remove the prefiexes
-    assembly_name = utility.from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
+    assembly_name = utility.stamped_from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
     prefix_len = len(f"{assembly_name}_MAG_")
     suffix_len = len("_virtual_sample")
     mag_to_accession = {}
@@ -454,7 +467,7 @@ def submit_mags(config: dict,
         mag_logging_dir = os.path.join(logging_dir, f"{mag_id}")
         os.makedirs(mag_logging_dir, exist_ok=False)
         mag_manifest = mag_manifests[mag_id]
-        assembly_name = utility.from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
+        assembly_name = utility.stamped_from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
         subdir_name = assembly_name + '_' + mag_id
         mag_receipts[mag_id], mag_accessions[mag_id] = webinWrapper.webin_cli(manifest=mag_manifest,
                                                                               inputdir=mag_staging_dir,

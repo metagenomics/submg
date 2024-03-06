@@ -11,7 +11,7 @@ METAGENOME_TAXID: "718289"                                                    # 
 SEQUENCING_PLATFORMS: ["ILLUMINA"]                                            # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#platform >>EXAMPLE: ["ILLUMINA","OXFORD_NANOPORE"]
 SAMPLE_ACCESSIONS: ['SAMEA113417017']                                         # These samples exist in ENA. Your assembly is based on them. >>EXAMPLE: ["ERS15898933","ERS15898932"]
 ASSEMBLY:                                         
-  ASSEMBLY_NAME: "idx00_ex08_assembly"                                        # Choose a name, even if your assembly has been uploaded already. Will only be used for naming assembly and bins/MAGs. >>EXAMPLE: "Northern Germany biogas digester metagenome"
+  ASSEMBLY_NAME: "idx00_ex08_asm"                                        # Choose a name, even if your assembly has been uploaded already. Will only be used for naming assembly and bins/MAGs. >>EXAMPLE: "Northern Germany biogas digester metagenome"
   ASSEMBLY_SOFTWARE: "MEGAHIT"                                                # Software used to generate the assembly >>EXAMPLE: "MEGAHIT"
   ISOLATION_SOURCE: "biogas plant anaerobic digester"                         # Describe where your sample was taken from >>EXAMPLE: "biogas plant anaerobic digester"
   FASTA_FILE: "data/assembly.fasta"                                           # Path to the fasta file >>EXAMPLE: "/mnt/data/assembly.fasta.gz"

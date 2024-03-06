@@ -14,6 +14,30 @@ from synum import loggingC
 from synum.statConf import staticConfig
 
 
+# Global variable for timestamping data that is pulled from the config
+timestamp = None
+keys_to_stamp = []
+
+
+def set_up_timestamps(arguments: dict):
+    """
+    Set up the timestamp for the submission. Data is only timestamped with
+    the hour and minute. Because of daily resets, this is sufficient to
+    prevent name clashes on the development server.
+    """
+    global timestamp
+    global keys_to_stamp
+    keys_to_stamp = [
+        "PROJECT_NAME",
+        "NAME",
+        "TITLE",
+        "RELATED_SAMPLE_TITLE"
+    ]
+    if arguments['submit_assembly']:
+        keys_to_stamp.append("ASSEMBLY_NAME")
+    timestamp = time.strftime("%H%M")
+
+
 def construct_depth_files(staging_dir: str,
                           threads: int,
                           bam_files: list) -> dict:
@@ -180,23 +204,37 @@ def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
     """
     Extracts a value from the dict that was created based on the
     config YAML file.
+
+    Args:
+        config (dict): The dict created from the config YAML file.
+        key (str): The key to extract from the dict.
+        subkey (str): The nested key to extract from the key.
+        subsubkey (str): The nested key to extract from the subkey.
+        supress_errors (bool): If True, missing keys will not cause an exit
+            but will instead return None.
     """
     if not key in config:
         if not supress_errors:
             err = f"\nERROR: The field '{key}' is missing from the config YAML file."
             loggingC.message(err, threshold=-1)
             exit(1)
+        else:
+            return None
     if not config[key]:
         if not supress_errors:
             err = f"\nERROR: The field '{key}' is empty in the config YAML file."
             loggingC.message(err, threshold=-1)
             exit(1)
+        else:
+            return None
     if subkey:
         if not subkey in config[key]:
             if not supress_errors:
                 err = f"\nERROR: The field '{key}|{subkey}' is missing from the config YAML file."
                 loggingC.message(err, threshold=-1)
                 exit(1)
+            else:
+                return None
         if not config[key][subkey]:
             if not supress_errors:
                 err = f"\nERROR: The field '{key}|{subkey}' is empty in the config YAML file."
@@ -208,37 +246,54 @@ def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
                     err = f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is missing from the config YAML file."
                     loggingC.message(err, threshold=-1)
                     exit(1)
+                else:
+                    return None
             if not config[key][subkey][subsubkey]:
                 if not supress_errors:
                     err = f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is empty in the config YAML file."
                     loggingC.message(err, threshold=-1)
                     exit(1)
+                else:
+                    return None
             return __strcast(config[key][subkey][subsubkey])
         return __strcast(config[key][subkey])
     return __strcast(config[key])
 
 def optional_from_config(config, key, subkey=None, subsubkey=None):
+    """
+    Calls from config but returns None if the key is missing.
+
+    Args:
+        config (dict): The dict created from the config YAML file.
+        key (str): The key to extract from the dict.
+        subkey (str): The nested key to extract from the key.
+        subsubkey (str): The nested key to extract from the subkey.
+    """
     try:
         return from_config(config, key, subkey, subsubkey, supress_errors=True)
     except:
-        return ''
+        return None
+    
+def stamped_from_config(config, key, subkey=None, subsubkey=None):
+    """
+    Calls from config but adds a timestamp to relevant fields if timestamping
+    is activated.
 
-# def calculate_assembly_length(fasta_file):
-#     """
-#     Calculate the total length of the assembly from a FASTA file.
+    Args:
+        config (dict): The dict created from the config YAML file.
+        key (str): The key to extract from the dict.
+        subkey (str): The nested key to extract from the key.
+        subsubkey (str): The nested key to extract from the subkey.
+    """
+    global timestamp
+    global keys_to_stamp
+    lowest_key = subsubkey or subkey or key
 
-#     Args:
-#     fasta_file (str): File path to the FASTA file. Can be gzipped.
+    value = from_config(config, key, subkey, subsubkey)
+    if timestamp and (lowest_key in keys_to_stamp):
+        value = f"{timestamp}{value}"
+    return value
 
-#     Returns:
-#     int: Total length of the assembly.
-#     """
-#     total_length = 0
-#     with pysam.FastaFile(fasta_file) as fasta:
-#         for seq in fasta.references:
-#             total_length += fasta.get_reference_length(seq)
-
-#     return total_length
 
 def check_fastq(fastq_filepath: str):
     """
@@ -400,6 +455,7 @@ def contigs_coverage(depth_file):
 def calculate_coverage(depth_files: list,
                        target_contigs: set = None,
                        threads=4,
+                       outfile=None,
                        silent=False):
     """
     Calculate the average coverage of an assembly based on multiple depth files using parallel processing.
@@ -435,7 +491,11 @@ def calculate_coverage(depth_files: list,
     else:
         threshold = 0
     loggingC.message(">Calculating coverage from depth files. This might take a while.", threshold)
-
+    msg = f">The coverage value will be written to {outfile} in case you " \
+            " want to provide a KNOWN_COVERAGE in the ASSEMBLY section " \
+            " in the config for subsequent submission attempts."
+    if outfile:
+        loggingC.message(msg, threshold=0)
 
     inuse = min(threads, len(depth_files))
     with yaspin(text=f"Processing with {inuse} threads...\t", color="yellow") as spinner:
@@ -449,7 +509,11 @@ def calculate_coverage(depth_files: list,
         average_coverage = total_coverage / total_length if total_length > 0 else 0
 
     if not silent:
-        loggingC.message(f"\t...coverage is {str(average_coverage)}", threshold+1)
+        loggingC.message(f"\t...coverage is {str(average_coverage)}", threshold=0)
+
+    if outfile:
+        with open(outfile, 'w') as f:
+            f.write(str(average_coverage))
 
     return average_coverage
 

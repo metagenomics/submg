@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
 
 from synum import utility, loggingC
-from synum.utility import from_config
+from synum.utility import from_config, stamped_from_config
 from synum.statConf import staticConfig
 from synum.webinWrapper import webin_cli
 
@@ -20,21 +20,21 @@ def __prep_coassembly_samplesheet(config: dict,
     Args:
         config (dict): The configuration dictionary.
         outdir (str): The directory where the samplesheet will be written.
-        staticConfig (staticConfig, optional): The static configuration object. Defaults to staticConfig.
+        origin_samples: list of sample accessions that are being co-assembled
 
     Returns:
         str: The path to the samplesheet.
     """
     loggingC.message(f">Preparing assembly samplesheet...", threshold=0)
 
-    sample_alias = from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
+    sample_alias = stamped_from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
 
     # Create XML tree
     root = ET.Element("SAMPLE_SET")
     sample = ET.SubElement(root, "SAMPLE", alias=sample_alias)
 
     title = ET.SubElement(sample, "TITLE")
-    title.text = from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME')
+    title.text = stamped_from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME')
 
     sample_name = ET.SubElement(sample, "SAMPLE_NAME")
     taxon_id = ET.SubElement(sample_name, "TAXON_ID")
@@ -117,6 +117,7 @@ def __submit_coassembly_samplesheet(sample_xml: str,
 
 
 def __prep_assembly_manifest(config: dict,
+                             logging_dir: str,
                              outdir: str,
                              depth_files,
                              run_accessions,
@@ -143,8 +144,10 @@ def __prep_assembly_manifest(config: dict,
     if depth_files is None:
         COVERAGE = utility.from_config(config, 'ASSEMBLY', 'COVERAGE_VALUE')
     else:
+        coverage_outfile = os.path.join(logging_dir, "assembly_coverage.txt")
         COVERAGE = utility.calculate_coverage(depth_files,
-                                            threads=threads)
+                                              outfile=coverage_outfile,
+                                              threads=threads)
 
     # Write manifest
     PLATFORM = utility.from_config(config, 'SEQUENCING_PLATFORMS')
@@ -157,7 +160,7 @@ def __prep_assembly_manifest(config: dict,
     rows = [
         [ 'STUDY', utility.from_config(config, 'STUDY') ],
         [ 'SAMPLE', sample_accession ],
-        [ 'ASSEMBLYNAME', utility.from_config(config, 'ASSEMBLY','ASSEMBLY_NAME') ],
+        [ 'ASSEMBLYNAME', utility.stamped_from_config(config, 'ASSEMBLY','ASSEMBLY_NAME') ],
         [ 'ASSEMBLY_TYPE', staticConfig.sequence_assembly_type ],
         [ 'COVERAGE', COVERAGE ],
         [ 'PROGRAM', utility.from_config(config, 'ASSEMBLY','ASSEMBLY_SOFTWARE') ],
@@ -268,6 +271,7 @@ def submit_assembly(config: dict,
     os.makedirs(fasta_logging_dir, exist_ok=False)
     ## make a manifest and submit
     manifest_path = __prep_assembly_manifest(config,
+                                             logging_dir,
                                              fasta_submission_dir,
                                              depth_files,
                                              run_accessions,
@@ -276,7 +280,7 @@ def submit_assembly(config: dict,
                                              threads=threads)
 
     loggingC.message(f">Using ENA Webin-CLI to submit assembly.", threshold=0)
-    assembly_name = utility.from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
+    assembly_name = utility.stamped_from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
     usr, pwd = utility.get_login()
     receipt, accession = webin_cli(manifest=manifest_path,
                                    inputdir=fasta_submission_dir,

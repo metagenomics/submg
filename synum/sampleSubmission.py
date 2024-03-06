@@ -1,7 +1,7 @@
 import os
 
 from synum import loggingC, utility
-from synum.utility import from_config
+from synum.utility import from_config, stamped_from_config
 from synum.statConf import staticConfig
 
 import requests
@@ -27,7 +27,7 @@ def __prep_samplesheet(config: dict,
     metagenome_taxid = from_config(config, 'METAGENOME_TAXID')
 
     for data in samples_data:
-        tree_sample = ET.SubElement(tree_root, 'SAMPLE', alias=from_config(data, 'TITLE'))
+        tree_sample = ET.SubElement(tree_root, 'SAMPLE', alias=stamped_from_config(data, 'TITLE'))
 
         tree_title = ET.SubElement(tree_sample, 'TITLE')
         tree_title.text = from_config(data, 'TITLE')
