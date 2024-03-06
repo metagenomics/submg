@@ -369,7 +369,7 @@ def get_bin_taxonomy(config) -> dict:
 
     # Read data from NCBI_TAXONOMY_FILES
     ncbi_taxonomy_files = utility.optional_from_config(config, 'BINS', 'NCBI_TAXONOMY_FILES')
-    if ncbi_taxonomy_files == '': # Key not found in config
+    if ncbi_taxonomy_files == None: # Key not found in config
         ncbi_taxonomy_files = []
         loggingC.message(">No NCBI taxonomy files found in config.", threshold=0)
     if not type(ncbi_taxonomy_files) == list:

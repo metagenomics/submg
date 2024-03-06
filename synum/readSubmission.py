@@ -2,7 +2,7 @@ import os
 import csv
 
 from synum import loggingC, utility
-from synum.utility import from_config
+from synum.utility import from_config, stamped_from_config
 from synum.statConf import staticConfig
 from synum.webinWrapper import webin_cli
 
@@ -15,10 +15,23 @@ def __prep_reads_manifest(config: dict,
                           staging_dir: str,
                           fastq1_path: str,
                           fastq2_path: str) -> str:
+    """
+    Prepare the manifest file for reads submission.
+
+    Args:
+        config (dict): The configuration dictionary.
+        sample_accession_data (list): Contains one dictionary with information
+            on each sample. Dict keys are 'accession', 'external_accession',
+            and 'alias'.
+        data (dict): dictionary containing the reads data.
+        staging_dir (str): The directory where the reads are staged.
+        fastq1_path (str): The path to the first fastq file.
+        fastq2_path (str): The path to the second fastq file (if paired-end).
+    """
     
     # Find the related sample
     if 'RELATED_SAMPLE_TITLE' in data.keys():
-        sample_title = from_config(data, 'RELATED_SAMPLE_TITLE')
+        sample_title = stamped_from_config(data, 'RELATED_SAMPLE_TITLE')
         sample = None
         for sd in sample_accession_data:
             if sd['alias'] == sample_title:
@@ -27,6 +40,7 @@ def __prep_reads_manifest(config: dict,
         if sample is None:
             err = f"\nERROR: No related sample found for the reads with title '{sample_title}'. Please check the configuration file."
             loggingC.message(err, threshold=-1)
+            exit(1)
     elif 'RELATED_SAMPLE_ACCESSION' in data.keys():
         sample = from_config(data, 'RELATED_SAMPLE_ACCESSION')
     else:
@@ -37,7 +51,7 @@ def __prep_reads_manifest(config: dict,
     rows = [
         ['STUDY', from_config(config, 'STUDY')],
         ['SAMPLE', sample],
-        ['NAME', from_config(data, 'NAME')],
+        ['NAME', stamped_from_config(data, 'NAME')],
         ['INSTRUMENT', from_config(data, 'SEQUENCING_INSTRUMENT')],
         ['LIBRARY_SOURCE', from_config(data, 'LIBRARY_SOURCE')],
         ['LIBRARY_SELECTION', from_config(data, 'LIBRARY_SELECTION')],
@@ -87,8 +101,21 @@ def __stage_reads_submission(config: dict,
                              staging_dir: str,
                              logging_dir: str) -> str:
     """
+    Stage the reads for submission.
+
+    Args:
+        config (dict): The configuration dictionary.
+        sample_accession_data (list): Contains one dictionary with information
+            on each sample. Dict keys are 'accession', 'external_accession',
+            and 'alias'.
+        data (dict): dictionary containing the reads data.
+        staging_dir (str): The directory where the reads will be staged.
+        logging_dir (str): The directory where the submission logs will be
+            written.
+
+    Returns:
+        str: The path to the manifest file.
     """
-  
     # Stage the fastq file(s)
     gzipped_fastq1_path = os.path.join(staging_dir, 'reads_1' + staticConfig.zipped_fastq_extension)
     gzipped_fastq2_path = os.path.join(staging_dir, 'reads_2' + staticConfig.zipped_fastq_extension)
@@ -140,7 +167,7 @@ def submit_reads(config,
     if 'PAIRED_END_READS' in config.keys():
         loggingC.message(">Staging paired-end reads for submission. This might take a while.", threshold=0)
         for i, data in enumerate(from_config(config, 'PAIRED_END_READS')):
-            name = from_config(data, 'NAME').replace(' ', '_')
+            name = stamped_from_config(data, 'NAME').replace(' ', '_')
             read_set_staging_dir = os.path.join(staging_dir, f"reads_{name}")
             os.makedirs(read_set_staging_dir, exist_ok=False)
             read_set_logging_dir = os.path.join(logging_dir, f"reads_{name}")
@@ -158,7 +185,7 @@ def submit_reads(config,
         loggingC.message(">Staging single-end reads for submission. This might take a while.", threshold=0)
         for j, data in enumerate(from_config(config, 'SINGLE_READS')):
             i = counter + j
-            name = from_config(data, 'NAME').replace(' ', '_')
+            name = stamped_from_config(data, 'NAME').replace(' ', '_')
             read_set_staging_dir = os.path.join(staging_dir, f"reads_{name}")
             os.makedirs(read_set_staging_dir, exist_ok=False)
             read_set_logging_dir = os.path.join(logging_dir, f"reads_{name}")

@@ -5,23 +5,21 @@ from synum.statConf import staticConfig
 
 
 def study_exists(study_accession: str,
-                 testmode: bool) -> bool:
+                 devserver: bool) -> bool:
     """
     Check if a study with the input accession exists in ENA.
 
     Args:
         study_accession (str): The study accession.
-        testmode (bool):       Whether to use the test server.
+        devserver (bool):       Whether to use the test server.
 
     Returns:
         bool: True if the study exists, False if not.
     """
-    if testmode:
-        #url = "https://wwwdev.ebi.ac.uk/ena/portal/api/search"
-        url = staticConfig.ena_search_url
-    else:
-        #url = "https://www.ebi.ac.uk/ena/portal/api/search"
+    if devserver:
         url = staticConfig.ena_test_search_url
+    else:
+        url = staticConfig.ena_search_url
     params = {
         "query": f"study_accession={study_accession}",
         "result": "study",
@@ -38,29 +36,22 @@ def study_exists(study_accession: str,
     return False
 
 
-def sample_exists(sample_accession: str,
-                  testmode: bool) -> bool:
+def sample_accession_exists(sample_accession: str,  
+                            devserver: bool = False) -> bool:
     """
     Check if a sample with the input accession exists in ENA.
 
     Args:
         sample_accession (str): The sample accession.
-        testmode (bool):        Whether to use the test server.
+        devserver (bool):        Whether to use the test server.
 
     Returns:
         bool: True if the sample exists, False if not.
     """
-    
-    #msg = f"\WARNING: Checking sample accessions is suspended because of issues with the ENA API."
-    #loggingC.message(msg, threshold=0)
-    #return True
-
-    if testmode:
-        #url = "https://wwwdev.ebi.ac.uk/ena/portal/api/search"
-        url = staticConfig.ena_search_url
-    else:
-        #url = "https://www.ebi.ac.uk/ena/portal/api/search"
+    if devserver:
         url = staticConfig.ena_test_search_url
+    else:
+        url = staticConfig.ena_search_url
     params = {
         "query": f"sample_accession={sample_accession}",
         "result": "sample",
@@ -76,8 +67,102 @@ def sample_exists(sample_accession: str,
     return False
 
 
+def sample_alias_accession(sample_alias: str,
+                           study_accession: str,
+                           devserver: bool) -> bool:
+    """
+    Check if a sample with the input alias exists in ENA. Return the accession
+    if it does or None if it does not.
+
+    Args:
+        sample_alias (str):     The sample alias.
+        study_accession (str):  The study accession.
+        devserver (bool):        Whether to use the test server.
+    """
+    if devserver:
+        url = staticConfig.ena_test_search_url
+    else:
+        url = staticConfig.ena_search_url
+    params = {
+        "query": f"sample_alias={sample_alias} AND study_accession={study_accession}",
+        "result": "sample",
+        "fields": "sample_accession"
+    }
+    response = requests.get(url, params=params)
+    try:
+        data = response.text.split('\n')[1]
+    except:
+        data = None
+    if data == '':
+        data = None
+    return data
+
+
+def sample_title_accession(sample_title: str,
+                           study_accession: str,
+                           devserver: bool) -> bool:
+    """
+    Check if a sample with the input title exists in ENA. Return the accession
+    if it does or None if it does not.
+
+    Args:
+        sample_title (str):     The sample title.
+        study_accession (str):  The study accession.
+        devserver (bool):        Whether to use the test server.
+    """
+    if devserver:
+        url = staticConfig.ena_test_search_url
+    else:
+        url = staticConfig.ena_search_url
+    params = {
+        "query": f"sample_title={sample_title} AND study_accession={study_accession}",
+        "result": "sample",
+        "fields": "sample_accession"
+    }
+    response = requests.get(url, params=params)
+    try:
+        data = response.text.split('\n')[1]
+    except:
+        data = None
+    if data == '':
+        data = None
+    return data
+
+
+
+def run_alias_accession(run_alias: str,
+                        study_accession: str,
+                        devserver: bool) -> bool:
+    """
+    Check if a run with the input name exists in ENA. Return the accession
+    if it does or None if it does not.
+
+    Args:
+        run_alias (str):        The run name.
+        study_accession (str):  The study accession.
+        devserver (bool):        Whether to use the test server.
+    """
+    if devserver:
+        url = staticConfig.ena_test_search_url
+    else:
+        url = staticConfig.ena_search_url
+    params = {
+        "query": f"run_alias={run_alias} AND study_accession={study_accession}",
+        "result": "read_run",
+        "fields": "run_accession"
+    }
+    response = requests.get(url, params=params)
+    try:
+        data = response.text.split('\n')[1]
+    except:
+        data = None
+    if data == '':
+        data = None
+    return data
+
+
 def search_samples_by_assembly_analysis(assembly_analysis_accession: str,
-                                        testmode: bool) -> list:
+                                        devserver: bool) -> list:
     """
     Get a list of sample accessions for a given assembly analysis accession.
 
@@ -87,21 +172,24 @@ def search_samples_by_assembly_analysis(assembly_analysis_accession: str,
     Returns:
         str: A single sample accession.
     """
-    if testmode:
-        #url = "https://wwwdev.ebi.ac.uk/ena/portal/api/search"
-        url = staticConfig.ena_search_url
-    else:
-        #url = "https://www.ebi.ac.uk/ena/portal/api/search"
+    if devserver:
         url = staticConfig.ena_test_search_url
+    else:
+        url = staticConfig.ena_search_url
     params = {
         "query": f"analysis_accession={assembly_analysis_accession}",
         "result": "analysis",
         "fields": "sample_accession"
     }
     response = requests.get(url, params=params)
+    print("INPUT: ", assembly_analysis_accession)
+    print("RESPONSE: ", response.text)
 
-    sample_accession = response.text.split('\n')[1:-1][0]
-    sample_accession = sample_accession.split('\t')[0]
+    try:
+        sample_accession = response.text.split('\n')[1:-1][0]
+        sample_accession = sample_accession.split('\t')[0]
+    except:
+        return None
 
     if ',' in sample_accession:
         loggingC.message(f"\nERROR: Multiple sample accessions found for assembly analysis {assembly_analysis_accession}:\n{sample_accession}", threshold=-1)
@@ -111,7 +199,7 @@ def search_samples_by_assembly_analysis(assembly_analysis_accession: str,
 
 
 def search_scientific_name_by_sample(sample_accession: str,
-                                     testmode: bool) -> str:
+                                     devserver: bool) -> str:
     """
     Get the scientific name for a given sample accession.
 
@@ -121,19 +209,16 @@ def search_scientific_name_by_sample(sample_accession: str,
     Returns:
         str: The scientific name of the sample.
     """
-    if testmode:
-        #url = "https://wwwdev.ebi.ac.uk/ena/portal/api/search"
-        url = staticConfig.ena_search_url
-    else:
-        #url = "https://www.ebi.ac.uk/ena/portal/api/search"
+    if devserver:
         url = staticConfig.ena_test_search_url
+    else:
+        url = staticConfig.ena_search_url
     params = {
         "query": f"sample_accession={sample_accession}",
         "result": "sample",
         "fields": "scientific_name"
     }
     response = requests.get(url, params=params)
-
     try:
         scientific_name = response.text.split('\n')[1:-1][0]
         scientific_name = scientific_name.split('\t')[0]
@@ -148,11 +233,24 @@ def search_scientific_name_by_sample(sample_accession: str,
     return scientific_name
 
 
-# For debugging
-#print(sample_exists('SAMEA113417025', True))
-#print(sample_exists('ERS28162653', True))
-#print(study_exists("PRJEB71644", True))
-#print(search_scientific_name_by_sample('ERS28140038', True))
-#print(search_scientific_name_by_sample("SAMEA114749859", True))
-#print(search_samples_by_assembly_analysis('ERZ1049590'))
-#print(search_runs_by_sample('SAMEA113417025'))
+if __name__ == "__main__":
+    # For debugging
+    print("DEBUG: Running sample_accession_exists('SAMEA113417025',False)")
+    print(sample_accession_exists('SAMEA113417025',False))
+    print("DEBUG: Running sample_accession_exists('ERS28162653', False)")
+    print(sample_accession_exists('ERS28162653', False))
+    print("DEBUG: Running study_exists('PRJEB71644', False)")
+    print(study_exists("PRJEB71644", False))
+    print("DEBUG: Running search_scientific_name_by_sample('SAMEA114749859', False)")
+    print(search_scientific_name_by_sample("SAMEA114749859", False))
+    print("DEBUG: Running search_samples_by_assembly_analysis('ERZ1049590', False)")
+    print(search_samples_by_assembly_analysis('ERZ1049590', False))
+    print("DEBUG: Running sample_alias_accession('bgp35_d1a', 'PRJEB39821', False)")
+    print(sample_alias_accession('bgp35_d1a', 'PRJEB39821', False))
+    print("DEBUG: Running sample_title_accession('bgp35_digester_1_a', 'PRJEB39821', False)")
+    print(sample_title_accession('bgp35_digester_1_a', 'PRJEB39821', False))
+    print("DEBUG: Running read_name_accession('BGP350_Hc_deepseq', 'PRJEB39821', False)")
+    print(run_alias_accession('BGP350_Hc_deepseq', 'PRJEB39821', False))
+
+    print("UUUUUUUUUND")
+    print(search_scientific_name_by_sample('SAMEA114745644', False))

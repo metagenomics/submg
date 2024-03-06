@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class staticConfig:
-    synum_version: str = '0.9.0'
+    synum_version: str = '0.9.1'
     webin_cli_version: str = '7.0.1'
     ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/drop-box/submit/'
     ena_test_dropbox_url: str = 'https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/'
@@ -40,6 +40,7 @@ class staticConfig:
     mag_qstring_high: str = 'Multiple fragments where gaps span repetitive regions. Presence of the 23S, 16S and 5S rRNA genes and at least 18 tRNAs.'
     mag_qstring_medium: str = 'Many fragments with little to no review of assembly other than reporting of standard assembly statistics.'
     max_assembly_name_length: int = 50 - len('webin-genome-' + '_SAMEA________')
+    timestamp_length: int = 4
     ena_rest_rate_limit: int = 50 # requests per second
     submission_modes_message: str = """
         The following modes of submission are supported:

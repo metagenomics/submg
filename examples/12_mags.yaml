@@ -12,7 +12,7 @@ SEQUENCING_PLATFORMS: ["ILLUMINA"]                                            # 
 PROJECT_NAME: "idx00_ex12_proj"                                               # Name of the project within which the sequencing was organized >>EXAMPLE: "AgRFex 2 Biogas Survey"
 SAMPLE_ACCESSIONS: ['SAMEA113417017','SAMEA113417018']                        # These samples exist in ENA. Your assembly is based on them. >>EXAMPLE: ["ERS15898933","ERS15898932"]
 ASSEMBLY:                                         
-  ASSEMBLY_NAME: "idx00_ex12_assembly"                                        # Choose a name, even if your assembly has been uploaded already. Will only be used for naming assembly and bins/MAGs. >>EXAMPLE: "Northern Germany biogas digester metagenome"
+  ASSEMBLY_NAME: "idx00_ex12_asm"                                        # Choose a name, even if your assembly has been uploaded already. Will only be used for naming assembly and bins/MAGs. >>EXAMPLE: "Northern Germany biogas digester metagenome"
   EXISTING_ASSEMBLY_ANALYSIS_ACCESSION:                                       # The accession of the assembly analysis that all bins/MAGs originate from >>EXAMPLE: "GCA_012552665"
   EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION: 'SAMEA114745644'                     # The accession of the virtual sample of the co-assembly which all bins/MAGs originate from >>EXAMPLE: "ERZ21942150"
   ASSEMBLY_SOFTWARE: "MEGAHIT"                                                # Software used to generate the assembly >>EXAMPLE: "MEGAHIT"

@@ -9,6 +9,7 @@ from synum.taxQuery import taxid_from_scientific_name
 import time
 import csv
 
+checks_failed = False
 
 def __check_tsv(tsvfile: str,
                 required_columns: list):
@@ -29,9 +30,9 @@ def __check_tsv(tsvfile: str,
         header = f.readline().strip().split('\t')
     for col in required_columns:
         if col not in header:
-            err = f"\nERROR: The .tsv file '{tsvfile}' is missing the column '{col}'."
+            err = f"\nWARNING: The .tsv file '{tsvfile}' is missing the column '{col}'."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            checks_failed = True
     if 'Bin_ids' in header:
         bin_ids = []
         with open(tsvfile, 'r') as f:
@@ -60,6 +61,7 @@ def __check_fields(items: list,
         category_name (str, optional): The name of the category being checked.
             Only used for error messages. Defaults to "item".
     """
+    global checks_failed
     if not isinstance(items, list):
         items = [items]
     for item in items:
@@ -68,18 +70,18 @@ def __check_fields(items: list,
                 if not optional:
                     err = f"\nERROR: A '{field}' field is missing in the {category_name} section (or one of the items in this section)."
                     loggingC.message(err, threshold=-1)
-                    exit(1)
+                    checks_failed = True
             elif item[field] is None or item[field] == '':
                 if not optional:
                     err = f"\nERROR: A '{field}' field is empty in the {category_name} section (or one of the items in this section)."
                     loggingC.message(err, threshold=-1)
-                    exit(1)
+                    checks_failed = True
             elif not isinstance(item[field], field_type):
                 found_type = type(item[field]).__name__
                 desired_type = field_type.__name__
                 err = f"\nERROR: The '{field}' field in the {category_name} section (or one of the items in this section) is not of the correct type (type is <{found_type}> but should be <{desired_type}>)."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                checks_failed = True
 
 
 def __check_date(date: str):
@@ -89,6 +91,7 @@ def __check_date(date: str):
     Args:
         date:    The date string to check.
     """
+    global checks_failed
     valid_formats = [
         "%Y",                   # Year only
         "%Y-%m",                # Year-month
@@ -108,7 +111,7 @@ def __check_date(date: str):
     if not valid:
         err = f"\nERROR: The date '{date}' is not a valid ISO date string. Please check your config file."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        checks_failed = True
 
 
 def __check_country_sea_location(location: str):
@@ -118,11 +121,12 @@ def __check_country_sea_location(location: str):
     Args:
         location:    The location string to check.
     """
+    global checks_failed
     valid_locations = staticConfig.valid_locations.split(';')
     if not location in valid_locations:
         err = f"\nERROR: The location '{location}' is not a valid country or sea name. Please check your config file."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        checks_failed = True
 
 
 def __check_study(config: dict,
@@ -134,14 +138,25 @@ def __check_study(config: dict,
         config:    The config file as a dictionary.
         testmode:  Whether or not to use the ENA development server.
     """
+    global checks_failed
     study_accession = utility.from_config(config, 'STUDY')
     if not enaSearching.study_exists(study_accession, testmode):
         if testmode:
-            err = f"\nERROR: The study accession '{study_accession}' does not exist on the ENA development server which you are trying to submit to. If you created it on the regular server, it can take up to 24 hours until it shows up on the development server."
+            if not enaSearching.study_exists(study_accession, False):
+                wrn = f"\nWARNING: The study accession '{study_accession}' " \
+                       "cannot be found on the ENA server. This might be okay " \
+                       "if you just created this study on the development " \
+                       "server. If that is the case, consider using " \
+                       "--skip_checks"
+                loggingC.message(wrn, threshold=-1)
+                checks_failed = True
         else:
-            err = f"\nERROR: The study accession '{study_accession}' does not exist on the ENA production server which you are trying to submit to. Did you create it on the development server?"
-        loggingC.message(err, threshold=-1)
-        exit(1)
+            err = f"\nERROR: The study accession '{study_accession}' does not " \
+                   "exist on the ENA production server which you are trying to " \
+                   "submit to. Did you create it only on the development " \
+                   "server?"
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
 
 
 def __check_samples(arguments: dict,
@@ -153,6 +168,7 @@ def __check_samples(arguments: dict,
         arguments:    The command line arguments.
         config:       The config file as a dictionary.
     """
+    global checks_failed
     if not arguments['submit_samples']:
         return
     # Check data in SAMPLES section
@@ -160,13 +176,33 @@ def __check_samples(arguments: dict,
     if len(sample_items) == 0:
         err = f"\nERROR: You chose to submit samples, but did not provide any sample data."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        checks_failed = True
     mandatory_fields = [('collection date', str),
                         ('geographic location (country and/or sea)', str)]
     __check_fields(sample_items, mandatory_fields, category_name="NEW_SAMPLE")
     for s in sample_items:
         __check_date(s['collection date'])
         __check_country_sea_location(s['geographic location (country and/or sea)'])
+    # Are all sample titles unique
+    titles = []
+    study = utility.from_config(config, 'STUDY')
+    testmode = arguments['development_service']
+    for sample in sample_items:
+        titles.append(sample['TITLE'])
+    if len(titles) != len(set(titles)):
+        err = f"\nERROR: The TITLEs in the SAMPLES section are not unique."
+        loggingC.message(err, threshold=-1)
+        checks_failed = True
+    # Does one of the sample titles already exist in ENA
+    for title in titles:
+        if enaSearching.sample_title_accession(title, study, False) or enaSearching.sample_title_accession(title, study, testmode):
+            err = f"\nERROR: The sample title '{title}' was provided in the samples section but already exists on the ENA server as a sample title."
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
+        if enaSearching.sample_alias_accession(title, study, False) or enaSearching.sample_title_accession(title, study, testmode):
+            err = f"\nERROR: The sample title '{title}' was provided in the samples section but already exists on the ENA server as a sample alias."
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
 
 
 def __check_read_type(paired: bool,
@@ -183,6 +219,7 @@ def __check_read_type(paired: bool,
         arguments:    The command line arguments.
         testmode:     Whether or not to use the ENA development server.
     """
+    global checks_failed
     if paired:
         read_type = 'paired-end reads'
     else:
@@ -205,12 +242,21 @@ def __check_read_type(paired: bool,
     else:
         mandatory_fields.append(('RELATED_SAMPLE_ACCESSION',  str),)
 
+    read_aliases = []
     for s in read_items:
         # Check if all fields are present and not empty
         __check_fields(read_items,
                        mandatory_fields,
                        category_name=read_type)
-        
+        # Check if the read name already exists as aliases in ENA
+        read_alias = s['NAME']
+        read_aliases.append(read_alias)
+        study = utility.from_config(config, 'STUDY')
+        testmode = arguments['development_service']
+        if enaSearching.run_alias_accession(read_alias, study, False) or enaSearching.run_alias_accession(read_alias, study, testmode):
+            err = f"\nERROR: The NAME '{read_alias}' was provided in the reads section but already exists on the ENA server as a run alias."
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
         # Check if sample accessions are coherent
         if arguments['submit_samples']:
             sample_title = s['RELATED_SAMPLE_TITLE']
@@ -221,14 +267,20 @@ def __check_read_type(paired: bool,
             if sample_title not in titles:
                 err = f"\nERROR: The sample title '{sample_title}' was provided in the reads section but not matching sample exist in the NEW_SAMPLES section."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                checks_failed = True
         else:
             sample_accession = s['RELATED_SAMPLE_ACCESSION']
             # Do the samples exist in ENA
-            if not enaSearching.sample_exists(sample_accession, testmode):
-                err = f"\nERROR: The sample accession '{sample_accession}' was provided in the reads section but does not exist on the ENA server."
-                loggingC.message(err, threshold=-1)
-                exit(1)
+            if not enaSearching.sample_accession_exists(sample_accession, False):
+                if not enaSearching.sample_accession_exists(sample_accession, testmode):
+                    if testmode:
+                        wrn = f"\nWARNING: The sample accession '{sample_accession}' cannot be found on the ENA server. This might be okay if you just created it on the development server. Consider using --skip_checks"
+                        loggingC.message(wrn, threshold=-1)
+                        checks_failed = True
+                    else:
+                        err = f"\nERROR: The sample accession '{sample_accession}' was provided in the reads section but does not exist on the ENA server."
+                        loggingC.message(err, threshold=-1)
+                        checks_failed = True
             # Is it the same samples from the sample_accessions field
             if 'SAMPLE_ACCESSIONS' in config:
                 sample_accessions = utility.from_config(config, 'SAMPLE_ACCESSIONS')
@@ -237,9 +289,13 @@ def __check_read_type(paired: bool,
                 if not sample_accession in sample_accessions:
                     err = f"\nERROR: The sample accession '{sample_accession}' was provided in the reads section but does not exist in the SAMPLE_ACCESSIONS field."
                     loggingC.message(err, threshold=-1)
-                    exit(1)
+                    checks_failed = True
                 
-            
+        # Check if all aliases are unique
+        if len(read_aliases) != len(set(read_aliases)):
+            err = f"\nERROR: The NAMEs in the reads section are not unique."
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
 
         # Check if the FASTQ file exists and has a valid file extension
         if paired:
@@ -295,6 +351,7 @@ def __check_misc(arguments: dict,
         arguments:    The command line arguments.
         config:       The config file as a dictionary.
     """
+    global checks_failed
     # Sequencing Platforms
     if arguments['submit_assembly'] or arguments['submit_bins'] or arguments['submit_mags']:
         sequencing_platforms = utility.from_config(config, 'SEQUENCING_PLATFORMS')
@@ -305,11 +362,11 @@ def __check_misc(arguments: dict,
             if not platform in valid_platforms:
                 err = f"\nERROR: The sequencing platform '{platform}' is not valid. Valid platforms are: {'|'.join(staticConfig.valid_sequencing_platforms.split(';'))}"
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                checks_failed = True
 
     # Project Name
     if arguments['submit_mags']:
-        utility.from_config(config, 'PROJECT_NAME')
+        utility.stamped_from_config(config, 'PROJECT_NAME')
 
     # Metagenome taxonomy
     if arguments['submit_assembly']:
@@ -322,30 +379,35 @@ def __check_misc(arguments: dict,
                       '{metagenome_scientific_name}' but could not be mapped \
                         to an NCBI tax id."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            checks_failed = True
         else:
             msg = f"Matched METAGENOME_SCIENTIFIC_NAME \
                     '{metagenome_scientific_name}' to NCBI tax id {ena_taxid}."
             loggingC.message(msg, threshold=1)
 
 
-def __check_assembly_name(assembly_name):
+def __check_assembly_name(arguments: dict,
+                          assembly_name: str):
     """
     Check if the assembly name is too long. The submission limit is 50 characters,
     but webin cli will introduce add a prefix before submission.
 
     Args:
+        arguments:        The command line arguments.
         assembly_name:    The assembly name read from the config.
     """
+    global checks_failed
     if not isinstance(assembly_name, str):
         err = f"\nERROR: Please provide a string as the assembly name (found {type(assembly_name).__name__})."
         loggingC.message(err, threshold=-1)
         exit(1)
     max_length = staticConfig.max_assembly_name_length
+    if arguments['development_service'] or arguments['timestamps']:
+        max_length -= staticConfig.timestamp_length
     if len(assembly_name) > max_length:
         err = f"\nERROR: The assembly name '{assembly_name}' is too long. The maximum length is {max_length} characters."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        checks_failed = True
 
 
 def __check_assembly(arguments: dict,
@@ -359,13 +421,15 @@ def __check_assembly(arguments: dict,
         config:       The config file as a dictionary.
         testmode:     Whether or not to use the ENA development server.
     """
+    global checks_failed
+
     if testmode:
         servertype = "development"
     else:
         servertype = "production"
 
     assembly_data = utility.from_config(config, 'ASSEMBLY')
-    __check_assembly_name(assembly_data['ASSEMBLY_NAME'])
+    __check_assembly_name(arguments, assembly_data['ASSEMBLY_NAME'])
 
     if arguments['submit_assembly']:
         
@@ -389,7 +453,7 @@ def __check_assembly(arguments: dict,
             gz_extensions = [f"{ext}.gz" for ext in valid_extensions]
             err = f"\nERROR: The assembly fasta file '{assembly_data['FASTA_FILE']}' does not exist or does not have a valid file extensions. Valid extensions are {'|'.join(valid_extensions)} and {'|'.join(gz_extensions)}." 
             loggingC.message(err, threshold=-1)
-            exit(1)
+            checks_failed = True
 
     else:
         biological_sample_accessions = utility.from_config(config, 'SAMPLE_ACCESSIONS')
@@ -401,7 +465,9 @@ def __check_assembly(arguments: dict,
                                                                        'ASSEMBLY',
                                                                        'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION')
             if not assembly_analysis_accession is None or assembly_analysis_accession == '':
-                resulting_accession = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession, testmode)
+                resulting_accession = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession, False)
+                if not resulting_accession:
+                    resulting_accession = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession, testmode)
                 if not len(biological_sample_accessions) == 1:
                     err = f"\nERROR: When providing an existing assembly analysis accession, you need to provide exactly one biological sample accession in the SAMPLE_ACCESSIONS field. If the assembly stems from 2 or more samples, please provide a co-assembly accession instead."
                     loggingC.message(err, threshold=-1)
@@ -411,16 +477,27 @@ def __check_assembly(arguments: dict,
         if resulting_accession is None and 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data:
             sample_accessions = utility.optional_from_config(config, 'ASSEMBLY', 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION')
             if not sample_accessions is None or sample_accessions == '':
-                if not enaSearching.sample_exists(sample_accessions, testmode):
-                    err = f"\nERROR: The co-assembly sample accession '{sample_accessions}' could not be found on the {servertype} ENA server."
-                    loggingC.message(err, threshold=-1)
-                    exit(1)
+                if not enaSearching.sample_accession_exists(sample_accessions, False):
+                    if not enaSearching.sample_accession_exists(sample_accessions, testmode):
+                        if testmode:
+                            wrn = f"\nWARNING: The co-assembly sample " \
+                                   "accession '{sample_accessions}' cannot " \
+                                   "be found on the ENA server. This might be " \
+                                   "okay if you just created it on the " \
+                                   "development server. Consider using " \
+                                   "--skip_checks"
+                            loggingC.message(wrn, threshold=-1)
+                            checks_failed = True
+                        else:
+                            err = f"\nERROR: The co-assembly sample accession '{sample_accessions}' could not be found on the {servertype} ENA server."
+                            loggingC.message(err, threshold=-1)
+                            checks_failed = True
                 else:
                     resulting_accession = sample_accessions
                     if len(biological_sample_accessions) < 2:
                         err = f"\nERROR: When providing an existing co-assembly sample accession, you need to provide at least two biological sample accessions in the SAMPLE_ACCESSIONS field."
                         loggingC.message(err, threshold=-1)
-                        exit(1)
+                        checks_failed = True
             else:
                 resulting_accession = None
         if (not 'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION' in assembly_data) and (not 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data):
@@ -444,6 +521,7 @@ def __check_bins(arguments: dict,
         config:       The config file as a dictionary.
         testmode:     Whether or not to use the ENA development server.
     """
+    global checks_failed
     if not arguments['submit_bins'] and not arguments['submit_mags']:
         return
     
@@ -464,7 +542,7 @@ def __check_bins(arguments: dict,
     if quality_file is None or quality_file == '':
         err = f"\nERROR: No QUALITY_FILE was provided in the BINS section."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        checks_failed = True
     __check_tsv(quality_file, staticConfig.bin_quality_columns.split(';'))
 
 
@@ -490,7 +568,7 @@ def __check_bins(arguments: dict,
                     if not item in header:
                         err = f"\nERROR: The taxonomy file '{tax_file}' needs to have one of the following two sets of columns:\n{'|'.join(gtdb_majority_vote_columns)}\n{'|'.join(ncbi_taxonomy_columns)}"
                         loggingC.message(err, threshold=-1)
-                        exit(1)
+                        checks_failed = True
     if 'MANUAL_TAXONOMY_FILE' in bin_data.keys():
         if isinstance(bin_data['MANUAL_TAXONOMY_FILE'], list):
             err = f"\nERROR: In the BINS section, provide only one MANUAL_TAXONOMY_FILE please"
@@ -501,7 +579,7 @@ def __check_bins(arguments: dict,
                 err = f"\nERROR: Ane empty string was provided as MANUAL_TAXONOMY_FILE in the BINS section."
                 err += f"\nPlease provide a valid file path or remove the field from the config file."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                checks_failed = True
             __check_tsv(bin_data['MANUAL_TAXONOMY_FILE'], staticConfig.manual_taxonomy_columns.split(';'))
             tax_files.append(bin_data['MANUAL_TAXONOMY_FILE'])
     # And if the headers of the MANUAL_TAXONOMY_FILE are correct
@@ -531,7 +609,7 @@ def __check_bins(arguments: dict,
     if not found:
         err = f"\nERROR: The bins directory '{bins_directory}' does not contain any fasta files."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        checks_failed = True
 
     # Check if the required arguments in ASSEMBLY section are present
     assembly_data = utility.from_config(config, 'ASSEMBLY')
@@ -558,7 +636,7 @@ def __check_mags(arguments: dict,
         return
     
     # Check project name
-    utility.from_config(config, 'PROJECT_NAME')
+    utility.stamped_from_config(config, 'PROJECT_NAME')
 
     # Check the metadata file
     metadata_file = utility.from_config(config, 'MAGS', 'MAG_METADATA_FILE')
@@ -701,6 +779,9 @@ def preflight_checks(arguments: dict) -> None:
     Returns:
         The config file as a dictionary.
     """
+    msg = f">Running preflight checks. You can skip these by using the --skip_checks flag."
+    loggingC.message(msg, threshold=0)
+
     # Check if config file exists
     if not os.path.isfile(arguments['config']):
         err = f"\nERROR: The config file '{arguments['config']}' does not exist."
@@ -746,7 +827,16 @@ def preflight_checks(arguments: dict) -> None:
         loggingC.message(err, threshold=-1)
         exit(1)
 
-    msg = f">All preflight checks passed."
-    loggingC.message(msg, threshold=0)
+    if checks_failed:
+        msg = f"Some preflight checks failed. If you are sure that the data " \
+                "you provided is correct, you can skip these checks by using " \
+                "the --skip_checks flag. If any ERROR messages are not " \
+                "adressed, they are likely to cause failure after partial " \
+                "submission."
+        loggingC.message(msg, threshold=-1)
+        exit(1)
+    else:
+        msg = f">All preflight checks passed."
+        loggingC.message(msg, threshold=0)
 
     return config

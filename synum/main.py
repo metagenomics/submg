@@ -58,8 +58,8 @@ def main():
                                type=int,
                                choices=[0, 1],
                                default=1,
-                               help="Make submissions to the ENA dev test "
-                               "server. [default 1/true]")
+                               help="Make submissions to the ENA development "
+                               "test server. [default 1/true]")
     parser_submit.add_argument("-t",
                                "--threads",
                                type=int,
@@ -105,6 +105,15 @@ def main():
                                action="store_true",
                                default=False,
                                help="Skip preflight checks. Use with caution.")
+    parser_submit.add_argument("-z", "--timestamps",
+                               type=int,
+                               choices=[0, 1],
+                               help="Add timestamps to the names of submitted "
+                               "items. This prevents name clashes when "
+                               "submitting the same data multiple times during "
+                               "testing. Defaults to true when using the "
+                               "development_service, defaults to false "
+                               "otherwise.")
 
     parser_makecfg = subparsers.add_parser('makecfg',
                                            help='Create a .yml file '
@@ -195,16 +204,18 @@ def main():
     elif args.mode == 'submit':
 
         loggingC.set_up_logging(args.logging_dir, args.verbosity)
+        if args.timestamps or (args.timestamps is None and args.development_service):
+            utility.set_up_timestamps(vars(args))
 
         try:        
             sver = staticConfig.synum_version
             wver = staticConfig.webin_cli_version
             loggingC.message(f">Running synum {sver} with webin-cli {wver}", 0)
             if args.development_service == 1:
-                loggingC.message((">Initializing a test submission to" \
+                loggingC.message((">Initializing a test submission to " \
                                    "the ENA dev server."), 0)
             else:
-                loggingC.message((">Initializing a LIVE SUBMISSION to" \
+                loggingC.message((">Initializing a LIVE SUBMISSION to " \
                                    "the ENA production server."), 0)
                 time.sleep(5)
 
@@ -334,8 +345,15 @@ def main():
                 if args.submit_assembly:
                     metagenome_scientific_name = utility.from_config(config, 'METAGENOME_SCIENTIFIC_NAME')
                 else:
-                    metagenome_scientific_name = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
-                                                                                            args.development_service)
+                    try:
+                        metagenome_scientific_name = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
+                                                                                                   args.development_service)
+                    except:  
+                        # This is a workaround because I keep getting
+                        # false negatives on the development server
+                        # for samples that exist on both servers.
+                        metagenome_scientific_name = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
+                                                                                                   False)
                 submit_mags(config,
                             metagenome_scientific_name,
                             sample_accession_data,

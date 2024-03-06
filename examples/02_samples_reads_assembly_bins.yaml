@@ -31,7 +31,7 @@ SINGLE_READS:
   RELATED_SAMPLE_TITLE: 'idx00_example02_sample01'                                                    # The title of the sample that these reads originate from >>EXAMPLE: "Bioreactor_2_sample"
   ADDITIONAL_MANIFEST_FIELDS:                                                                         # You can add additional fields that will be written to the manifest
 ASSEMBLY:                                         
-  ASSEMBLY_NAME: 'idx00_e02_assembly'                                                                 # Choose a name, even if your assembly has been uploaded already. Will only be used for naming assembly and bins/MAGs. >>EXAMPLE: "Northern Germany biogas digester metagenome"
+  ASSEMBLY_NAME: 'idx00_e02_asm'                                                                 # Choose a name, even if your assembly has been uploaded already. Will only be used for naming assembly and bins/MAGs. >>EXAMPLE: "Northern Germany biogas digester metagenome"
   ASSEMBLY_SOFTWARE: 'metaSPAdes'                                                                     # Software used to generate the assembly >>EXAMPLE: "MEGAHIT"
   ISOLATION_SOURCE: 'ant fungus garden'                                                               # Describe where your sample was taken from >>EXAMPLE: "biogas plant anaerobic digester"
   FASTA_FILE: "data/assembly.fasta"                                                                   # Path to the fasta file >>EXAMPLE: "/mnt/data/assembly.fasta.gz"
