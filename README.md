@@ -6,12 +6,8 @@
 </picture>
 &nbsp;
 
-&nbsp;
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/ttubb/synum)
-
-
-# Synum
-Synum aids in the submission of metagenomic experiment data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in single YAML form, Synum derives additional information where required, creates all samplesheets and manifests and uploads everything to your ENA account.
+# Synum <img align="right" style="float: right; margin-left: 10px; margin-top: 15px;" src="https://img.shields.io/github/v/release/ttubb/synum" alt="GitHub release (latest)">
+Synum aids in the submission of metagenomic experiment data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in single YAML form, Synum derives additional information where required, creates samplesheets and manifests and uploads everything to your ENA account.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="synum/img/steps_dark.png">
@@ -26,8 +22,9 @@ Please Note:
 1. The tool will work *only* for metagenomic data.
 2. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenomic bin. Bins should be submitted before MAGs.
 3. In case you intend to upload results based on third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
-4. Please [report](#support) any issues you have with this tool. We'll get back to you as soon as possible.
-5. If the tool doesn't cover your use case, let us know. We are happy to expand functionality.
+4. Please [report any issues](https://github.com/ttubb/synum/issues/new) you have with this tool. We'll get back to you as soon as possible.
+5. If the tool doesn't cover your use case, [let us know](https://github.com/ttubb/synum/discussions). We are happy to expand functionality.
+
 
 # Content
 - [Installation](#installation)
@@ -51,7 +48,7 @@ Please Note:
 # Installation
 - Make sure Python 3.8 or higher is installed
 - Make sure Java 1.8 or higher is installed
-- Clone this repository (`git clone https://github.com/ttubb/synum`)
+- Clone this repository: `git clone https://github.com/ttubb/synum`
 - Switch into the directory that you just cloned
 - Run `python -m pip install .`
 - Run `synum download_webin` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli). 
@@ -60,24 +57,28 @@ Please Note:
 Synum is intended to submit data related to a *single* (co-)assembly. All samples, sequncing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run synum once for each assembly.
 
 ## Example
-Assuming you want to upload 2 samples, 2 paired-end read files, a co-assembly and bins.
-1. Create environment variables for your ENA username and password
+Assuming you want to upload 2 samples, 2 paired-end read files, a co-assembly and bins. We will collect the necessary data, do a test submission, then upload everything to the ENA.
+
+1 - Create environment variables for your ENA username and password:
 ```
 export ENA_USER=your_ena_username
 export ENA_PASSWORD=your_ena_password
 ```
-2. Create study object through the web interface of the [ENA development service](https://wwwdev.ebi.ac.uk/ena/submit/webin/login)
-3. Create a template config file using
+2 - Create study object through the web interface of the [ENA development service](https://wwwdev.ebi.ac.uk/ena/submit/webin/login)
+
+3 - Create a template config file using:
 ```
 synum makecfg --outfile /path/to/your/config.yaml --submit_samples 2 --submit_paired_end_reads 2 --submit_assembly --submit_bins
 ```
-4. Fill out the config file (it contains explanations and examples)
-5. Submit your data to the development server using
+4 - Fill out the config file (it contains explanations and examples for each line)
+
+5 - Submit your data to the development server using:
 ```
 synum submit --config /path/to/your/config.yaml --staging_dir /path/to/empty/directory1 --logging_dir /path/to/empty/directory2 --submit_samples --submit_reads --submit_assembly --submit_bins
 ```
-6. If there are no errors, create a study object through the web interface of the [ENA production server](https://www.ebi.ac.uk/ena/submit/webin/login)
-7. Submit your data to the production server using
+6 - If there are no errors, create a study object through the web interface of the [ENA production server](https://www.ebi.ac.uk/ena/submit/webin/login)
+
+7 - Submit your data to the production server using
 ```
 synum submit --config /path/to/your/config.yaml --staging_dir /path/to/empty/directory3 --logging_dir /path/to/empty/directory4 --submit_samples --submit_reads --submit_assembly --submit_bins --development_service 0
 ```
@@ -146,4 +147,4 @@ If your bins are the result of dereplicating data from a single assembly you can
 When calculating completeness and contamination of a bin with tools like [CheckM](https://github.com/Ecogenomics/CheckM), contamination values above 100% can occur. [Usually, this is not an error](https://github.com/Ecogenomics/CheckM/issues/107). However, the ENA API will refuse to accept bins with contamination values above 100%. This issue is unrelated to synum, but to avoid partial submissions synum will refuse to work if such a bin is present in the dataset. If you have bins with contamination values above 100% you can either leave them out by removing them from your dataset or manually set the contamination value to 100% in the `BINS_QUALITY_FILE` file you provide to synum.
 
 # Support
-Synum is being actively developed. Please use the github issue tracker to report problems. A discussions page is available for questions, comments and suggestions. 
+Synum is being actively developed. Please use the github [issue tracker](https://github.com/ttubb/synum/issues) to report problems. A [discussions page](https://github.com/ttubb/synum/discussions) is available for questions, comments and suggestions. 
