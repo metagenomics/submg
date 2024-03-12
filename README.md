@@ -1,3 +1,4 @@
+<meta name="google-site-verification" content="7ioXWTUx90EhmA5B0684YunfQfnMeUu9XXFznjPt-FU" />
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="synum/img/logo_dark.png">
