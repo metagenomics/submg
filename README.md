@@ -6,7 +6,6 @@
 </picture>
 
 <img align="right" src="https://img.shields.io/github/v/release/ttubb/synum" alt="GitHub release (latest)">
-&nbsp;
 
 # Synum 
 Synum aids in the submission of metagenomic experiment data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in single YAML form, Synum derives additional information where required, creates samplesheets and manifests and uploads everything to your ENA account.
