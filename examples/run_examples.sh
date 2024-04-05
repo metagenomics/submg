@@ -14,7 +14,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -33,7 +33,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -51,7 +51,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -68,7 +68,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -86,7 +86,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -103,7 +103,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -119,7 +119,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -136,7 +136,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -152,7 +152,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -167,7 +167,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -183,7 +183,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -198,7 +198,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-synum submit \
+submg submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \

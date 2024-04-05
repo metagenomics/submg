@@ -1,7 +1,7 @@
 # ABOUT: This is a config for submitting a co-assembly
 # ABOUT: Coverage is derived from .bam files
 # USAGE: navigate to the <examples> directory
-# USAGE: synum submit --config 08_assembly_bins.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_assembly
+# USAGE: submg submit --config 08_assembly_bins.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_assembly
 
 
 STUDY: "PRJEB71644"                                                           # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"
