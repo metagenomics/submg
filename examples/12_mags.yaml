@@ -2,7 +2,7 @@
 # ABOUT: Coverage is derived from .bam files
 # ABOUT: Taxonomy is specified only in the MANUAL_TAXONOMY_FILE
 # USAGE: navigate to the <examples> directory
-# USAGE: synum submit --config 12_mags.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_mags
+# USAGE: submg submit --config 12_mags.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_mags
 
 
 STUDY: "PRJEB71644"                                                           # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"
