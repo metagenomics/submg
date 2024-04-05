@@ -1,15 +1,19 @@
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="submg/img/logo_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="submg/img/logo_light.png">
-  <img alt="submg Logo" sr c="submg/img/logo_light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="submg/img/logo_dark.png" width=400>
+  <source media="(prefers-color-scheme: light)" srcset="submg/img/logo_light.png" width=400>
+  <img alt="submg Logo" sr c="submg/img/logo_light.png" width=400>
 </picture>
 
 &nbsp;
 &nbsp;
 # About <img align="right" style="float: right; margin-left: 10px; margin-top: 15px;" src="https://img.shields.io/github/v/release/ttubb/synum" alt="GitHub release (latest)">
-submg aids in the submission of metagenomic study data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in single YAML form, submg derives additional information where required, creates samplesheets and manifests and uploads everything to your ENA account.
+submg aids in the submission of metagenomic study data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in single YAML form, submg derives additional information where required, creates samplesheets and manifests and uploads everything to your ENA account.  
 
+**We are investigating recent issues with accessing the search API of the ENA development server. Test submissions might fail if the main study object does not exist on the production server.**  
+
+&nbsp;
+&nbsp;
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/img/steps_dark.png">
