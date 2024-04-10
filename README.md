@@ -50,6 +50,14 @@ Please Note
 
 
 # Installation
+
+## Container
+A container based on the main branch is available [through DockerHub](https://hub.docker.com/r/ttubb/submg)
+```
+docker pull ttubb/submg
+```
+
+## Local Installation
 - Make sure Python 3.8 or higher is installed
 - Make sure Java 1.8 or higher is installed
 - Make sure [wheel](https://pypi.org/project/wheel/) is installed
