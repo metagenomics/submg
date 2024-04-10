@@ -1,14 +1,25 @@
-
+# About  <img align="right" style="float: right; margin-left: 10px; margin-top: 15px;" src="https://img.shields.io/github/v/release/ttubb/submg" alt="GitHub release (latest)">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="submg/img/logo_dark.png" width=400>
-  <source media="(prefers-color-scheme: light)" srcset="submg/img/logo_light.png" width=400>
-  <img alt="submg Logo" sr c="submg/img/logo_light.png" width=400>
+  <source media="(prefers-color-scheme: dark)" srcset="submg/img/logo_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="submg/img/logo_light.png">
+  <img align="left" alt="submg Logo" sr c="submg/img/logo_light.png" width=350>
 </picture>
 
-&nbsp;
-&nbsp;
-# About <img align="right" style="float: right; margin-left: 10px; margin-top: 15px;" src="https://img.shields.io/github/v/release/ttubb/submg" alt="GitHub release (latest)">
+
 submg aids in the submission of metagenomic study data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in a configuration form, submg derives additional information where required, creates samplesheets and manifests and uploads everything to your ENA account. You can use a combination of manual and submg steps to submit your data (e.g. submitting samples and reads through the ENA web interface, then using the tool to submit the assembly and bins).
+
+
+
+&nbsp;
+&nbsp;
+&nbsp;
+
+Please Note
+1. The tool will work *only* for metagenomic data.
+2. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenomic bin. Bins should be submitted before MAGs.
+3. In case you intend to upload results based on third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
+4. Please [report any issues](https://github.com/ttubb/submg/issues/new) you have with this tool. We'll get back to you as soon as possible.
+5. If the tool doesn't cover your use case, [let us know](https://github.com/ttubb/submg/discussions). We are happy to expand functionality.
 
 &nbsp;
 &nbsp;
@@ -21,14 +32,6 @@ submg aids in the submission of metagenomic study data to the European Nucleotid
 
 &nbsp;
 &nbsp;
-
-Please Note
-1. The tool will work *only* for metagenomic data.
-2. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenomic bin. Bins should be submitted before MAGs.
-3. In case you intend to upload results based on third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
-4. Please [report any issues](https://github.com/ttubb/submg/issues/new) you have with this tool. We'll get back to you as soon as possible.
-5. If the tool doesn't cover your use case, [let us know](https://github.com/ttubb/submg/discussions). We are happy to expand functionality.
-
 
 # Content
 - [Installation](#installation)
@@ -52,10 +55,7 @@ Please Note
 # Installation
 
 ## Container
-A container based on the main branch is available [through DockerHub](https://hub.docker.com/r/ttubb/submg)
-```
-docker pull ttubb/submg
-```
+A container based on the main branch is available [through DockerHub](https://hub.docker.com/r/ttubb/submg): `docker pull ttubb/submg`
 
 ## Local Installation
 - Make sure Python 3.8 or higher is installed
