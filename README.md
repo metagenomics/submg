@@ -8,9 +8,7 @@
 &nbsp;
 &nbsp;
 # About <img align="right" style="float: right; margin-left: 10px; margin-top: 15px;" src="https://img.shields.io/github/v/release/ttubb/submg" alt="GitHub release (latest)">
-submg aids in the submission of metagenomic study data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in single YAML form, submg derives additional information where required, creates samplesheets and manifests and uploads everything to your ENA account.  
-
-**We are investigating recent issues with accessing the search API of the ENA development server. Test submissions might fail if the main study object does not exist on the production server.**  
+submg aids in the submission of metagenomic study data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in a configuration form, submg derives additional information where required, creates samplesheets and manifests and uploads everything to your ENA account. You can use a combination of manual and submg steps to submit your data (e.g. submitting samples and reads through the ENA web interface, then using the tool to submit the assembly and bins).
 
 &nbsp;
 &nbsp;

@@ -1,11 +1,11 @@
 import requests
 
-from submg import loggingC, utility
+from submg import loggingC
 from submg.statConf import staticConfig
 
 
 def study_exists(study_accession: str,
-                 devserver: bool) -> bool:
+                 devserver: bool = False) -> bool:
     """
     Check if a study with the input accession exists in ENA.
 
@@ -26,7 +26,7 @@ def study_exists(study_accession: str,
         "fields": "study_accession"
     }
     response = requests.get(url, params=params)
-    
+
     data = response.text.split('\n')
     if (data[0] != 'study_accession') or (data[1] not in [study_accession, '']):
         # There are some weird issues when querying the development server API
@@ -64,6 +64,7 @@ def sample_accession_exists(sample_accession: str,
         "fields": "sample_accession"
     }
     response = requests.get(url, params=params)
+
     data = response.text.split('\n')
     if (data[0] != 'sample_accession') or (data[1] not in [sample_accession, '']):
         loggingC.message(f"\nERROR: Unexpected response when querying ENA API for sample accession {sample_accession}.", threshold=-1)
@@ -257,6 +258,5 @@ if __name__ == "__main__":
     print(sample_title_accession('bgp35_digester_1_a', 'PRJEB39821', False))
     print("DEBUG: Running read_name_accession('BGP350_Hc_deepseq', 'PRJEB39821', False)")
     print(run_alias_accession('BGP350_Hc_deepseq', 'PRJEB39821', False))
-
-    print("UUUUUUUUUND")
+    print("DEBUG: Running search_scientific_name_by_sample('SAMEA114745644', False)")
     print(search_scientific_name_by_sample('SAMEA114745644', False))
