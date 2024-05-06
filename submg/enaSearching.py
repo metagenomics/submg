@@ -189,8 +189,6 @@ def search_samples_by_assembly_analysis(assembly_analysis_accession: str,
         "fields": "sample_accession"
     }
     response = requests.get(url, params=params)
-    print("INPUT: ", assembly_analysis_accession)
-    print("RESPONSE: ", response.text)
 
     try:
         sample_accession = response.text.split('\n')[1:-1][0]
@@ -242,6 +240,7 @@ def search_scientific_name_by_sample(sample_accession: str,
 
 if __name__ == "__main__":
     # For debugging
+    print("DEBUG: Checking API availability...\n")
     print("DEBUG: Running sample_accession_exists('SAMEA113417025',False)")
     print(sample_accession_exists('SAMEA113417025',False))
     print("DEBUG: Running sample_accession_exists('ERS28162653', False)")
