@@ -130,7 +130,8 @@ def init_argparse():
                                            'containing the fields you need to '
                                            'fill out prior to submission')
     parser_makecfg.add_argument("-o",
-                                "--outfile",required=True,
+                                "--outfile",
+                                required=True,
                                 help="Path to the empty config that will be "
                                 "generated.")
     parser_makecfg.add_argument("-c",

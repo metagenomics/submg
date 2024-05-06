@@ -589,6 +589,7 @@ def validate_parameter_combination(submit_samples: bool,
         is_valid = True
 
     if not is_valid:
+        # Dont use loggingC here because this might be called from configGen
         print(f"\nERROR: The combination of parameters you have specified is not valid.")
         print(staticConfig.submission_modes_message)
         exit(1)
