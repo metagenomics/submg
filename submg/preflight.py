@@ -711,7 +711,7 @@ def __check_mags(arguments: dict,
 
     # Check if all MAGs bins pass the filtering that is being applied to bins
     bin_quality = binSubmission.get_bin_quality(config, silent=True)
-    filtered_bins = utility.filter_bins(bin_quality, config)
+    filtered_bins = utility.quality_filter_bins(bin_quality, config)
     for bin_id in all_mag_bins:
         if bin_id not in filtered_bins:
             err = f"\nERROR: The bin {bin_id} in the MAG_METADATA_FILE does not pass the filtering criteria for bins (MIN_COMPLETENESS / MAX_CONTAMINATION)."

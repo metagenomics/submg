@@ -376,7 +376,7 @@ def check_fasta(fasta_path) -> tuple:
     return fasta_path, gzipped
 
 
-def filter_bins(quality_data, config):
+def quality_filter_bins(quality_data, config):
     """
     Filter bins based on the quality data.
 
