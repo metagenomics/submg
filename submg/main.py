@@ -246,7 +246,7 @@ def submit(args):
         else:
             loggingC.message((">Initializing a LIVE SUBMISSION to " \
                                "the ENA production server."), 0)
-            time.sleep(5)
+            time.sleep(5) # Give user some extra time to notice message
 
         if not args.skip_checks:
             utility.validate_parameter_combination(args.submit_samples,
@@ -263,7 +263,7 @@ def submit(args):
         if args.submit_bins or args.submit_mags:
             bin_quality = get_bin_quality(config, silent=True)
             # If there are quality cutoffs, make a list of bins to submit
-            filtered_bins = utility.filter_bins(bin_quality, config)
+            filtered_bins = utility.quality_filter_bins(bin_quality, config)
             # Test if there are bins which are too contaminated
             for name in filtered_bins:
                 contamination = bin_quality[name]['contamination']
@@ -280,8 +280,10 @@ def submit(args):
                     )
                     loggingC.message(err, threshold=-1)
                     exit(1)
-            bin_taxonomy = taxQuery.get_bin_taxonomy(filtered_bins, config)
-        
+            # Query the taxonomy of bins
+            bin_taxonomy = taxQuery.get_bin_taxonomy(filtered_bins,
+                                                                    config)
+            
         # Construct depth files if there are .bam files in the config
         if 'BAM_FILES' in config.keys():
             bam_files = utility.from_config(config, 'BAM_FILES')

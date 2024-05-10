@@ -24,7 +24,9 @@ def __report_tax_issues(issues):
     problematic_bins = set(problematic_bins)
     msg = '\n'.join(problematic_bins)
     loggingC.message(msg, threshold=-1)
-    msg = "Please consult the README. You can manually enter taxonomy data for these bins into a .tsv file and specify it in the MANUAL_TAXONOMY_FILE field in the config file."
+    msg =  "Please consult the README. You can manually enter taxonomy data for these bins into a .tsv file and specify it in the MANUAL_TAXONOMY_FILE field in the config file."
+    msg += " If your annotation process failed to classify a bin even at domain level, consider excluding it from your submission. If you want to submit it anyways,"
+    msg += " you may choose to add it to the MANUAL_TAXONOMY_FILES using taxid 155900 (unclassified organism)."
     loggingC.message(msg, threshold=-1) 
 
     # Give a detailed listing of the issues
@@ -278,7 +280,7 @@ def __best_classification(ncbi_classifications: dict) -> dict:
     return result
 
 
-def ena_taxonomy_suggestion(level: str,
+def __ena_taxonomy_suggestion(level: str,
                             domain: str,
                             classification: str,
                             filtered: bool = True) -> list:
@@ -472,7 +474,7 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
         if bin_name in upload_taxonomy_data:
             loggingC.message(f">INFO: Bin {bin_name} was found in the manual taxonomy file and will be skipped.", threshold=1)
             continue
-        suggestions = ena_taxonomy_suggestion(taxonomy['level'],
+        suggestions = __ena_taxonomy_suggestion(taxonomy['level'],
                                               taxonomy['domain'],
                                               taxonomy['classification'],
                                               filtered=True)
@@ -482,7 +484,7 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
                 'tax_id': suggestions[0]['tax_id'],
             }
         else:
-            all_ena_suggestions = ena_taxonomy_suggestion(taxonomy['level'],
+            all_ena_suggestions = __ena_taxonomy_suggestion(taxonomy['level'],
                                                           taxonomy['domain'],
                                                           taxonomy['classification'],
                                                           filtered=False)
