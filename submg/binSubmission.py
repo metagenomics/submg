@@ -108,7 +108,8 @@ def get_bin_quality(config, silent=False) -> dict:
     return result
 
 
-def __prep_bins_samplesheet(config: dict,
+def __prep_bins_samplesheet(filtered_bins: list,
+                            config: dict,
                             assembly_sample_accession: str,
                             samples_submission_dir: str,
                             upload_taxonomy_data: dict) -> str:
@@ -116,6 +117,7 @@ def __prep_bins_samplesheet(config: dict,
     Prepares an XML samplesheet for all bin samples.
 
     Args:
+        filtered_bins (list): A list of bin names to submit.
         config (dict): The config dictionary.
         assembly_sample_accession (str): Either the accession of a co-assembly
             virtual sample or the accession of the single biological sample
@@ -150,7 +152,7 @@ def __prep_bins_samplesheet(config: dict,
     # Define root element
     root = ET.Element("SAMPLE_SET")
 
-    for bin_id in upload_taxonomy_data.keys():
+    for bin_id in filtered_bins:
 
         assembly_name = utility.stamped_from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
         sample_alias = f"{assembly_name}_bin_{bin_id}_virtual_sample"
@@ -461,11 +463,13 @@ def bin_coverage_from_depth(depth_files: str,
     return bin_coverages
 
 
-def bin_coverage_from_tsv(bin_coverage_file: str,
+def bin_coverage_from_tsv(filtered_bins: list,
+                          bin_coverage_file: str,
                           bin_names: dict) -> dict:
     """Reads coverage for each bin from a tsv file.
 
     Args:
+        filtered_bins (list): A list of bin names to submit.
         bin_coverage_file (str): The path to the tsv file containing the bin
             coverage data.
         bin_names (dict): A dictionary mapping bin names to their corresponding
@@ -482,8 +486,8 @@ def bin_coverage_from_tsv(bin_coverage_file: str,
             bin_name = row['Bin_id']
             coverage = float(row['Coverage'])
             bin_coverages[bin_name] = coverage
-    for known_name in bin_names:
-        if not known_name in bin_coverages:
+    for known_name in filtered_bins:
+        if known_name not in bin_coverages:
             err = f"\nERROR: Bin {known_name} was not found in the coverage file at {os.path.abspath(bin_coverage_file)}."
             loggingC.message(err, threshold=-1)
             exit(1)
@@ -511,7 +515,8 @@ def get_bins_in_dir(bins_directory: str) -> list:
     return bin_name_to_fasta
 
 
-def submit_bins(config: dict,
+def submit_bins(filtered_bins: list,
+                config: dict,
                 upload_taxonomy_data: dict,
                 assembly_sample_accession: str,
                 run_accessions,
@@ -527,6 +532,7 @@ def submit_bins(config: dict,
     bin as an individual analysis object using webin-cli.
 
     Args:
+        filtered_bins: A list of bin names to submit.
         config (dict): The config dictionary.
         upload_taxonomy_data (dict): A dictionary with the taxid and scientific
             name for each bin.
@@ -568,21 +574,23 @@ def submit_bins(config: dict,
     # Get the coverage for each bin file
     loggingC.message(">Deriving bin coverage", threshold=1)
     coverage_outfile = os.path.join(logging_dir, 'bin_coverages.tsv')
-    if not depth_files is None:
+    if depth_files is not None:
         bin_coverages = bin_coverage_from_depth(depth_files,
                                                 bin_name_to_fasta,
                                                 coverage_outfile,
                                                 threads=threads)
-    elif not bin_coverage_file is None:
-        bin_coverages = bin_coverage_from_tsv(bin_coverage_file,
+    elif bin_coverage_file is not None:
+        bin_coverages = bin_coverage_from_tsv(filtered_bins,
+                                              bin_coverage_file,
                                               bin_name_to_fasta.keys())
         
 
-    # Make a samplesheet for all bins
+    # Make a samplesheet for filtered bins
     loggingC.message(">Making bin samplesheet", threshold=1)
     samples_submission_dir = os.path.join(staging_dir, 'bin_samplesheet')
     os.makedirs(samples_submission_dir, exist_ok=False)
-    samplesheet = __prep_bins_samplesheet(config,
+    samplesheet = __prep_bins_samplesheet(filtered_bins,
+                                          config,
                                           assembly_sample_accession,
                                           samples_submission_dir,
                                           upload_taxonomy_data)
@@ -592,9 +600,10 @@ def submit_bins(config: dict,
     samples_logging_dir = os.path.join(logging_dir, 'bin_samplesheet')
     os.makedirs(samples_logging_dir, exist_ok=False)
     prefixbin_to_accession = __submit_bins_samplesheet(samplesheet,
-                                                    samples_submission_dir,
-                                                    samples_logging_dir,
-                                                    url)
+                                                       samples_submission_dir,
+                                                       samples_logging_dir,
+                                                       url)
+    
     # Remove the prefixes
     assembly_name = utility.stamped_from_config(config, 'ASSEMBLY', 'ASSEMBLY_NAME').replace(' ', '_')
     prefix_len = len(f"{assembly_name}_bin_")
@@ -608,7 +617,8 @@ def submit_bins(config: dict,
     staging_directories = {}
     loggingC.message(">Staging bin submission sequences and manifests...", threshold=0)
     bin_manifests = {}
-    for bin_name, bin_fasta in bin_name_to_fasta.items():
+    for bin_name in filtered_bins:
+        bin_fasta = bin_name_to_fasta[bin_name]
         bin_sample_accession = bin_to_accession[bin_name]
         staging_directory = os.path.join(staging_dir, f"bin_{bin_name}_staging")
         staging_directories[bin_name] = staging_directory

@@ -11,7 +11,7 @@ SEQUENCING_PLATFORMS: ["ILLUMINA"]                                            # 
 PROJECT_NAME: "Project ex11 idx00"                                            # Name of the project within which the sequencing was organized >>EXAMPLE: "AgRFex 2 Biogas Survey"
 SAMPLE_ACCESSIONS: ["SAMEA113417017"]                                         # These samples exist in ENA. Your assembly is based on them. >>EXAMPLE: ["ERS15898933","ERS15898932"]
 ASSEMBLY:                                         
-  ASSEMBLY_NAME: "idx00_ex11_asm"                                        # Choose a name, even if your assembly has been uploaded already. Will only be used for naming assembly and bins/MAGs. >>EXAMPLE: "Northern Germany biogas digester metagenome"
+  ASSEMBLY_NAME: "idx00_ex11_asm"                                             # Choose a name, even if your assembly has been uploaded already. Will only be used for naming assembly and bins/MAGs. >>EXAMPLE: "Northern Germany biogas digester metagenome"
   EXISTING_ASSEMBLY_ANALYSIS_ACCESSION: "ERZ21942150"                         # The accession of the assembly analysis that all bins/MAGs originate from >>EXAMPLE: "GCA_012552665"
   EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION:                                      # The accession of the virtual sample of the co-assembly which all bins/MAGs originate from >>EXAMPLE: "ERZ21942150"
   ASSEMBLY_SOFTWARE: "MEGAHIT"                                                # Software used to generate the assembly >>EXAMPLE: "MEGAHIT"
@@ -25,6 +25,7 @@ BINS:
   NCBI_TAXONOMY_FILES: "data/taxonomy/eukaryota_taxonomy.tsv"                 # A list of files with NCBI taxonomy information about the bins. Consult the README to see how they should be structured. >>EXAMPLE: ["/mnt/data/bacteria_tax.tsv","/mnt/data/archaea_tax.tsv"]  
   MANUAL_TAXONOMY_FILE: "data/taxonomy/manual_taxonomy_eukaryota.tsv"         # Scientific names and taxids for bins. See example file for the structure. Columns must be 'Bin_id', 'Tax_id' and 'Scientific_name'. Consult the README for more information. >>EXAMPLE: "/mnt/data/manual_tax.tsv"
   BINNING_SOFTWARE: "metabat2"                                                # The program that was used for binning. >>EXAMPLE: "metabat2"
+  MAX_CONTAMINATION: 5                                                        # Bins with larger contamination value will be discarded (values in percent, 0-100). Remove this row to ignore bin contamination (>100% contamination bins will still be discarded). >>EXAMPLE: "5"
   ADDITIONAL_SAMPLESHEET_FIELDS:                                              # You can add more fields from the ENA samplesheet that most closely matches your experiment
   ADDITIONAL_MANIFEST_FIELDS:                                                 # You can add additional fields that will be written to the manifest
   COVERAGE_FILE: "data/bin_coverage.tsv"                                      # .tsv file containing the coverage values of each bin. Columns must be 'Bin_id' and 'Coverage'.

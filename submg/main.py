@@ -177,7 +177,7 @@ def init_argparse():
                                 "To submit multiple assemblies, you need to "
                                 "use the tool multiple times.")
     parser_makecfg.add_argument("-q",
-                                "--quality_cutoffs",
+                                "--bin_quality_cutoffs",
                                 action="store_true",
                                 default=False,
                                 help="Include fields for bin quality cutoff "
@@ -262,8 +262,10 @@ def submit(args):
         # We do this early so we notice issues before we start staging files.
         if args.submit_bins or args.submit_mags:
             bin_quality = get_bin_quality(config, silent=True)
+            # If there are quality cutoffs, make a list of bins to submit
+            filtered_bins = utility.filter_bins(bin_quality, config)
             # Test if there are bins which are too contaminated
-            for name in bin_quality.keys():
+            for name in filtered_bins:
                 contamination = bin_quality[name]['contamination']
                 if contamination > staticConfig.max_contamination:
                     err = (
@@ -278,7 +280,7 @@ def submit(args):
                     )
                     loggingC.message(err, threshold=-1)
                     exit(1)
-            bin_taxonomy = taxQuery.get_bin_taxonomy(config)
+            bin_taxonomy = taxQuery.get_bin_taxonomy(filtered_bins, config)
         
         # Construct depth files if there are .bam files in the config
         if 'BAM_FILES' in config.keys():
@@ -357,7 +359,8 @@ def submit(args):
 
         # Bin submision
         if args.submit_bins:
-            submit_bins(config,
+            submit_bins(filtered_bins,
+                        config,
                         bin_taxonomy,
                         assembly_sample_accession,
                         run_accessions,
@@ -378,9 +381,11 @@ def submit(args):
                     metagenome_scientific_name = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
                                                                                                 args.development_service)
                 except:  
-                    # This is a workaround because I keep getting
-                    # false negatives on the development server
-                    # for samples that exist on both servers.
+                    # This is a workaround for times where the ENA development
+                    # API does not work. If the sample is registered on the 
+                    # production server we can still continue submitting.
+                    # Included because the situation came up multiple times
+                    # during development.
                     metagenome_scientific_name = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
                                                                                                 False)
             submit_mags(config,

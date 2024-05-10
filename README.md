@@ -6,7 +6,7 @@
 </picture>
 
 
-submg aids in the submission of metagenomic study data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in a configuration form, submg derives additional information where required, creates samplesheets and manifests and uploads everything to your ENA account. You can use a combination of manual and submg steps to submit your data (e.g. submitting samples and reads through the ENA web interface, then using the tool to submit the assembly and bins).
+subMG aids in the submission of metagenomic study data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in a configuration form, subMG derives additional information where required, creates samplesheets and manifests and uploads everything to your ENA account. You can use a combination of manual and subMG steps to submit your data (e.g. submitting samples and reads through the ENA web interface, then using the tool to submit the assembly and bins).
 
 
 
@@ -54,10 +54,9 @@ Please Note
 
 # Installation
 
-## Container
 A container based on the main branch is available [through DockerHub](https://hub.docker.com/r/ttubb/submg): `docker pull ttubb/submg`
 
-## Local Installation
+If you want to install the tool locally, follow these steps:
 - Make sure Python 3.8 or higher is installed
 - Make sure Java 1.8 or higher is installed
 - Make sure [wheel](https://pypi.org/project/wheel/) is installed
@@ -157,7 +156,8 @@ ENA provides a [guideline for choosing taxonomy](https://ena-docs.readthedocs.io
 If your bins are the result of dereplicating data from a single assembly you can use submg as described above. If your bins are the result of dereplicating data from multiple different assemblies, you need to split them based on which assembly they belong to. You then run submg seperately for each assembly (together with the corresponding set of bins).
 
 # Bin Contamination above 100 percent
-When calculating completeness and contamination of a bin with tools like [CheckM](https://github.com/Ecogenomics/CheckM), contamination values above 100% can occur. [Usually, this is not an error](https://github.com/Ecogenomics/CheckM/issues/107). However, the ENA API will refuse to accept bins with contamination values above 100%. This issue is unrelated to submg, but to avoid partial submissions submg will refuse to work if such a bin is present in the dataset. If you have bins with contamination values above 100% you can either leave them out by removing them from your dataset or manually set the contamination value to 100% in the `BINS_QUALITY_FILE` file you provide to submg.
+When calculating completeness and contamination of a bin with tools like [CheckM](https://github.com/Ecogenomics/CheckM), contamination values above 100% can occur. [Usually, this is not an error](https://github.com/Ecogenomics/CheckM/issues/107). However, the ENA API will refuse to accept bins with contamination values above 100%. submg will automatically exclude bins with contamination values above 100% from the submission.
+If you _need_ to submit such (presumably low quality) bins, you need to manually set the contamination value to 100 in the 'QUALITY_FILE' you provide under the bins section.
 
 # Support
 submg is being actively developed. Please use the github [issue tracker](https://github.com/ttubb/submg/issues) to report problems. A [discussions page](https://github.com/ttubb/submg/discussions) is available for questions, comments and suggestions. 

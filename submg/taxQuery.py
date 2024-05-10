@@ -4,7 +4,7 @@ import requests
 import time
 
 from tqdm import tqdm
-from submg import utility, loggingC
+from submg import utility, loggingC, binSubmission
 from submg.statConf import staticConfig
 
 
@@ -51,41 +51,43 @@ def __report_tax_issues(issues):
 
 
 def __check_bin_coherence(bin_basenames: list,
+                          bin_quality_data: dict,
                           annotated_bin_taxonomies: dict,
                           upload_taxonomy_data: dict):
     """
-    Check if the bins in the BINS_DIRECTORY are consistent with the taxonomy
-    files. If a bin is in the BINS_DIRECTORY but not in the taxonomy files, or
-    vice versa, the program will exit with an error message.
+    Check if all the sources of bin names are coherent (e.g. the set of bins in
+    the quality file, the fasta files and the taxonomy files has to be
+    identical.)
 
     Args:
         bin_basenames (list): A list of the basenames of the bins in the
             BINS_DIRECTORY
+        bin_quality_data (dict): A dictionary with the quality data for each bin
         annotated_bin_taxonomies (dict): A dictionary with the taxid and
             scientific name for each bin in the taxonomy files
         upload_taxonomy_data (dict): A dictionary with the taxid and scientific
             name for each bin in the manual taxonomy file
     """
-    ids_from_taxonomies = set(upload_taxonomy_data.keys())
-    ids_from_taxonomies.update(set(annotated_bin_taxonomies.keys()))
+    # Get the set of bin_ids from different sources
+    ids_from_quality = set(bin_quality_data.keys())
+    ids_from_taxonomies = set(upload_taxonomy_data.keys()).union(set(annotated_bin_taxonomies.keys()))
     ids_from_fasta = set(bin_basenames)
 
-    only_in_fasta = ids_from_fasta.difference(ids_from_taxonomies)
-    only_in_taxonomies = ids_from_taxonomies.difference(ids_from_fasta)
+    # Check for discrepancies between the sets
+    missing_in_fasta = ids_from_taxonomies.union(ids_from_quality).difference(ids_from_fasta)
+    missing_in_taxonomies = ids_from_fasta.union(ids_from_quality).difference(ids_from_taxonomies)
+    missing_in_quality = ids_from_fasta.union(ids_from_taxonomies).difference(ids_from_quality)
 
-    if len(only_in_fasta) > 0:
-        err = f"\nERROR: The following bins are in the BINS_DIRECTORY but not in the taxonomy files:"
-        loggingC.message(err, threshold=-1)
-        for b in only_in_fasta:
-            msg = f"\t{b}"
-            loggingC.message(msg, threshold=0)
-        exit(1)
-    if len(only_in_taxonomies) > 0:
-        err = f"\nERROR: The following bins are in the taxonomy files but not in the BINS_DIRECTORY:"
-        loggingC.message(err, threshold=-1)
-        for b in only_in_taxonomies:
-            msg = f"\t{b}"
-            loggingC.message(msg, threshold=0)
+    # Log errors and exit if there are any
+    if missing_in_fasta or missing_in_taxonomies or missing_in_quality:
+        msg = "\n>ERROR: Bin sources are not coherent."
+        if missing_in_fasta:
+            msg += f"\nBins missing in fasta files: {', '.join(missing_in_fasta)}"
+        if missing_in_taxonomies:
+            msg += f"\nBins missing in taxonomy files: {', '.join(missing_in_taxonomies)}"
+        if missing_in_quality:
+            msg += f"\nBins missing in quality data: {', '.join(missing_in_quality)}"
+        loggingC.message(msg, threshold=-1)
         exit(1)
 
 
@@ -112,6 +114,66 @@ def __read_manual_taxonomy_file(manual_taxonomy_file: str) -> dict:
                 'scientific_name': scientific_name,
             }
     return result
+
+
+def __report_manual_tax_issues(issues):
+    """
+    When the tool fails because of issues with the manual taxonomy file, this
+    function reports the issues in detail.
+
+    Args:
+        issues (list): A list of dictionaries with the issues encountered.
+    """
+    # Log the error
+    err = f"\nERROR: Manual taxonomy file contains issues for {len(issues)} bins:"
+    loggingC.message(err, threshold=-1)
+
+    # Give a detailed listing of the issues
+    for i in issues:
+        bin = i['bin']
+        scientific_name = i['scientific_name']
+        tax_id = i['tax_id']
+        ena_tax_id = i['ena_tax_id']
+        if ena_tax_id == 'N/A':
+            msg = f"\tbin {bin} - no taxid found for scientific name {scientific_name}"
+            loggingC.message(msg, threshold=-1)
+        else:
+            msg = f"\tbin {bin} - tax_id {tax_id} does not match ENA tax_id {ena_tax_id} for scientific name {scientific_name}"
+            loggingC.message(msg, threshold=-1)
+
+
+def check_manual_taxonomies(manual_taxonomy_file: str) -> bool:
+    """
+    Read in the manual taxonomy file. Perform an ENA query for each bin to
+    make sure the taxid matches up with the scientific name.
+
+    Args:
+        manual_taxonomy_file (str): Path to the manual taxonomy file.
+    """
+    manual_taxonomies = __read_manual_taxonomy_file(manual_taxonomy_file)
+    issues = []
+    for bin_name, data in manual_taxonomies.items():
+        tax_id = data['tax_id']
+        scientific_name = data['scientific_name']
+        ena_tax_id = taxid_from_scientific_name(scientific_name)
+        if not ena_tax_id:
+            issues.append({
+                'bin': bin_name,
+                'scientific_name': scientific_name,
+                'tax_id': tax_id,
+                'ena_tax_id': 'N/A',
+            })
+        elif not ena_tax_id == tax_id:
+            issues.append({
+                'bin': bin_name,
+                'scientific_name': scientific_name,
+                'tax_id': tax_id,
+                'ena_tax_id': ena_tax_id,
+            })
+    if len(issues) > 0:
+        __report_manual_tax_issues(issues)
+        return False
+    return True
 
 
 def __read_ncbi_taxonomy(ncbi_taxonomy_file: str) -> dict:
@@ -329,12 +391,14 @@ def __parse_classification_tsvs(ncbi_taxonomy_files: list) -> dict:
     return all_classifications
 
 
-def get_bin_taxonomy(config) -> dict:
+def get_bin_taxonomy(filtered_bins, config) -> dict:
     """
     Based on the NCBI taxonomy files and manual taxonomy file defined in the
     config, derive the taxid and scientific name for each bin
 
     Args:
+        filtered_bins (list): List of bins that was filtered to remove
+            bins with bad completeness / contamination
         config (dict): The configuration dictionary
 
     Returns:
@@ -381,6 +445,7 @@ def get_bin_taxonomy(config) -> dict:
     # Make sure that, for each bin showing up in the taxonomy files, we have
     # a corresponding fasta file
     __check_bin_coherence(bin_basenames,
+                          binSubmission.get_bin_quality(config, silent=True),
                           annotated_bin_taxonomies,
                           upload_taxonomy_data)
     
@@ -393,6 +458,9 @@ def get_bin_taxonomy(config) -> dict:
     last_request_time = time.time() - min_interval
 
     for bin_name, taxonomy in tqdm(annotated_bin_taxonomies.items(), leave=False):
+        # Only check the bins that we actually want to submit
+        if not bin_name in filtered_bins:
+            continue
         # Make sure we don't run into the ENA API rate limit
         current_time = time.time()
         time_since_last_request = current_time - last_request_time
@@ -426,17 +494,17 @@ def get_bin_taxonomy(config) -> dict:
                 'suggestions': all_ena_suggestions,
             })
 
-    # Add any bins that only show up in the files to the issues as unclassified
-    for basename in bin_basenames:
-        if not basename in upload_taxonomy_data:
+    # Add any bins that are missing from the taxonomy files als unclassified
+    for bin_name in filtered_bins:
+        if not bin_name in upload_taxonomy_data:
             is_issue = False
             for i in issues:
-                if i['mag_bin'] == basename:
+                if i['mag_bin'] == bin_name:
                     is_issue = True
             if is_issue:
                 continue
             issues.append({
-                'mag_bin': basename,
+                'mag_bin': bin_name,
                 'level': 'unclassified',
                 'classification': 'N/A',
                 'suggestions': [],
