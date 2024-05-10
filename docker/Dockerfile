@@ -1,7 +1,6 @@
 # Base Image
 FROM openjdk:slim
 
-
 # Set up environment
 RUN apt-get update && \
     apt-get upgrade -y

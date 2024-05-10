@@ -15,9 +15,10 @@
 [x] Preflight checks überarbeiten, so dass ich mehrere ERRORs auf einmal sehen kann
 
 >> RELEASE 1.0.0
+[ ] Refactor main.py 
 [ ] Antworten auf meine ENA tickets
 [ ] minitest-option - wir uploaden nur 1 readfile, nur 1 bin, simulieren coverage werte
-[ ] enaSearching überarbeiten - kann ich wirklich nicht auf dem dev server suchen?
+[x] enaSearching überarbeiten - kann ich wirklich nicht auf dem dev server suchen?
 
 >> RELEASE irgendwann
 [ ] preflight macht erst alle preflight checks, reported alle probleme. Erst dann passiert exit(1).-

@@ -47,7 +47,9 @@ BINS:
   QUALITY_FILE: "data/checkm_quality_2bins.tsv"                                                       # tsv file containing quality values of each bin. Header must include 'Bin_id', 'Completeness', 'Contamination'. A CheckM output table will work here. >>EXAMPLE: "/mnt/data/checkm_quality.tsv"
   NCBI_TAXONOMY_FILES: ["data/taxonomy/archaea_taxonomy.tsv", "data/taxonomy/bacteria_taxonomy.tsv"]  # A list of files with NCBI taxonomy information about the bins. Consult the README to see how they should be structured. >>EXAMPLE: ["/mnt/data/bacteria_tax.tsv","/mnt/data/archaea_tax.tsv"]
   MANUAL_TAXONOMY_FILE:                                                                               # Scientific names and taxids for bins. See example file for the structure. Columns must be 'Bin_id', 'Tax_id' and 'Scientific_name'. Consult the README for more information. >>EXAMPLE: "/mnt/data/manual_tax.tsv"
-  BINNING_SOFTWARE: 'VAMB'                                                                            # The program that was used for binning. >>EXAMPLE: "metabat2"
+  BINNING_SOFTWARE: 'VAMB'         
+  MIN_COMPLETENESS: 50                                                        # Bins with smaller completeness value will be discarded (values in percent, 0-100). Remove this row to ignore bin completeness. >>EXAMPLE: "90"
+  MAX_CONTAMINATION: 10                                                       # Bins with larger contamination value will be discarded (values in percent, 0-100). Remove this row to ignore bin contamination (>100% contamination bins will still be discarded). >>EXAMPLE: "5"
   ADDITIONAL_SAMPLESHEET_FIELDS:                                                                      # Please add more fields from the ENA samplesheet that most closely matches your experiment
   ADDITIONAL_MANIFEST_FIELDS:                                                                         # You can add additional fields that will be written to the manifest
 BAM_FILES:
