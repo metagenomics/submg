@@ -399,11 +399,12 @@ def submit_mags(config: dict,
     bin_files = binSubmission.get_bins_in_dir(bins_directory)
     if not depth_files is None:
         bin_coverages = binSubmission.bin_coverage_from_depth(depth_files,
-                                                bin_files,
-                                                threads=threads)
+                                                              bin_files,
+                                                              threads=threads)
     elif not bin_coverage_file is None:
-        bin_coverages = binSubmission.bin_coverage_from_tsv(bin_coverage_file,
-                                              bin_files)
+        bin_coverages = binSubmission.bin_coverage_from_tsv(mag_metadata.keys(),
+                                                            bin_coverage_file,
+                                                            bin_files)
         
     # Make a samplesheet for all MAGs
     loggingC.message(">Making MAG samplesheet", threshold=1)
