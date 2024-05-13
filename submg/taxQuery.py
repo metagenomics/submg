@@ -22,9 +22,10 @@ def __report_tax_issues(issues):
     loggingC.message(err, threshold=-1)
     problematic_bins = [x['mag_bin'] for x in issues]
     problematic_bins = set(problematic_bins)
-    msg = '\n'.join(problematic_bins)
+    msg = "\t"+'\n\t'.join(problematic_bins)
     loggingC.message(msg, threshold=-1)
-    msg =  "Please consult the README. You can manually enter taxonomy data for these bins into a .tsv file and specify it in the MANUAL_TAXONOMY_FILE field in the config file."
+    msg =  "Please consult the Taxonomy Assignment section of the README."
+    msg += "\nYou can manually enter taxonomy data for these bins into a .tsv file and specify it in the MANUAL_TAXONOMY_FILE field in the config file."
     msg += " If your annotation process failed to classify a bin even at domain level, consider excluding it from your submission. If you want to submit it anyways,"
     msg += " you may choose to add it to the MANUAL_TAXONOMY_FILES using taxid 155900 (unclassified organism)."
     loggingC.message(msg, threshold=-1) 
