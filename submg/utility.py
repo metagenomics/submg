@@ -411,10 +411,11 @@ def quality_filter_bins(quality_data, config):
     if len(filtered_out) > 0:
         msg = f">WARNING: {len(filtered_out)} bins have been excluded from submission due to quality thresholds:"
         loggingC.message(msg, threshold=0)
-        time.sleep(5) # Give user some extra time to notice message
     for bin in filtered_out:
         msg = f"\t{bin} (completeness {quality_data[bin]['completeness']}, contamination {quality_data[bin]['contamination']})"
         loggingC.message(msg, threshold=0)
+    if len(filtered_out) > 0:
+        time.sleep(5) # Give user some extra time to notice message
     if len(filtered_bins) == 0:
         err = "\nERROR: No bins left after filtering. Please adjust the quality thresholds."
         loggingC.message(err, threshold=-1)
