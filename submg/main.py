@@ -70,6 +70,12 @@ def init_argparse():
                                default=1,
                                help="Make submissions to the ENA development "
                                "test server. [default 1/true]")
+    parser_submit.add_argument("-i",
+                               "--minitest",
+                               action="store_true",
+                               help="Run a minimal test submission using just "
+                               "a fraction of your dataset. Intended for quick "
+                               "troubleshooting. [default false]")
     parser_submit.add_argument("-t",
                                "--threads",
                                type=int,
@@ -236,7 +242,11 @@ def submit(args):
     if args.timestamps or (args.timestamps is None and args.development_service):
         utility.set_up_timestamps(vars(args))
 
-    try:        
+    if args.minitest and not args.development_service:
+        loggingC.message("ERROR: The --minitest mode cannot be used for a submission to the ENA production server.",
+                         threshold=-1)
+        
+    try:
         sver = staticConfig.submg_version
         wver = staticConfig.webin_cli_version
         loggingC.message(f">Running submg {sver} with webin-cli {wver}", 0)
@@ -281,14 +291,22 @@ def submit(args):
                     loggingC.message(err, threshold=-1)
                     exit(1)
             # Query the taxonomy of bins
-            bin_taxonomy = taxQuery.get_bin_taxonomy(filtered_bins,
-                                                                    config)
+            bin_taxonomy = taxQuery.get_bin_taxonomy(filtered_bins, config)
+            if args.minitest:
+                msg = f">Minitest: Discarding every bin except {filtered_bins[0]}"
+                loggingC.message(msg, threshold=0)
+                filtered_bins = filtered_bins[0:1]
             
         # Construct depth files if there are .bam files in the config
         if 'BAM_FILES' in config.keys():
             bam_files = utility.from_config(config, 'BAM_FILES')
+
             if not isinstance(bam_files, list):
                 bam_files = [bam_files]
+            if args.minitest:
+                msg = f">Minitest: Ignoring bam files except for {bam_files[0]}"
+                loggingC.message(msg, threshold=0)
+                bam_files = bam_files[0:1]
             depth_files = utility.construct_depth_files(args.staging_dir,
                                                         args.threads,
                                                         bam_files)
@@ -325,7 +343,8 @@ def submit(args):
                                           sample_accession_data,
                                           prepdir(args.staging_dir, 'reads'),
                                           prepdir(args.logging_dir, 'reads'),
-                                          test=args.development_service)
+                                          test=args.development_service,
+                                          minitest=args.minitest)
         else:
             run_accessions = utility.from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS')
             if not isinstance(run_accessions, list):
@@ -431,7 +450,7 @@ def submit(args):
                 os.remove(depth_file)
 
     except Exception:
-        err = "\n\nTERMINATING BECAUSE AN UNHANDLED EXCEPTION OCCURED:\n"
+        err = "\n\nTERMINATING BECAUSE AN UNEXPECTED ERROR OCCURED:\n"
         loggingC.message(err, threshold=-1)
         exc_info = traceback.format_exc()
         loggingC.message(exc_info, threshold=-1)

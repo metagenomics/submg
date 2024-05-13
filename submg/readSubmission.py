@@ -143,7 +143,8 @@ def submit_reads(config,
                  sample_accession_data,
                  staging_dir,
                  logging_dir,
-                 test=True):
+                 test=True,
+                 minitest=False):
     """
     Submits the specified reads to ENA.
 
@@ -180,6 +181,10 @@ def submit_reads(config,
             if not name in read_manifests:
                 read_manifests[name] = manifest  
             counter = i + 1
+            if minitest:
+                msg = ">Minitest: Only submitting the first paired-end read set."
+                loggingC.message(msg, threshold=0)
+                break
 
     if 'SINGLE_READS' in config.keys():
         loggingC.message(">Staging single-end reads for submission. This might take a while.", threshold=0)
@@ -197,7 +202,11 @@ def submit_reads(config,
                                                 read_set_logging_dir)         
             
             if not name in read_manifests:
-                read_manifests[name] = manifest                                       
+                read_manifests[name] = manifest    
+            if minitest:
+                msg = ">Minitest: Only submitting the first single-end read set."
+                loggingC.message(msg, threshold=0)
+                break                                
 
     # Upload the reads
     loggingC.message(f">Using ENA Webin-CLI to submit reads.", threshold=0)
