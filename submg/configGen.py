@@ -25,8 +25,6 @@ def __write_yaml(data: dict,
             data dictionary and values corresponding to the examples that should
             be written for each key
     """
-
-
     # Function to handle None values, representing them as empty fields
     def represent_none(self, _):
         return self.represent_scalar('tag:yaml.org,2002:null', '')
@@ -75,7 +73,8 @@ def __check_parameters(outpath: str,
                        known_coverage: bool,
                        submit_assembly: bool,
                        submit_bins: bool,
-                       submit_mags: bool) -> None:
+                       submit_mags: bool,
+                       quality_cutoffs: bool) -> None:
     """
     Check if the parameters in their combination are valid. If not, fail
     gracefully.
@@ -108,6 +107,14 @@ def __check_parameters(outpath: str,
         print("\nERROR: You must specify exactly one of --coverage-from-bam or --known-coverage.")
         exit(1)
 
+    # Check if quality cuttoffs make sense
+    if quality_cutoffs:
+        if not submit_bins:
+            msg = "ERROR: You cannot specify --quality-cutoffs without also specifying --submit-bins."
+            print(msg)
+            exit(1)
+
+    # Check if the specified items can be combined in one submission
     utility.validate_parameter_combination(submit_samples,
                                            submit_reads,
                                            submit_assembly,
@@ -122,7 +129,8 @@ def __make_config_dict(submit_samples: int,
                        known_coverage: bool,
                        submit_assembly: bool,
                        submit_bins: bool,
-                       submit_mags: bool) -> None:
+                       submit_mags: bool,
+                       quality_cutoffs: bool) -> None:
     """
     Create the config dictionary.
 
@@ -261,6 +269,9 @@ def __make_config_dict(submit_samples: int,
             'ADDITIONAL_SAMPLESHEET_FIELDS': None,
             'ADDITIONAL_MANIFEST_FIELDS': None,
         }
+        if quality_cutoffs:
+            bins['MIN_COMPLETENESS'] = None
+            bins['MAX_CONTAMINATION'] = None
         if submit_mags: # Since we need this for MAGs, we might as well ask for it here
             bins['ADDITIONAL_SAMPLESHEET_FIELDS'] = {
                 'binning parameters': None,
@@ -302,7 +313,8 @@ def make_config(outpath: str,
                 submit_assembly: bool,
                 submit_bins: bool,
                 submit_mags: bool,
-                no_comments: bool) -> None:
+                no_comments: bool,
+                quality_cutoffs: bool,) -> None:
     """
     Write an empty YAML config file which holds the keys (but not the values)
     which the user needs.
@@ -327,7 +339,8 @@ def make_config(outpath: str,
                        known_coverage,
                        submit_assembly,
                        submit_bins,
-                       submit_mags)
+                       submit_mags,
+                       quality_cutoffs)
 
     
     # Assemble all the fields we need
@@ -338,7 +351,8 @@ def make_config(outpath: str,
                                        known_coverage,
                                        submit_assembly,
                                        submit_bins,
-                                       submit_mags)
+                                       submit_mags,
+                                       quality_cutoffs,)
     
     # Write to file
     __write_yaml(config_fields,

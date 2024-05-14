@@ -136,12 +136,14 @@ def api_response_check(response: requests.Response):
         loggingC.message(err, threshold=-1)
         exit(1)
 
+
 def calculate_md5(fname):
     hash_md5 = hashlib.md5()
     with open(fname, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
+
 
 def get_login():
     """
@@ -157,6 +159,7 @@ def get_login():
         exit(1)
     return os.environ['ENA_USER'], os.environ['ENA_PASSWORD']
 
+
 def read_yaml(file_path):
     try:
         with open(file_path, 'r') as yaml_file:
@@ -170,6 +173,7 @@ def read_yaml(file_path):
         err = f"\nERROR: An error occurred while reading {file_path}, error is:\n{e}"
         loggingC.message(err, threshold=-1)
         exit(1)
+
 
 def __strcast(value):
     """
@@ -199,7 +203,8 @@ def prepdir(parent_path, name):
     newdir = os.path.join(parent_path, name)
     os.makedirs(newdir, exist_ok=False)
     return newdir
-    
+
+
 def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
     """
     Extracts a value from the dict that was created based on the
@@ -259,6 +264,7 @@ def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
         return __strcast(config[key][subkey])
     return __strcast(config[key])
 
+
 def optional_from_config(config, key, subkey=None, subsubkey=None):
     """
     Calls from config but returns None if the key is missing.
@@ -274,6 +280,7 @@ def optional_from_config(config, key, subkey=None, subsubkey=None):
     except:
         return None
     
+
 def stamped_from_config(config, key, subkey=None, subsubkey=None):
     """
     Calls from config but adds a timestamp to relevant fields if timestamping
@@ -337,6 +344,7 @@ def is_fasta(filepath, extensions=staticConfig.fasta_extensions.split(';')) -> s
     basename = filename.rsplit('.', 1)[0]
     return basename
 
+
 def check_fasta(fasta_path) -> tuple:
     """
     Checks if the fasta file exists, has a valid extension and whether it is
@@ -366,6 +374,53 @@ def check_fasta(fasta_path) -> tuple:
         loggingC.message(err, threshold=-1)
         exit(1)
     return fasta_path, gzipped
+
+
+def quality_filter_bins(quality_data, config):
+    """
+    Filter bins based on the quality data.
+
+    Args:
+        quality_data (dict): The quality data for the bins.
+    """
+    filtered_bins = []
+
+    # Check arguments in config
+    if 'MIN_COMPLETENESS' in config['BINS']:
+        min_completeness = config['BINS']['MIN_COMPLETENESS']
+        msg = f">Filtering bins based on minimum completeness of {min_completeness}."
+    else:
+        min_completeness = 0
+        msg = ">No MIN_COMPLETENESS specified, bins will not be filtered for completeness."
+    loggingC.message(msg, threshold=0)
+    if 'MAX_CONTAMINATION' in config['BINS']:
+        max_contamination = config['BINS']['MAX_CONTAMINATION']
+        msg = f">Filtering bins based on maximum contamination of {max_contamination}."
+    else:
+        max_contamination = 100
+        msg = ">No MAX_CONTAMINATION specified, maximum contamination is set to 100."
+    loggingC.message(msg, threshold=0)
+
+    # Filtering
+    filtered_out = []
+    for bin in quality_data:
+        if quality_data[bin]['completeness'] >= min_completeness and quality_data[bin]['contamination'] <= max_contamination:
+            filtered_bins.append(bin)
+        else:
+            filtered_out.append(bin)
+    if len(filtered_out) > 0:
+        msg = f">WARNING: {len(filtered_out)} bins have been excluded from submission due to quality thresholds:"
+        loggingC.message(msg, threshold=0)
+    for bin in filtered_out:
+        msg = f"\t{bin} (completeness {quality_data[bin]['completeness']}, contamination {quality_data[bin]['contamination']})"
+        loggingC.message(msg, threshold=0)
+    if len(filtered_out) > 0:
+        time.sleep(5) # Give user some extra time to notice message
+    if len(filtered_bins) == 0:
+        err = "\nERROR: No bins left after filtering. Please adjust the quality thresholds."
+        loggingC.message(err, threshold=-1)
+        exit(1)
+    return filtered_bins
 
 
 def check_bam(bam_file,
@@ -408,6 +463,7 @@ def check_bam(bam_file,
 
     return sorted_bam_file  
 
+
 def make_depth_file(bam_file, outdir, num_threads=4):
     """
     Uses pysam.depth to call samtools depth and create a depth file with
@@ -425,6 +481,7 @@ def make_depth_file(bam_file, outdir, num_threads=4):
     outfile = os.path.join(outdir, filename)
     pysam.depth("-@", str(num_threads), "-a", sorted_bam_file, "-o", outfile)
     return outfile
+
 
 def contigs_coverage(depth_file):
     """
@@ -451,6 +508,7 @@ def contigs_coverage(depth_file):
         if position > contig_length[contig]: # Contig positions should be ordered, so we just need the last one. But we do this just to be safe
             contig_length[contig] = position
     return contig_coverage, contig_length
+
 
 def calculate_coverage(depth_files: list,
                        target_contigs: set = None,
@@ -589,6 +647,7 @@ def validate_parameter_combination(submit_samples: bool,
         is_valid = True
 
     if not is_valid:
+        # Dont use loggingC here, because this might be called from configGen
         print(f"\nERROR: The combination of parameters you have specified is not valid.")
         print(staticConfig.submission_modes_message)
         exit(1)

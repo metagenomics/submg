@@ -2,7 +2,7 @@ import os
 
 from datetime import datetime
 
-from submg import loggingC, utility, enaSearching
+from submg import loggingC, utility, enaSearching, binSubmission, taxQuery
 from submg.statConf import staticConfig
 from submg.webinWrapper import find_webin_cli_jar
 from submg.taxQuery import taxid_from_scientific_name
@@ -22,6 +22,7 @@ def __check_tsv(tsvfile: str,
         required_columns:   A list of column names that must be present in the
                             .tsv file.
     """
+    global checks_failed
     if not os.path.isfile(tsvfile):
         err = f"\nERROR: The .tsv file '{tsvfile}' does not exist."
         loggingC.message(err, threshold=-1)
@@ -30,7 +31,7 @@ def __check_tsv(tsvfile: str,
         header = f.readline().strip().split('\t')
     for col in required_columns:
         if col not in header:
-            err = f"\nWARNING: The .tsv file '{tsvfile}' is missing the column '{col}'."
+            err = f"\nERROR: The .tsv file '{tsvfile}' is missing the column '{col}'."
             loggingC.message(err, threshold=-1)
             checks_failed = True
     if 'Bin_ids' in header:
@@ -545,11 +546,50 @@ def __check_bins(arguments: dict,
         checks_failed = True
     __check_tsv(quality_file, staticConfig.bin_quality_columns.split(';'))
 
+    # Check if the quality filtering criteria are defined and whether they
+    # look right (they are positive, between 0 and 100, they are not floats < 1)
+    if 'MIN_COMPLETENESS' in bin_data.keys():
+        try:
+            min_completeness = float(bin_data['MIN_COMPLETENESS'])
+            if min_completeness < 0 or min_completeness > 100:
+                err = f"ERROR: The MIN_COMPLETENESS value is not between 0 and 100."
+                loggingC.message(err, threshold=-1)
+                checks_failed = True
+            if min_completeness < 1:
+                err = f"ERROR: The MIN_COMPLETENESS value is smaller than 1. Completeness needs to be defined as percent points (0-100)."
+                loggingC.message(err, threshold=-1)
+                checks_failed = True
+        except ValueError:
+            err = f"ERROR: The MIN_COMPLETENESS value {bin_data['MIN_COMPLETENESS']} is not a number."
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
+
+    if 'MAX_CONTAMINATION' in bin_data.keys():
+        try:
+            max_contamination = float(bin_data['MAX_CONTAMINATION'])
+            if max_contamination < 0 or max_contamination > 100:
+                err = f"ERROR: The MAX_CONTAMINATION value is not between 0 and 100."
+                loggingC.message(err, threshold=-1)
+                checks_failed = True
+            if max_contamination < 1:
+                err = f"ERROR: The MAX_CONTAMINATION value is smaller than 1. Contamination needs to be defined as percent points (0-100)."
+                loggingC.message(err, threshold=-1)
+                checks_failed = True
+        except ValueError:
+            err = f"ERROR: The MAX_CONTAMINATION value {bin_data['MAX_CONTAMINATION']} is not a number."
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
+
 
     # Check if at least one NCBI_TAXONOMY_FILE or MANUAL_TAXONOMY_FILE exists
     tax_files = []
     if 'NCBI_TAXONOMY_FILES' in bin_data.keys():
         ncbi_tax_files = bin_data['NCBI_TAXONOMY_FILES']
+        if ncbi_tax_files is None:
+            err = f"\nERROR: The field NCBI_TAXONOMY_FILES in the BINS section is empty."
+            err += f"\nPlease provide a valid file path or remove the field from the config file."
+            loggingC.message(err, threshold=-1)
+            exit(1) # We cannot carry out the rest of the preflight checks
         if not isinstance(ncbi_tax_files, list):
             ncbi_tax_files = [ncbi_tax_files]
         tax_files.extend(ncbi_tax_files)
@@ -581,10 +621,12 @@ def __check_bins(arguments: dict,
                 loggingC.message(err, threshold=-1)
                 checks_failed = True
             __check_tsv(bin_data['MANUAL_TAXONOMY_FILE'], staticConfig.manual_taxonomy_columns.split(';'))
+            if not taxQuery.check_manual_taxonomies(bin_data['MANUAL_TAXONOMY_FILE']):
+                checks_failed = True
             tax_files.append(bin_data['MANUAL_TAXONOMY_FILE'])
     # And if the headers of the MANUAL_TAXONOMY_FILE are correct
             
-    # Now check there actual are tax files
+    # Now check if there actual are tax files
     if len(tax_files) == 0:
         err = f"\nERROR: You chose to submit bins, but did not provide any taxonomy files."
         loggingC.message(err, threshold=-1)
@@ -639,6 +681,7 @@ def __check_mags(arguments: dict,
     utility.stamped_from_config(config, 'PROJECT_NAME')
 
     # Check the metadata file
+    all_mag_bins = set()
     metadata_file = utility.from_config(config, 'MAGS', 'MAG_METADATA_FILE')
     if metadata_file is None or metadata_file == '':
         err = f"\nERROR: No MAG_METADATA_FILE was provided in the MAGS section."
@@ -650,6 +693,7 @@ def __check_mags(arguments: dict,
         reader = csv.DictReader(f, delimiter='\t')
         for row in reader:
             bin_id = row['Bin_id'].strip()
+            all_mag_bins.add(bin_id)
             if bin_id == '' or bin_id is None:
                 err = f"\nERROR: The metadata file '{metadata_file}' contains an empty bin_id field."
                 loggingC.message(err, threshold=-1)
@@ -664,6 +708,15 @@ def __check_mags(arguments: dict,
                     err = f"\nERROR: Error reading '{metadata_file}' at Bin_id {bin_id}. If you provide an Unlocalised_path, you need to provide a Chromosomes_path as well."
                     loggingC.message(err, threshold=-1)
                     exit(1)
+
+    # Check if all MAGs bins pass the filtering that is being applied to bins
+    bin_quality = binSubmission.get_bin_quality(config, silent=True)
+    filtered_bins = utility.quality_filter_bins(bin_quality, config)
+    for bin_id in all_mag_bins:
+        if bin_id not in filtered_bins:
+            err = f"\nERROR: The bin {bin_id} in the MAG_METADATA_FILE does not pass the filtering criteria for bins (MIN_COMPLETENESS / MAX_CONTAMINATION)."
+            loggingC.message(err, threshold=-1)
+            exit(1)
 
     # Check fields in ASSEMBLY section
     assembly_data = utility.from_config(config, 'ASSEMBLY')
@@ -828,11 +881,11 @@ def preflight_checks(arguments: dict) -> None:
         exit(1)
 
     if checks_failed:
-        msg = f"Some preflight checks failed. If you are sure that the data " \
+        msg = f"\nSome preflight checks failed. If you are sure that the data " \
                 "you provided is correct, you can skip these checks by using " \
                 "the --skip_checks flag. If any ERROR messages are not " \
-                "adressed, they are likely to cause failure after partial " \
-                "submission."
+                "adressed, they are likely to cause failure, sometimes after " \
+                "partial submission of the data."
         loggingC.message(msg, threshold=-1)
         exit(1)
     else:

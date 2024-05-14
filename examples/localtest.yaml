@@ -11,7 +11,7 @@ METAGENOME_TAXID: "718289"                                                    # 
 SEQUENCING_PLATFORMS: ["ILLUMINA"]                                            # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#platform >>EXAMPLE: ["ILLUMINA","OXFORD_NANOPORE"]
 SAMPLE_ACCESSIONS: ['SAMEA113417017', 'SAMEA113417018']                       # These samples exist in ENA. Your assembly is based on them. >>EXAMPLE: ["ERS15898933","ERS15898932"]
 PAIRED_END_READS:                                 
-- NAME: "3rIQA_ex05_rp1"                                                            # Choose a unique name >>EXAMPLE: "Bioreactor_2_replicate_1"
+- NAME: "AKQ4G_ex05_rp1"                                                            # Choose a unique name >>EXAMPLE: "Bioreactor_2_replicate_1"
   SEQUENCING_INSTRUMENT: "Illumina HiSeq 1500"                                # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument >>EXAMPLE: ["Illumina HiSeq 1500", "GridION"]
   LIBRARY_SOURCE: "METAGENOMIC"                                               # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "GENOMIC"
   LIBRARY_SELECTION: "RANDOM"                                                 # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "RANDOM"
@@ -21,7 +21,7 @@ PAIRED_END_READS:
   FASTQ2_FILE: "data/reads/rev1.fastq"                                        # Path to the fastq file with reverse reads >>EXAMPLE: "/mnt/data/reads_R2.fastq.gz"
   RELATED_SAMPLE_ACCESSION: 'SAMEA113417017'                                  # The accession of the sample that these reads originate from >>EXAMPLE: "ERS15898933"
   ADDITIONAL_MANIFEST_FIELDS:                                                 # You can add additional fields that will be written to the manifest
-- NAME: "3rIQA_ex05_rp2"                                                            # Choose a unique name >>EXAMPLE: "Bioreactor_2_replicate_1"
+- NAME: "AKQ4G_ex05_rp2"                                                            # Choose a unique name >>EXAMPLE: "Bioreactor_2_replicate_1"
   SEQUENCING_INSTRUMENT: "Illumina HiSeq 1500"                                # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument >>EXAMPLE: ["Illumina HiSeq 1500", "GridION"]
   LIBRARY_SOURCE: "METAGENOMIC"                                               # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "GENOMIC"
   LIBRARY_SELECTION: "RANDOM"                                                 # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "RANDOM"
@@ -32,7 +32,7 @@ PAIRED_END_READS:
   RELATED_SAMPLE_ACCESSION: 'SAMEA113417018'                                  # The accession of the sample that these reads originate from >>EXAMPLE: "ERS15898933"
   ADDITIONAL_MANIFEST_FIELDS:                                                 # You can add additional fields that will be written to the manifest
 ASSEMBLY:                                         
-  ASSEMBLY_NAME: "3rIQA_e05_coasm"                                       # Choose a name, even if your assembly has been uploaded already. Will only be used for naming assembly and bins/MAGs. >>EXAMPLE: "SGMA project mg"
+  ASSEMBLY_NAME: "AKQ4G_e05_coasm"                                       # Choose a name, even if your assembly has been uploaded already. Will only be used for naming assembly and bins/MAGs. >>EXAMPLE: "SGMA project mg"
   ASSEMBLY_SOFTWARE: "MEGAHIT"                                                # Software used to generate the assembly >>EXAMPLE: "MEGAHIT"
   ISOLATION_SOURCE: "biogas plant anaerobic digester"                         # Describe where your sample was taken from >>EXAMPLE: "biogas plant anaerobic digester"
   FASTA_FILE: "data/assembly.fasta"                                           # Path to the fasta file >>EXAMPLE: "/mnt/data/assembly.fasta.gz"

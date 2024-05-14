@@ -2,11 +2,11 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/img/logo_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/img/logo_light.png">
-  <img align="left" alt="submg Logo" sr c="submg/img/logo_light.png" width=350>
+  <img align="left" alt="submg Logo" sr c="submg/img/logo_light.png" width=400>
 </picture>
 
 
-submg aids in the submission of metagenomic study data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in a configuration form, submg derives additional information where required, creates samplesheets and manifests and uploads everything to your ENA account. You can use a combination of manual and submg steps to submit your data (e.g. submitting samples and reads through the ENA web interface, then using the tool to submit the assembly and bins).
+subMG aids in the submission of metagenomic study data to the European Nucleotide Archive. It can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in a configuration form, subMG derives additional information where required, creates samplesheets and manifests and uploads everything to your ENA account. You can use a combination of manual and subMG steps to submit your data (e.g. submitting samples and reads through the ENA web interface, then using the tool to submit the assembly and bins).
 
 
 
@@ -54,10 +54,9 @@ Please Note
 
 # Installation
 
-## Container
 A container based on the main branch is available [through DockerHub](https://hub.docker.com/r/ttubb/submg): `docker pull ttubb/submg`
 
-## Local Installation
+If you want to install the tool locally, follow these steps:
 - Make sure Python 3.8 or higher is installed
 - Make sure Java 1.8 or higher is installed
 - Make sure [wheel](https://pypi.org/project/wheel/) is installed
@@ -130,13 +129,21 @@ Using the table below, MAG `m1` will be submitted as a medium quality contig ass
 A submission can take several hours to complete. We recommend using [nohup](https://en.wikipedia.org/wiki/Nohup), [tmux](https://github.com/tmux/tmux/wiki) or something similar to prevent the process from being interrupted. 
 
 # Taxonomy Assignment
-Assemblies and bins need a valid NCBI taxonomy (scientific name and taxonomic identifier) for submission. If you did taxonomic annotation of bins based on [GTDB](https://gtdb.ecogenomic.org/), you can use the `gtdb_to_ncbi_majority_vote.py` script of the [GTDB-Toolkit](https://github.com/Ecogenomics/GTDBTk) to translate your results to NCBI taxonomy.
+Assemblies and bins need a valid NCBI taxonomy (scientific name and taxonomic identifier) for submission. While in most cases the assignment works automatically, it is important to note that [environmental organism-level taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) has to be used for metagenome submissions. For example: Consider a bin that was classified only on the class level and was determined to belong to class `Clostridia`. The taxonomy id of the class `Clostridia` is `186801`. However, the correct environmental organism-level taxonomy for the bin is `uncultured Clostridia bacterium` with the taxid `244328`.
 
+## GTDB-Toolkit Taxonomy
+If you did taxonomic annotation of bins based on [GTDB](https://gtdb.ecogenomic.org/), you can use the `gtdb_to_ncbi_majority_vote.py` script of the [GTDB-Toolkit](https://github.com/Ecogenomics/GTDBTk) to translate your results to NCBI taxonomy.
+
+## NCBI-Taxonomy
 You can provide tables with NCBI taxonomy information for each bin (see `./tests/bacteria_taxonomy.tsv` for an example - the output of `gtdb_to_ncbi_majority_vote.py` has the correct format already). submg will use ENAs [suggest-for-submission-sendpoint](https://ena-docs.readthedocs.io/en/latest/retrieval/programmatic-access/taxon-api.html) to derive taxids that follow the [rules for bin taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html).
 
+## Manually Specified Taxonomy
 Either in addition to those files, or as an alternative you can provide a `MANUAL_TAXONOMY` table. This should specify the correct taxids and scientific names for bins. An example of such a document can be found in `./examples/data/taxonomy/manual_taxonomy_3bins.tsv`. If a bin is present in this document, the taxonomic data from the NCBI taxonomy tables will be ignored.
 
-In some cases submg will be unable to assign a valid taxonomy to a bin. The submission will be aborted and you will be informed which bins are causing problems. In such cases you have to determine the correct scientific name and taxid for the bin and specify it in the `MANUAL_TAXONOMY` field of your config file. Sometimes the reason for a failed taxonomic assignment is that no proper taxid exists yet. You can [create a taxon request](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy_requests.html) in the ENA Webin Portal to register the taxon.
+## Taxonomy Assignment Failure
+In some cases submg will be unable to assign a valid taxonomy to a bin. The submission will be aborted and you will be informed which bins are causing problems. In such cases you have to determine the correct scientific name and taxid for the bin and specify it in the `MANUAL_TAXONOMY` field of your config file. 
+
+A possible reason for a failed taxonomic assignment is that no proper taxid exists yet. This happens more often than one might expect. You can [create a taxon request](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy_requests.html) in the ENA Webin Portal to register the taxon.
 
 ## NCBI Taxonomy File
 This file contains the NCBI taxonomy for bins. You can provide multiple taxonomy files covering different bins. If you created it with `gtdb_to_ncbi_majority_vote.py` of the [GTDB-Toolkit](https://github.com/Ecogenomics/GTDBTk) it will have the following, compatible format already. Alternatively, provide a .tsv file with the columns 'Bin_id' and 'NCBI_taxonomy'. The string in the 'NCBI_taxonomy' column has to adhere to the format shown below. Taxonomic ranks are separated by semicolons. On each rank, a letter indicating the rank is followed by two underscores and the classification at that rank. The ranks have to be in the order 'domain', 'phylum', 'class', 'order', 'family', 'genus', 'species'. If a classification at a certain rank is unavailable, the rank itself still needs to be present in the string (e.g. "s__").
@@ -157,7 +164,8 @@ ENA provides a [guideline for choosing taxonomy](https://ena-docs.readthedocs.io
 If your bins are the result of dereplicating data from a single assembly you can use submg as described above. If your bins are the result of dereplicating data from multiple different assemblies, you need to split them based on which assembly they belong to. You then run submg seperately for each assembly (together with the corresponding set of bins).
 
 # Bin Contamination above 100 percent
-When calculating completeness and contamination of a bin with tools like [CheckM](https://github.com/Ecogenomics/CheckM), contamination values above 100% can occur. [Usually, this is not an error](https://github.com/Ecogenomics/CheckM/issues/107). However, the ENA API will refuse to accept bins with contamination values above 100%. This issue is unrelated to submg, but to avoid partial submissions submg will refuse to work if such a bin is present in the dataset. If you have bins with contamination values above 100% you can either leave them out by removing them from your dataset or manually set the contamination value to 100% in the `BINS_QUALITY_FILE` file you provide to submg.
+When calculating completeness and contamination of a bin with tools like [CheckM](https://github.com/Ecogenomics/CheckM), contamination values above 100% can occur. [Usually, this is not an error](https://github.com/Ecogenomics/CheckM/issues/107). However, the ENA API will refuse to accept bins with contamination values above 100%. submg will automatically exclude bins with contamination values above 100% from the submission.
+If you _need_ to submit such (presumably low quality) bins, you need to manually set the contamination value to 100 in the 'QUALITY_FILE' you provide under the bins section.
 
 # Support
 submg is being actively developed. Please use the github [issue tracker](https://github.com/ttubb/submg/issues) to report problems. A [discussions page](https://github.com/ttubb/submg/discussions) is available for questions, comments and suggestions. 
