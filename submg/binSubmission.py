@@ -110,7 +110,7 @@ def get_bin_quality(config, silent=False) -> dict:
 
 def __prep_bins_samplesheet(filtered_bins: list,
                             config: dict,
-                            assembly_sample_accession: str,
+                            sample_accession_data: list,
                             samples_submission_dir: str,
                             upload_taxonomy_data: dict) -> str:
     """
@@ -119,9 +119,8 @@ def __prep_bins_samplesheet(filtered_bins: list,
     Args:
         filtered_bins (list): A list of bin names to submit.
         config (dict): The config dictionary.
-        assembly_sample_accession (str): Either the accession of a co-assembly
-            virtual sample or the accession of the single biological sample
-            which the assembly is based on.
+        sample_accession_data (list): A list of dictionaries with the data
+            about each biological sample
         samples_submission_dir (str): The directory where the samplesheet will
             be written to.
         upload_taxonomy_data (dict): A dictionary with the taxid and scientific
@@ -143,7 +142,7 @@ def __prep_bins_samplesheet(filtered_bins: list,
     collection_date = utility.from_config(config, 'ASSEMBLY', 'collection date')
     geographic_location_country = utility.from_config(config, 'ASSEMBLY', 'geographic location (country and/or sea)')
     investigation_type = staticConfig.bin_investigation_type
-    sample_derived_from = assembly_sample_accession
+    sample_derived_from = ",".join([x['accession'] for x in sample_accession_data])
     metagenomic_source = utility.from_config(config, 'METAGENOME_SCIENTIFIC_NAME')
     sequencing_method = utility.from_config(config, 'SEQUENCING_PLATFORMS')
     if isinstance(sequencing_method, list):
@@ -518,7 +517,7 @@ def get_bins_in_dir(bins_directory: str) -> list:
 def submit_bins(filtered_bins: list,
                 config: dict,
                 upload_taxonomy_data: dict,
-                assembly_sample_accession: str,
+                sample_accession_data: list,
                 run_accessions,
                 staging_dir: str,
                 logging_dir: str,
@@ -536,9 +535,8 @@ def submit_bins(filtered_bins: list,
         config (dict): The config dictionary.
         upload_taxonomy_data (dict): A dictionary with the taxid and scientific
             name for each bin.
-        assembly_sample_accession (str): Either the accession of a co-assembly
-            virtual sample or the accession of the single biological sample
-            which the assembly is based on.
+        sample_accession_data (list): A list of dictionaries with the data
+            about each biological sample
         run_accessions (list): A list of accession numbers of the runs.
         staging_dir (str): The directory where the bins will be staged.
         logging_dir (str): The directory where the logs will be written to.
@@ -591,7 +589,7 @@ def submit_bins(filtered_bins: list,
     os.makedirs(samples_submission_dir, exist_ok=False)
     samplesheet = __prep_bins_samplesheet(filtered_bins,
                                           config,
-                                          assembly_sample_accession,
+                                          sample_accession_data,
                                           samples_submission_dir,
                                           upload_taxonomy_data)
     
