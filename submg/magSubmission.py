@@ -69,8 +69,8 @@ def __prep_mags_samplesheet(config: dict,
 
     Args:
         config (dict): The config dictionary.
-        sample_accession_data (list): A list of dictionaries with the sample
-            accession data.
+        sample_accession_data (list): A list of dictionaries with the data
+            about each biological sample
         mag_metadata (dict): A dictionary with the metadata for each MAG.
         bin_taxonomy_data (dict): A dictionary with the taxonomy data for each
             bin.
@@ -351,7 +351,6 @@ def submit_mags(config: dict,
                 sample_accession_data: list,
                 run_accessions,
                 bin_taxonomy_data: dict,
-    #            bin_to_sample: dict,
                 staging_dir: str,
                 logging_dir: str,
                 depth_files: str,
@@ -365,10 +364,12 @@ def submit_mags(config: dict,
     
     Args:
         config (dict): The config dictionary.
-        upload_taxonomy_data (dict): A dictionary with the taxid and scientific
-            name for each bin.
         metagenome_scientific_name (str): The scientific name of the metagenome.
+        sample_accession_data (list): A list of dictionaries with the data
+            about each biological sample
         run_accessions (list): A list of accession numbers of the runs.
+        bin_taxonomy_data (dict): A dictionary with the taxid and scientific
+            name for each bin.
         staging_dir (str): The directory where the bins will be staged.
         logging_dir (str): The directory where the logs will be written to.
         depth_files (list): A list of paths to the depth files. Either this or

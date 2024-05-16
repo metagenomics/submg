@@ -323,8 +323,6 @@ def submit(args):
                                                    args.staging_dir,
                                                    args.logging_dir,
                                                    test=args.development_service)
-                
-            
         else:
             sample_accessions = utility.from_config(config,
                                                     'SAMPLE_ACCESSIONS')
@@ -383,7 +381,7 @@ def submit(args):
             submit_bins(filtered_bins,
                         config,
                         bin_taxonomy,
-                        assembly_sample_accession,
+                        sample_accession_data,
                         run_accessions,
                         prepdir(args.staging_dir, 'bins'),
                         prepdir(args.logging_dir, 'bins'),
