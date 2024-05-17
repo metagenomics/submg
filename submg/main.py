@@ -228,7 +228,7 @@ def makecfg(args):
                           submit_bins=args.submit_bins,
                           submit_mags=args.submit_mags,
                           no_comments=args.no_comments,
-                          quality_cutoffs=args.quality_cutoffs)
+                          quality_cutoffs=args.bin_quality_cutoffs)
     
 
 def submit(args):
