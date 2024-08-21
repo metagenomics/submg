@@ -5,6 +5,25 @@ STAGING_DIR=localtest/staging
 LOGGING_DIR=localtest/logging
 rm -rf $STAGING_DIR $LOGGING_DIR
 
+CFG=01_samples_reads_assembly_bins_mags.yaml
+RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
+cp $CFG $LOCAL
+sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
+echo ""
+echo "##################################################################"
+echo "##################################################################"
+echo "Running CFG: $CFG in --minitest mode"
+submg submit \
+--config $LOCAL \
+--staging_dir $STAGING_DIR \
+--logging_dir $LOGGING_DIR \
+--submit_samples \
+--submit_reads \
+--submit_assembly \
+--submit_bins \
+--submit_mags \
+--minitest
+rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=01_samples_reads_assembly_bins_mags.yaml
 RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
@@ -203,6 +222,59 @@ submg submit \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
 --submit_mags
+rm -rf $STAGING_DIR $LOGGING_DIR
+
+echo ""
+echo "##################################################################"
+echo "##################################################################"
+echo "All examples submitted"
+echo "##################################################################"
+echo "##################################################################"
+
+CFG=13_samples.yaml
+RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
+cp $CFG $LOCAL
+sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
+echo ""
+echo "##################################################################"
+echo "##################################################################"
+echo "Running CFG: $CFG"
+submg submit \
+--config $LOCAL \
+--staging_dir $STAGING_DIR \
+--logging_dir $LOGGING_DIR \
+--submit_samples
+rm -rf $STAGING_DIR $LOGGING_DIR
+
+CFG=14_reads.yaml
+RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
+cp $CFG $LOCAL
+sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
+echo ""
+echo "##################################################################"
+echo "##################################################################"
+echo "Running CFG: $CFG"
+submg submit \
+--config $LOCAL \
+--staging_dir $STAGING_DIR \
+--logging_dir $LOGGING_DIR \
+--submit_reads
+rm -rf $STAGING_DIR $LOGGING_DIR
+
+CFG=15_samples_reads.yaml
+RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
+cp $CFG $LOCAL
+sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
+echo ""
+echo "##################################################################"
+echo "##################################################################"
+echo "Running CFG: $CFG"
+submg submit \
+--config $LOCAL \
+--staging_dir $STAGING_DIR \
+--logging_dir $LOGGING_DIR \
+--submit_samples \
+--submit_reads
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 echo ""
