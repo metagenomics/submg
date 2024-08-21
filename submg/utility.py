@@ -265,6 +265,45 @@ def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
     return __strcast(config[key])
 
 
+def samples_from_reads(config):
+    """
+    Extracts the a list of sample accessions from the SINGLE_READS and
+    PAIRED_END_READS fields in the config.
+    
+    Args:
+        config (dict): The dict created from the config YAML file.
+
+    Returns:
+        list: List of sample accessions.
+    """
+    samples = set()
+    if 'SINGLE_READS' in config:
+        for read in config['SINGLE_READS']:
+            if not 'RELATED_SAMPLE_ACCESSION' in read:
+                err = "\nERROR: Trying to read the RELATED_SAMPLE_ACCESION "
+                err += "field from an entry in the SINGLE_READS section of "
+                err += "the config, but the field is missing.\n"
+                err += "When submitting reads but not submitting samples, "
+                err += "the RELATED_SAMPLE_ACCESSION field must be present for "
+                err += "each read entry."
+                loggingC.message(err, threshold=-1)
+                exit(1)
+            samples.add(read['RELATED_SAMPLE_ACCESSION'])
+    if 'PAIRED_END_READS' in config:
+        for read in config['PAIRED_END_READS']:
+            if not 'RELATED_SAMPLE_ACCESSION' in read:
+                err = "\nERROR: Trying to read the RELATED_SAMPLE_ACCESION "
+                err += "field from an entry in the PAIRED_END_READS section of "
+                err += "the config, but the field is missing.\n"
+                err += "When submitting reads but not submitting samples, "
+                err += "the RELATED_SAMPLE_ACCESSION field must be present for "
+                err += "each read entry."
+                loggingC.message(err, threshold=-1)
+                exit(1)
+            samples.add(read['RELATED_SAMPLE_ACCESSION'])
+    return list(samples)
+
+
 def optional_from_config(config, key, subkey=None, subsubkey=None):
     """
     Calls from config but returns None if the key is missing.
@@ -621,6 +660,23 @@ def validate_parameter_combination(submit_samples: bool,
     Check if the parameters in their combination are valid. If not, fail
     gracefully.
 
+    The following submission modes are valid:
+     1.    Samples + Reads + Assembly + Bins + MAGs
+     2.    Samples + Reads + Assembly + Bins
+     3.    Samples + Reads + Assembly
+     4.              Reads + Assembly + Bins + MAGs
+     5.              Reads + Assembly + Bins
+     6.              Reads + Assembly
+     7.                      Assembly + Bins + MAGs
+     8.                      Assembly + Bins
+     9.                      Assembly
+    10.                                 Bins + MAGs
+    11.                                 Bins
+    12.                                        MAGs
+    13.    Samples
+    14.              Reads
+    15.    Samples + Reads
+
     Args:
         submit_samples (bool): Submit samples.
         submit_single_reads (bool): Submit single reads.
@@ -643,7 +699,9 @@ def validate_parameter_combination(submit_samples: bool,
         is_valid = True
     if (submit_bins and submit_mags and not submit_assembly and not submit_samples and not submit_reads): # Mode 10
         is_valid = True 
-    if ((submit_bins or submit_mags) and not submit_assembly and not submit_samples and not submit_reads): # Mode 11
+    if ((submit_bins or submit_mags) and not submit_assembly and not submit_samples and not submit_reads): # Mode 11-12
+        is_valid = True
+    if ((submit_samples or submit_reads) and not submit_assembly and not submit_bins and not submit_mags): # Mode 13-14
         is_valid = True
 
     if not is_valid:

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class staticConfig:
-    submg_version: str = '0.9.2'
+    submg_version: str = '1.0.0'
     webin_cli_version: str = '7.0.1'
     ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/drop-box/submit/'
     ena_test_dropbox_url: str = 'https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/'
@@ -48,6 +48,9 @@ class staticConfig:
         Samples + Reads + Assembly + Bins + MAGs
         Samples + Reads + Assembly + Bins
         Samples + Reads + Assembly
+        Samples + Reads
+        Samples
+                  Reads
                   Reads + Assembly + Bins + MAGs
                   Reads + Assembly + Bins
                   Reads + Assembly

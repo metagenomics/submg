@@ -196,7 +196,7 @@ def init_argparse():
                                 help="Include fields for bin quality cutoff "
                                 "(contamination & completeness) in config.")
 
-    coverage_group = parser_makecfg.add_mutually_exclusive_group(required=True)
+    coverage_group = parser_makecfg.add_mutually_exclusive_group(required=False)
     coverage_group.add_argument("--coverage_from_bam",
                                 action="store_true",
                                 help="Coverages will be calculated from a "
@@ -338,8 +338,14 @@ def submit(args):
                                                    args.logging_dir,
                                                    test=args.development_service)
         else:
-            sample_accessions = utility.from_config(config,
-                                                    'SAMPLE_ACCESSIONS')
+            if args.submit_assembly or args.submit_bins or args.submit_mags:
+                sample_accessions = utility.from_config(config,
+                                                        'SAMPLE_ACCESSIONS')
+            else:
+                # We are only submitting reads. We need to collect the sample
+                # accessions from the individual read entries in the config.
+                sample_accessions = utility.samples_from_reads(config)
+
             if not isinstance(sample_accessions, list):
                 sample_accessions = [sample_accessions]
             sample_accession_data = []
@@ -358,9 +364,10 @@ def submit(args):
                                           test=args.development_service,
                                           minitest=args.minitest)
         else:
-            run_accessions = utility.from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS')
-            if not isinstance(run_accessions, list):
-                run_accessions = [run_accessions]
+            if args.submit_bins or args.submit_mags or args.submit_assembly:
+                run_accessions = utility.from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS')
+                if not isinstance(run_accessions, list):
+                    run_accessions = [run_accessions]
 
         if args.submit_assembly:
             assembly_sample_accession, assembly_fasta_accession = submit_assembly(config,

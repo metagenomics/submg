@@ -429,6 +429,9 @@ def __check_assembly(arguments: dict,
     else:
         servertype = "production"
 
+    if not arguments['submit_assembly'] and not arguments['submit_bins'] and not arguments['submit_mags']:
+        return # We do not need any assembly data in this case
+    
     assembly_data = utility.from_config(config, 'ASSEMBLY')
     __check_assembly_name(arguments, assembly_data['ASSEMBLY_NAME'])
 

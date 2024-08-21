@@ -104,8 +104,9 @@ def __check_parameters(outpath: str,
 
     # Do we lack coverage data or have redundancy
     if (coverage_from_bam + known_coverage) != 1:
-        print("\nERROR: You must specify exactly one of --coverage-from-bam or --known-coverage.")
-        exit(1)
+        if (submit_assembly or submit_bins or submit_mags):
+            print("\nERROR: You must specify exactly one of --coverage_from_bam or --known_coverage.")
+            exit(1)
 
     # Check if quality cuttoffs make sense
     if quality_cutoffs:
@@ -154,7 +155,7 @@ def __make_config_dict(submit_samples: int,
     # Metagenome taxonomy
     # We need the scientific & taxid name for everything except reads
     # If the assembly was already submitted, we can derive the taxonomy from the assembly
-    if submit_assembly or submit_bins or submit_mags:
+    if submit_assembly or submit_bins or submit_mags or submit_samples:
         config['METAGENOME_SCIENTIFIC_NAME'] = None
         config['METAGENOME_TAXID'] = None
 
@@ -184,7 +185,8 @@ def __make_config_dict(submit_samples: int,
     if len(samples) > 0:
         config['NEW_SAMPLES'] = samples
     else:
-        config['SAMPLE_ACCESSIONS'] = list()
+        if submit_assembly or submit_bins or submit_mags:
+            config['SAMPLE_ACCESSIONS'] = list()
 
     # Make the SINGLE READ section
     reads = []
@@ -223,6 +225,11 @@ def __make_config_dict(submit_samples: int,
         reads.append(entry)
     if len(reads) > 0:
         config['PAIRED_END_READS'] = reads
+
+    # If this is only a samples, reads, or reads+samples submission,
+    # we can stop here
+    if not submit_assembly and not submit_bins and not submit_mags:
+        return config
 
     # Make the ASSEMBLY section
     assembly = {
@@ -359,7 +366,7 @@ def make_config(outpath: str,
                  outpath,
                  no_comments)
     
-    if not submit_assembly:
+    if not submit_assembly and (submit_bins or submit_mags):
         print("""\nSince you chose not to submit an assembly, we assume that it is
             already present in the ENA database. If this previously submitted
             assembly is a co-assembly, fill out the field
