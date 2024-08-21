@@ -28,9 +28,15 @@ def init_argparse():
     Returns:
         argparse.ArgumentParser: The arguments object.
     """
-    parser = argparse.ArgumentParser(description="""Tool for submitting metagenome bins to the European Nucleotide Archive.
-                                     Environment variables ENA_USER and ENA_PASSWORD must be set for ENA upload.""")
-    parser.add_argument("-v", "--version",          action="version", version=f"%(prog)s {staticConfig.submg_version}")
+    submg_description = """Tool for submitting metagenome study data to the
+                           European Nucleotide Archive (ENA). Environment
+                           variables ENA_USER and ENA_PASSWORD must be set for
+                           data upload."""
+
+    parser = argparse.ArgumentParser(description=submg_description)
+    parser.add_argument("-v", "--version",
+                        action="version",
+                        version=f"%(prog)s {staticConfig.submg_version}")
     
     subparsers = parser.add_subparsers(dest='mode')
 
@@ -168,7 +174,8 @@ def init_argparse():
                                 action="store_true",
                                 default=False,
                                 help="Use if you want to submit metagenome "
-                                "bins (note that bins are different from MAGs in the ENA definition).")
+                                "bins (note that bins are different from MAGs "
+                                "in the ENA definition).")
     parser_makecfg.add_argument("-m",
                                 "--submit_mags",
                                 action="store_true",
@@ -215,8 +222,8 @@ def download_webin():
 
 def makecfg(args):
     """
-    Use configGen to create a .yml file containing the fields a user needs
-    to fill in order to create a submission for their specific setup
+    Create a .yml file containing the fields a user needs to fill in order to
+    create a submission for their specific setup.
     """
     configGen.make_config(outpath=args.outfile,
                           submit_samples=args.submit_samples,
