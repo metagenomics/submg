@@ -260,10 +260,17 @@ def submit(args):
         if args.development_service == 1:
             loggingC.message((">Initializing a test submission to " \
                                "the ENA dev server."), 0)
+            if args.minitest:
+                loggingC.message(">Minitest: This mode will use only a small "
+                                 "fraction of you dataset for submission "
+                                 "testing. Please run a test submission "
+                                 "with the complete dataset before submitting "
+                                 "to the production service.", 0)
         else:
             loggingC.message((">Initializing a LIVE SUBMISSION to " \
                                "the ENA production server."), 0)
             time.sleep(5) # Give user some extra time to notice message
+        print(" ")
 
         if not args.skip_checks:
             utility.validate_parameter_combination(args.submit_samples,
