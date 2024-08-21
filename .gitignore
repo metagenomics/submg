@@ -1,6 +1,9 @@
 # Custom
+todo.txt
 submg/*.jar
 examples/local*
+examples/taxo*
+examples/temp*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
