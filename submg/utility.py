@@ -711,3 +711,43 @@ def validate_parameter_combination(submit_samples: bool,
         exit(1)
 
     return True
+
+
+def print_submission_schedule(submit_samples: bool,
+                              submit_reads: bool,
+                              submit_assembly: bool,
+                              submit_bins: bool,
+                              submit_mags: bool) -> bool:
+    """
+    Construct a string summarizing the submission schedule based on the
+    parameters provided.
+
+    Args:
+        submit_samples (bool): Submit samples.
+        submit_single_reads (bool): Submit single reads.
+        submit_paired_end_reads (bool): Submit paired-end reads.
+        submit_assembly (bool): Submit assembly.
+        submit_bins (bool): Submit bins.
+        submit_mags (bool): Submit mags.
+
+    Returns:
+        str: The submission schedule.
+    """
+    counter = 1
+    schedule = "Submission schedule:\n"
+    if submit_samples:
+        schedule += f"\t{counter}. Samples\n"
+        counter += 1
+    if submit_reads:
+        schedule += f"\t{counter}. Reads\n"
+        counter += 1
+    if submit_assembly:
+        schedule += f"\t{counter}. Assembly\n"
+        counter += 1
+    if submit_bins:
+        schedule += f"\t{counter}. Bins\n"
+        counter += 1
+    if submit_mags:
+        schedule += f"\t{counter}. MAGs\n"
+
+    return schedule
