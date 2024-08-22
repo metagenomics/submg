@@ -279,6 +279,13 @@ def submit(args):
                                                    args.submit_bins,
                                                    args.submit_mags)
 
+        msg = utility.print_submission_schedule(args.submit_samples,
+                                                args.submit_reads,
+                                                args.submit_assembly,
+                                                args.submit_bins,
+                                                args.submit_mags)
+        loggingC.message(msg, threshold=0)
+
         config = preflight.preflight_checks(vars(args))
 
         # If we are submitting bins, get the quality scores and the
