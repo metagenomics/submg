@@ -2,7 +2,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/img/logo_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/img/logo_light.png">
-  <img align="left" alt="submg Logo" sr c="submg/img/logo_light.png" width=400>
+  <img align="left" alt="submg Logo" sr c="submg/img/logo_light.png" width=200>
 </picture>
 
 
