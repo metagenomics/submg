@@ -142,7 +142,7 @@ You can provide tables with NCBI taxonomy information for each bin (see `./tests
 Either in addition to those files, or as an alternative you can provide a `MANUAL_TAXONOMY` table. This should specify the correct taxids and scientific names for bins. An example of such a document can be found in `./examples/data/taxonomy/manual_taxonomy_3bins.tsv`. If a bin is present in this document, the taxonomic data from the NCBI taxonomy tables will be ignored.
 
 ## Taxonomy Assignment Failure
-In some cases subMG will be unable to assign a valid taxonomy to a bin. The submission will be aborted and you will be informed which bins are causing problems. In such cases you have to determine the correct scientific name and taxid for the bin and specify it in the `MANUAL_TAXONOMY` field of your config file. 
+In some cases subMG will be unable to assign a valid taxonomy to a bin. The submission will be aborted and you will be informed which bins are causing problems. In such cases you have to determine the correct scientific name and taxid for the bin and specify it in a [a manual taxonomy file](#manually-specified-taxonomy). This file then has to be referenced in the `MANUAL_TAXONOMY` field of your config. Remember to use [environmental organism-level taxonomies](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) when manually defining the taxonomy for your bin.
 
 A possible reason for a failed taxonomic assignment is that no proper taxid exists yet. This happens more often than one might expect. You can [create a taxon request](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy_requests.html) in the ENA Webin Portal to register the taxon.
 
