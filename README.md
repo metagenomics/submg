@@ -2,13 +2,13 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/img/logo_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/img/logo_light.png">
-  <img align="left" alt="submg Logo" src="submg/img/logo_light.png" width=200>
+  <img align="right" alt="submg Logo" src="submg/img/logo_light.png" width=200>
 </picture>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/img/nfdi4microbiota_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/img/nfdi4microbiota_light.png">
-  <img align="right" alt="submg Logo" src="submg/img/nfdi4microbiota_light.png" width=200>
+  <img align="left" alt="submg Logo" src="submg/img/nfdi4microbiota_light.png" width=200>
 </picture>
 
 
