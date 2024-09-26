@@ -1,7 +1,11 @@
 import os
 import csv
 import yaml
-import pysam
+try:
+    import pysam
+    HAS_PYSAM = True
+except ImportError:
+    HAS_PYSAM = False
 import time
 import requests
 import hashlib
@@ -475,6 +479,11 @@ def check_bam(bam_file,
     Returns:
         str: The path to the sorted and indexed BAM file.
     """
+    if not HAS_PYSAM:
+        err = "\nERROR: pysam is not installed, but needed for coverage calculations. You CANNOT use pysam on a windows system."
+        loggingC.message(err, threshold=-1)
+        exit(1)
+
     # Check if the ending of the file is .bam or .BAM
     if bam_file.endswith('.BAM'):
         file_ending = '.BAM'
@@ -515,6 +524,10 @@ def make_depth_file(bam_file, outdir, num_threads=4):
     Returns:
         str: Path to the depth file.
     """
+    if not HAS_PYSAM:
+        err = "\nERROR: pysam is not installed, but needed for coverage calculations. You CANNOT use pysam on a windows system."
+        loggingC.message(err, threshold=-1)
+        exit(1)
     sorted_bam_file = check_bam(bam_file, num_threads=num_threads)
     filename = os.path.basename(sorted_bam_file) + '.depth'
     outfile = os.path.join(outdir, filename)

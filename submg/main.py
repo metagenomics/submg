@@ -2,6 +2,7 @@ import argparse
 import os
 import time
 import traceback
+import sys
 
 from submg import loggingC
 from submg import preflight
@@ -200,7 +201,8 @@ def init_argparse():
     coverage_group.add_argument("--coverage_from_bam",
                                 action="store_true",
                                 help="Coverages will be calculated from a "
-                                "list of .bam files that you provide.")
+                                "list of .bam files that you provide. WARNING: "
+                                "This does not work on windows systems.")
     coverage_group.add_argument("--known_coverage",
                                 action="store_true",
                                 help="Coverages are already known and you "
@@ -224,7 +226,16 @@ def makecfg(args):
     """
     Create a .yml file containing the fields a user needs to fill in order to
     create a submission for their specific setup.
+
+    Will exit with an error if the user tries to use --coverage_from_bam on a
+    Windows system.
     """
+    if args.coverage_from_bam and sys.platform == "win32":
+        err = ("ERROR: The --coverage_from_bam option does not work on "
+                "Windows systems.")
+        loggingC.message(err, threshold=-1)
+        exit(1)
+        
     configGen.make_config(outpath=args.outfile,
                           submit_samples=args.submit_samples,
                           submit_single_reads=args.submit_single_reads,

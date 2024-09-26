@@ -13,7 +13,7 @@ setup(
     version='1.0.0',
     packages=find_packages(),
     install_requires=[
-        'pysam>=0.19.1',
+        'pysam>=0.19.1; sys_platform != "Windows"',
         'PyYAML>=5.4.1',
         'Requests>=2.31.0',
         'tqdm>=4.64.1',
