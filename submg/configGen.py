@@ -105,7 +105,7 @@ def __check_parameters(outpath: str,
     # Do we lack coverage data or have redundancy
     if (coverage_from_bam + known_coverage) != 1:
         if (submit_assembly or submit_bins or submit_mags):
-            print("\nERROR: You must specify exactly one of --coverage_from_bam or --known_coverage.")
+            print("\nERROR: You must specify exactly one of --coverage_from_bam or --known_coverage when submitting assemblies, bins or MAGs.")
             exit(1)
 
     # Check if quality cuttoffs make sense
