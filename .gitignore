@@ -1,6 +1,7 @@
 # Custom
 todo.txt
 submg/*.jar
+submg/modules/*.jar
 examples/local*
 examples/taxo*
 examples/temp*
