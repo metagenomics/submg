@@ -5,7 +5,7 @@ import subprocess
 import requests
 import sys
 
-from submg import statConf
+from . import statConf
 
 def versions():
     """ Reads in versions of this tool and the corresponding ENA

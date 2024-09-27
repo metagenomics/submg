@@ -1,6 +1,6 @@
 import customtkinter as ctk
-from tkinter import PhotoImage
-from PIL import Image, ImageTk
+from PIL import Image
+
 
 class App(ctk.CTk):
     def __init__(self):
@@ -16,9 +16,9 @@ class App(ctk.CTk):
         self.geometry(windowSize)
 
         # Load and resize the images
-        self.logo_img_subMG = self.resize_image("assets/logo_subMG.png", height=logoHeight-10)
-        self.logo_img_microbiota = self.resize_image("assets/logo_microbiota.png", height=logoHeight)
-        self.flow_img = self.resize_image("assets/flow_submg.png", width=imageWidth_flow)
+        self.logo_img_subMG = self.resize_image("resources/logo_subMG.png", height=logoHeight-10)
+        self.logo_img_microbiota = self.resize_image("resources/logo_microbiota.png", height=logoHeight)
+        self.flow_img = self.resize_image("resources/flow_submg.png", width=imageWidth_flow)
 
         # Create a container for pages
         self.container = ctk.CTkFrame(self, fg_color="transparent")
@@ -62,6 +62,7 @@ class App(ctk.CTk):
         """Raise the frame (page) to the top to show it."""
         frame = self.frames[page_name]
         frame.tkraise()
+
 
 class HomePage(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -151,6 +152,13 @@ class SubmissionOutlinePage(ctk.CTkFrame):
                                     command=lambda: controller.show_frame("HomePage"))
         back_button.grid(row=1, column=0, padx=20, pady=10)
 
-if __name__ == "__main__":
+
+def main():
     app = App()
     app.mainloop()
+
+
+if __name__ == "__main__":
+    main()
+
+

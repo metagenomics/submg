@@ -3,8 +3,8 @@ import os
 import glob
 import signal
 
-from submg  import loggingC
-from submg.statConf import staticConfig
+from . import loggingC
+from .statConf import staticConfig
 
 def find_webin_cli_jar():
     """ Find the Webin CLI JAR file in the directory of this script.
@@ -21,7 +21,7 @@ def find_webin_cli_jar():
         loggingC.message(err, threshold=-1)
         exit(1)
     else:
-        err = f"ERROR: webin_cli .jar file not found in {os.path.abspath(script_dir)}.\nYou can download the .jar by running the webin_downloader.py file in the submg directory or manually from the ENA website."
+        err = f"ERROR: webin_cli .jar file not found in {os.path.abspath(script_dir)}.\nYou can download the .jar by running the webin_downloader.py file in the submg/modules directory or manually from the ENA website."
         loggingC.message(err, threshold=-1)
         exit(1)
 

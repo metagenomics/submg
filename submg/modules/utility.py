@@ -14,8 +14,8 @@ import concurrent.futures
 from tqdm import tqdm
 from yaspin import yaspin
 
-from submg import loggingC
-from submg.statConf import staticConfig
+from . import loggingC
+from .statConf import staticConfig
 
 
 # Global variable for timestamping data that is pulled from the config

@@ -1,9 +1,9 @@
 import os
 import yaml
 
-from submg import utility
+from . import utility
 
-from submg.statConf import YAMLCOMMENTS, YAMLEXAMPLES, staticConfig
+from .statConf import YAMLCOMMENTS, YAMLEXAMPLES, staticConfig
 
 
 def __write_yaml(data: dict,

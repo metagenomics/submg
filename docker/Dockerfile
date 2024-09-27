@@ -14,4 +14,4 @@ WORKDIR /app
 RUN python3 -m pip install .
 
 # download webin-cli
-RUN submg download_webin
+RUN submg-cli download_webin

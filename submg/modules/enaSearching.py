@@ -1,7 +1,7 @@
 import requests
 
-from submg import loggingC
-from submg.statConf import staticConfig
+from . import loggingC
+from .statConf import staticConfig
 
 
 def study_exists(study_accession: str,

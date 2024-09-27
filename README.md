@@ -1,14 +1,14 @@
 # About  <img align="right" style="float: right; margin-left: 10px; margin-top: 15px;" src="https://img.shields.io/github/v/release/ttubb/submg" alt="GitHub release (latest)">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="submg/img/logo_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="submg/img/logo_light.png">
-  <img align="right" alt="submg Logo" src="submg/img/logo_light.png" width=200>
+  <source media="(prefers-color-scheme: dark)" srcset="submg/resources/logo_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="submg/resources/logo_light.png">
+  <img align="right" alt="submg Logo" src="submg/resources/logo_light.png" width=200>
 </picture>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="submg/img/nfdi4microbiota_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="submg/img/nfdi4microbiota_light.png">
-  <img align="left" alt="submg Logo" src="submg/img/nfdi4microbiota_light.png" width=200>
+  <source media="(prefers-color-scheme: dark)" srcset="submg/resources/nfdi4microbiota_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="submg/resources/nfdi4microbiota_light.png">
+  <img align="left" alt="submg Logo" src="submg/resources/nfdi4microbiota_light.png" width=200>
 </picture>
 
 
@@ -30,9 +30,9 @@ Please Note
 &nbsp;
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="submg/img/steps_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="submg/img/steps_light.png">
-  <img alt="Steps of submitting data with submg" src="submg/img/steps_light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="submg/resources/steps_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="submg/resources/steps_light.png">
+  <img alt="Steps of submitting data with submg" src="submg/resources/steps_light.png">
 </picture>
 
 &nbsp;
@@ -70,7 +70,7 @@ If you want to install the tool locally, follow these steps:
 - Clone this repository: `git clone https://github.com/ttubb/submg`
 - Switch into the directory that you just cloned
 - Run `python -m pip install .`
-- Run `submg download_webin` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli). 
+- Run `submg-cli download_webin` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli). 
 
 # Usage
 subMG is intended to submit data related to a *single* (co-)assembly. All samples, sequncing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run subMG once for each assembly.
@@ -87,19 +87,19 @@ export ENA_PASSWORD=your_ena_password
 
 3 - Create a template config file using:
 ```
-submg makecfg --outfile /path/to/your/config.yaml --submit_samples 2 --submit_paired_end_reads 2 --submit_assembly --submit_bins
+submg-cli makecfg --outfile /path/to/your/config.yaml --submit_samples 2 --submit_paired_end_reads 2 --submit_assembly --submit_bins
 ```
 4 - Fill out the config file (it contains explanations and examples for each line)
 
 5 - Submit your data to the development server using:
 ```
-submg submit --config /path/to/your/config.yaml --staging_dir /path/to/empty/directory1 --logging_dir /path/to/empty/directory2 --submit_samples --submit_reads --submit_assembly --submit_bins
+submg-cli submit --config /path/to/your/config.yaml --staging_dir /path/to/empty/directory1 --logging_dir /path/to/empty/directory2 --submit_samples --submit_reads --submit_assembly --submit_bins
 ```
 6 - If there are no errors, create a study object through the web interface of the [ENA production server](https://www.ebi.ac.uk/ena/submit/webin/login)
 
 7 - Submit your data to the production server using
 ```
-submg submit --config /path/to/your/config.yaml --staging_dir /path/to/empty/directory3 --logging_dir /path/to/empty/directory4 --submit_samples --submit_reads --submit_assembly --submit_bins --development_service 0
+submg-cli submit --config /path/to/your/config.yaml --staging_dir /path/to/empty/directory3 --logging_dir /path/to/empty/directory4 --submit_samples --submit_reads --submit_assembly --submit_bins --development_service 0
 ```
 
 ## ENA Development Service
@@ -109,7 +109,7 @@ ENA provides a [development service](https://ena-docs.readthedocs.io/en/latest/s
 `Study` is used synonymously with `project` here. Before you can submit data using subMG, you need to have a `Study` object (= a project) in your ENA account. If you intend to submit annotation data, you will also need a [locus tag prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html). You can create both through the ENA webin portal on the [production server](https://www.ebi.ac.uk/ena/submit/webin/login) or the [development server](https://wwwdev.ebi.ac.uk/ena/submit/webin/login). Be aware that if you create the `Study` object on the production server, it can take up to 24h hours until it is available on the development server. This can cause test submissions to fail.
 
 ## The Config File
-A lot of (meta)data is required for a submission. To use subMG, you need to provide metadata and the locations of your files in a YAML document. Which information is required depends on the type of your submission. You can use `submg makecfg` command to create a template for your config file. It will contain only the fields necessary for your specific submission, along with explanations and examples. Additionally, the `examples` directory contains examples of config files and the associated data. If you are unsure of how to fill out certain fields, please feel free to ask on the [github discussions page](https://github.com/ttubb/submg/discussions) of this project.
+A lot of (meta)data is required for a submission. To use subMG, you need to provide metadata and the locations of your files in a YAML document. Which information is required depends on the type of your submission. You can use `submg-cli makecfg` command to create a template for your config file. It will contain only the fields necessary for your specific submission, along with explanations and examples. Additionally, the `examples` directory contains examples of config files and the associated data. If you are unsure of how to fill out certain fields, please feel free to ask on the [github discussions page](https://github.com/ttubb/submg/discussions) of this project.
 
 ## MAG Submission
 If you have assembled high quality bins from your metagenome, you can [submit them as MAGs](https://ena-docs.readthedocs.io/en/latest/faq/metagenomes.html#) (after submitting them as bins). Some additional metadata is needed for a MAG submission.

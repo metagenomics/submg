@@ -13,7 +13,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG in --minitest mode"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -33,7 +33,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -52,7 +52,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -70,7 +70,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -87,7 +87,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -105,7 +105,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -122,7 +122,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -138,7 +138,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -155,7 +155,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -171,7 +171,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -186,7 +186,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -202,7 +202,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -217,7 +217,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -239,7 +239,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -254,7 +254,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \
@@ -269,7 +269,7 @@ echo ""
 echo "##################################################################"
 echo "##################################################################"
 echo "Running CFG: $CFG"
-submg submit \
+submg-cli submit \
 --config $LOCAL \
 --staging_dir $STAGING_DIR \
 --logging_dir $LOGGING_DIR \

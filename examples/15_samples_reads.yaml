@@ -1,6 +1,6 @@
 # ABOUT: This is a config for submitting 2 samples, 2 sets of single-reads, 2 sets of paired end reads
 # USAGE: navigate to the <examples> directory
-# USAGE: submg submit --config 15_samples_reads.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_samples --submit_reads
+# USAGE: submg-cli submit --config 15_samples_reads.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_samples --submit_reads
 
 
 STUDY: "PRJEB71644"                                                           # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"

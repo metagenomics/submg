@@ -4,8 +4,8 @@ import requests
 import time
 
 from tqdm import tqdm
-from submg import utility, loggingC, binSubmission
-from submg.statConf import staticConfig
+from . import utility, loggingC, binSubmission
+from .statConf import staticConfig
 
 
 def __report_tax_issues(issues):
@@ -48,7 +48,10 @@ def __report_tax_issues(issues):
             loggingC.message(f"bin/MAG {mag} - multiple suggestions found (classified as {level} {classification})", threshold=0)
             loggingC.message("\tSuggestions are:", threshold=0)
             for s in suggestions:
-                loggingC.message(f"\t{s['taxId']}\t{s['scientificName']}", threshold=0)
+                try:
+                    loggingC.message(f"\t{s['tax_id']}\t{s['scientificName']}", threshold=0)
+                except KeyError:
+                    loggingC.message(f"\t<Could not find tax_id / scientific name in the following suggestion> {s}", threshold=0)
     
     exit(1)
 
@@ -360,6 +363,10 @@ def __ena_taxonomy_suggestion(level: str,
             elif level == 'species':
                 if scientific_name.endswith(classification):
                     result.append(taxdata)
+            # For domain level, we check for a perfect match of the scientific name
+            elif level == 'domain':
+                if scientific_name == query:
+                    result.append(taxdata)
             # For all other cases we want the "<classification> <domain>" taxon.
             else:
                 if scientific_name.endswith('archaeon') or scientific_name.endswith('bacterium') or scientific_name.endswith('eukaryote') or level == 'metagenome':
@@ -462,7 +469,7 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
 
     for bin_name, taxonomy in tqdm(annotated_bin_taxonomies.items(), leave=False):
         # Only check the bins that we actually want to submit
-        if not bin_name in filtered_bins:
+        if bin_name not in filtered_bins:
             continue
         # Make sure we don't run into the ENA API rate limit
         current_time = time.time()
@@ -499,7 +506,7 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
 
     # Add any bins that are missing from the taxonomy files als unclassified
     for bin_name in filtered_bins:
-        if not bin_name in upload_taxonomy_data:
+        if bin_name not in upload_taxonomy_data:
             is_issue = False
             for i in issues:
                 if i['mag_bin'] == bin_name:

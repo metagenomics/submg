@@ -7,9 +7,9 @@ import gzip
 import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
 
-from submg import loggingC, utility
-from submg.webinWrapper import webin_cli
-from submg.statConf import staticConfig
+from . import loggingC, utility
+from .webinWrapper import webin_cli
+from .statConf import staticConfig
 
 
 def __calculate_bin_coverage(fasta: str,

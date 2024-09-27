@@ -2,10 +2,10 @@ import os
 
 from datetime import datetime
 
-from submg import loggingC, utility, enaSearching, binSubmission, taxQuery
-from submg.statConf import staticConfig
-from submg.webinWrapper import find_webin_cli_jar
-from submg.taxQuery import taxid_from_scientific_name
+from . import loggingC, utility, enaSearching, binSubmission, taxQuery
+from .statConf import staticConfig
+from .webinWrapper import find_webin_cli_jar
+from .taxQuery import taxid_from_scientific_name
 import time
 import csv
 
