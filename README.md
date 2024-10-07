@@ -2,13 +2,13 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/logo_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/logo_light.png">
-  <img align="right" alt="submg Logo" src="submg/resources/logo_light.png" width=200>
+  <img align="left" alt="submg Logo" src="submg/resources/logo_light.png" height=88>
 </picture>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/nfdi4microbiota_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/nfdi4microbiota_light.png">
-  <img align="left" alt="submg Logo" src="submg/resources/nfdi4microbiota_light.png" width=200>
+  <img align="right" alt="submg Logo" src="submg/resources/nfdi4microbiota_light.png" height=88>
 </picture>
 
 
@@ -45,6 +45,7 @@ Please Note
   - [ENA Development Service](#ena-development-service)
   - [Study Object](#study-object)
   - [The Config File](#the-config-file)
+  - [Submission Modes](#submission-modes)
   - [MAG Submission](#mag-submission)
     - [Contig- and Chromosome-MAG-Assemblies](#contig--and-chromosome-mag-assemblies)
     - [MAG metadata](#mag-metadata)
@@ -110,6 +111,15 @@ ENA provides a [development service](https://ena-docs.readthedocs.io/en/latest/s
 
 ## The Config File
 A lot of (meta)data is required for a submission. To use subMG, you need to provide metadata and the locations of your files in a YAML document. Which information is required depends on the type of your submission. You can use `submg-cli makecfg` command to create a template for your config file. It will contain only the fields necessary for your specific submission, along with explanations and examples. Additionally, the `examples` directory contains examples of config files and the associated data. If you are unsure of how to fill out certain fields, please feel free to ask on the [github discussions page](https://github.com/ttubb/submg/discussions) of this project.
+
+## Submission Modes
+Not all combinations of items can be submitted. For example, it is not not possible to submit only samples and a co-assembly without also submitting the corresponding reads. The figure below illustrates all possible combinations of items that can be submitted.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="submg/resources/submission_modes_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="submg/resources/submission_modes_light.png">
+  <img alt="submission modes" src="submg/resources/submission_modes_dark.png" height=450>
+</picture>
+
 
 ## MAG Submission
 If you have assembled high quality bins from your metagenome, you can [submit them as MAGs](https://ena-docs.readthedocs.io/en/latest/faq/metagenomes.html#) (after submitting them as bins). Some additional metadata is needed for a MAG submission.

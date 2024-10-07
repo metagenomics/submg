@@ -668,7 +668,8 @@ def validate_parameter_combination(submit_samples: bool,
                                    submit_reads: bool,
                                    submit_assembly: bool,
                                    submit_bins: bool,
-                                   submit_mags: bool) -> bool:
+                                   submit_mags: bool,
+                                   exit_on_invalid=True) -> bool:
     """
     Check if the parameters in their combination are valid. If not, fail
     gracefully.
@@ -718,10 +719,13 @@ def validate_parameter_combination(submit_samples: bool,
         is_valid = True
 
     if not is_valid:
-        # Dont use loggingC here, because this might be called from configGen
-        print(f"\nERROR: The combination of parameters you have specified is not valid.")
-        print(staticConfig.submission_modes_message)
-        exit(1)
+        if exit_on_invalid:
+            # Dont use loggingC here, because this might be called from configGen
+            print(f"\nERROR: The combination of parameters you have specified is not valid.")
+            print(staticConfig.submission_modes_message)
+            exit(1)
+        else:
+            return False
 
     return True
 

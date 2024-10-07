@@ -1,8 +1,8 @@
-from .gui import menu
+from .gui import controller
 
 
 def main():
-    menu.main()
+    controller.main()
 
 
 if __name__ == "__main__":

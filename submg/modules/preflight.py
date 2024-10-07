@@ -830,7 +830,7 @@ def preflight_checks(arguments: dict) -> None:
     Check if everything looks like we can start.
 
     Args:
-        args:    The command line arguments.
+        arguments:    The command line arguments.
 
     Returns:
         The config file as a dictionary.

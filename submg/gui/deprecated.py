@@ -1,3 +1,5 @@
+import importlib.resources as pkg_resources
+from submg import resources
 import customtkinter as ctk
 from PIL import Image
 
@@ -16,9 +18,14 @@ class App(ctk.CTk):
         self.geometry(windowSize)
 
         # Load and resize the images
-        self.logo_img_subMG = self.resize_image("resources/logo_subMG.png", height=logoHeight-10)
-        self.logo_img_microbiota = self.resize_image("resources/logo_microbiota.png", height=logoHeight)
-        self.flow_img = self.resize_image("resources/flow_submg.png", width=imageWidth_flow)
+        with pkg_resources.path(resources, 'gui_logo.png') as logo_path:
+            self.logo_img_subMG = self.resize_image(logo_path, height=logoHeight - 10)
+
+        with pkg_resources.path(resources, 'nfdi4microbiota_light.png') as microbiota_path:
+            self.logo_img_microbiota = self.resize_image(microbiota_path, height=logoHeight)
+
+        with pkg_resources.path(resources, 'gui_flow.png') as flow_path:
+            self.flow_img = self.resize_image(flow_path, width=imageWidth_flow)
 
         # Create a container for pages
         self.container = ctk.CTkFrame(self, fg_color="transparent")
