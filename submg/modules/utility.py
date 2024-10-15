@@ -22,6 +22,30 @@ from .statConf import staticConfig
 timestamp = None
 keys_to_stamp = []
 
+# Credentials
+USE_GUI = False
+gui_credentials = {"username": None, "password": None}
+
+def set_gui_credentials(username, password):
+    """
+    Set the credentials when using the GUI.
+
+    Args:
+        username (str): ENA username.
+        password (str): ENA password.
+    """
+    global USE_GUI, gui_credentials
+    USE_GUI = True
+    gui_credentials["username"] = username
+    gui_credentials["password"] = password
+
+
+def full_timestamp():
+    """
+    Creates and returns a full timestamp (year, month, day, hour, minute, second).
+    """
+    return time.strftime("%Y%m%d%H%M%S")
+
 
 def set_up_timestamps(arguments: dict):
     """
@@ -151,16 +175,31 @@ def calculate_md5(fname):
 
 def get_login():
     """
-    Reads ENA login credentials from environmental variables and returns them.
+    Reads ENA login credentials and returns them.
+    Uses environment variables or GUI inputs based on the context.
+
+    Returns:
+        (str, str): Username and Password.
     """
-    if not 'ENA_USER' in os.environ:
-        err = "\nERROR: ENA_USER environmental variable not set. Please export your ENA username and password as environmental variables ENA_USER and ENA_PASSWORD."
+    global USE_GUI, gui_credentials
+
+    if USE_GUI:
+        if gui_credentials["username"] is None or gui_credentials["password"] is None:
+            err = "\nERROR: GUI credentials not set."
+            loggingC.message(err, threshold=-1)
+            exit(1)
+        return gui_credentials["username"], gui_credentials["password"]
+    
+    # Fallback to environment variables for CLI usage
+    if 'ENA_USER' not in os.environ:
+        err = "\nERROR: ENA_USER environmental variable not set. Please export your ENA username as ENA_USER."
         loggingC.message(err, threshold=-1)
         exit(1)
-    if not 'ENA_PASSWORD' in os.environ:
-        err = "\nERROR: ENA_PASSWORD environmental variable not set. Please export your ENA username and password as environmental variables ENA_USER and ENA_PASSWORD."
+    if 'ENA_PASSWORD' not in os.environ:
+        err = "\nERROR: ENA_PASSWORD environmental variable not set. Please export your ENA password as ENA_PASSWORD."
         loggingC.message(err, threshold=-1)
         exit(1)
+
     return os.environ['ENA_USER'], os.environ['ENA_PASSWORD']
 
 

@@ -9,11 +9,13 @@ from .configForm import ConfigFormPage
 from .submission import SubmissionPage
 from .monitor import MonitorPage
 
+
 class MyApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
         self.title("subMG")
+
         
 
         # Set the window as resizable (both horizontally and vertically)
@@ -22,17 +24,26 @@ class MyApp(ctk.CTk):
         # Sizing
         self.logoHeight = 50
         self.imageWidth_flow = 600
-        self.imageWidth_submodes = 400
-        self.fontsize=15
+        self.imageWidth_submodes = 350
+        self.fontsize = 15
 
-
-    
         # Submission data
         self.file_path = None
         self.staging_dir_path = None
+        self.submission_mode = ctk.StringVar(value="1")
         self.submission_items = {
             "samples": False,
             "reads": False,
+            "assembly": False,
+            "bins": False,
+            "mags": False,
+        }
+
+        # Config data
+        self.config_items = {
+            "samples": 0,
+            "unpaired_reads": 0,
+            "paired_reads": 0,
             "assembly": False,
             "bins": False,
             "mags": False,
@@ -78,6 +89,7 @@ class MyApp(ctk.CTk):
         # Bring the selected page to the front
         page = self.pages[page_name]
         page.tkraise()
+        page.initialize()
 
     def resize_image(self, path, width=None, height=None):
         """Resizes an image while preserving its aspect ratio."""
@@ -110,7 +122,7 @@ class MyApp(ctk.CTk):
         with pkg_resources.path('submg.resources', 'gui_flow.png') as flow_path:
             self.flow_img = self.resize_image(flow_path, width=self.imageWidth_flow)
 
-        with pkg_resources.path('submg.resources', 'submission_modes_light.png') as nodes_path:
+        with pkg_resources.path('submg.resources', 'submission_modes_dark.png') as nodes_path:
             self.submodes_img = self.resize_image(nodes_path, width=self.imageWidth_submodes)
 
     def set_submission_data(self, file_path, staging_dir_path, submission_items):
@@ -118,6 +130,15 @@ class MyApp(ctk.CTk):
         self.staging_dir_path = staging_dir_path
         self.submission_items = submission_items
 
+    def set_config_data(self, config_items):
+        self.config_items = config_items
+
+    def truncate_display_path(self, path, max_display_len):
+        """Truncates a path for display."""
+        if len(path) > max_display_len:
+            return "..." + path[-max_display_len:]
+        return path
+      
 # Run the application
 def main():
     app = MyApp()

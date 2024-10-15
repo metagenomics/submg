@@ -39,14 +39,6 @@ class BasePage(ctk.CTkFrame):
             text=""
         )
         logo_label_subMG.grid(row=0, column=0, padx=10, pady=15, sticky="e")
-        # Right logo
-        #logo_label_microbiota = ctk.CTkLabel(
-        #    logos_frame,
-        #    image=self.controller.logo_img_microbiota,
-        #    text=""
-        #)
-        #logo_label_microbiota.grid(row=0, column=1, padx=10, pady=0, sticky="e")
-
 
         # Title label
         title_label = ctk.CTkLabel(
@@ -95,3 +87,4 @@ class BasePage(ctk.CTkFrame):
                "\n\nContinue?")
         if askyesno("Register Study", msg):
             webbrowser.open(self.submg_repo)
+

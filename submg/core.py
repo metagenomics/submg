@@ -222,6 +222,38 @@ def download_webin():
     webinDownload.download_webin_cli(webinCliVersion)
 
 
+def makecfg_through_gui(outpath,
+                        submit_samples,
+                        submit_single_reads,
+                        submit_paired_end_reads,
+                        coverage_from_bam,
+                        known_coverage,
+                        submit_assembly,
+                        submit_bins,
+                        submit_mags,
+                        quality_cutoffs):
+    if coverage_from_bam and sys.platform == "win32":
+        err = ("ERROR: The --coverage_from_bam option does not work on "
+                "Windows systems.")
+        loggingC.message(err, threshold=-1)
+        exit(1)
+        
+    print("input arguments of makecfg_through_gui:")
+    print("coverage from bam", coverage_from_bam)
+    print("known coverage", known_coverage)
+    configGen.make_config(outpath=outpath,
+                          submit_samples=submit_samples,
+                          submit_single_reads=submit_single_reads,
+                          submit_paired_end_reads=submit_paired_end_reads,
+                          coverage_from_bam=coverage_from_bam,
+                          known_coverage=known_coverage,
+                          submit_assembly=submit_assembly,
+                          submit_bins=submit_bins,
+                          submit_mags=submit_mags,
+                          no_comments=False,
+                          quality_cutoffs=quality_cutoffs)
+
+
 def makecfg(args):
     """
     Create a .yml file containing the fields a user needs to fill in order to
@@ -249,14 +281,56 @@ def makecfg(args):
                           quality_cutoffs=args.bin_quality_cutoffs)
     
 
-def submit(args):
+def submit_through_gui(config_path,
+                       output_dir,
+                       listener,
+                       development_service,
+                       verbosity,
+                       submit_samples,
+                       submit_reads,
+                       submit_assembly,
+                       submit_bins,
+                       submit_mags,
+                       username,
+                       password):
+    # Create timestamped logging and staging directories
+    timestamp = utility.full_timestamp()
+    logging_dir = os.path.join(output_dir, f"submg_logging_{timestamp}")
+    staging_dir = os.path.join(output_dir, f"submg_staging_{timestamp}")
+
+    # Create an args object to use with the submit() function
+    args = argparse.Namespace()
+    args.config = config_path
+    args.staging_dir = staging_dir
+    args.logging_dir = logging_dir
+    args.verbosity = verbosity
+    args.development_service = development_service
+    args.skip_checks = False
+    args.timestamps = 1
+    args.threads = 4
+    args.keep_depth_files = False
+    args.submit_samples = submit_samples
+    args.submit_reads = submit_reads
+    args.submit_assembly = submit_assembly
+    args.submit_bins = submit_bins
+    args.submit_mags = submit_mags
+    args.minitest = False
+
+    # Set credentials
+    utility.set_gui_credentials(username, password)
+
+    # Initialize submission
+    submit(args, listener)
+
+
+def submit(args, listener=None):
     """
     Submit data to the ENA.
 
     Args:
         args (argparse.Namespace): The arguments object.
     """
-    loggingC.set_up_logging(args.logging_dir, args.verbosity)
+    loggingC.set_up_logging(args.logging_dir, args.verbosity, listener)
     if args.timestamps or (args.timestamps is None and args.development_service):
         utility.set_up_timestamps(vars(args))
 

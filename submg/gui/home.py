@@ -12,10 +12,10 @@ class HomePage(BasePage):
 
         # Create main_frame and configure its grid
         main_frame = ctk.CTkFrame(self, fg_color="transparent")
-        main_frame.grid(row=1, column=0, sticky="ew")  # Horizontal stretching only
+        main_frame.grid(row=1, column=0, sticky="nsew")  # Allow main frame to stretch both vertically and horizontally
 
         # Configure grid
-        self.grid_rowconfigure(1, weight=0)  # No vertical scaling, content stays at the top
+        self.grid_rowconfigure(1, weight=1)  # Allow main frame to expand
         main_frame.grid_rowconfigure(0, weight=0)  # Content row, no vertical scaling
         main_frame.grid_columnconfigure(0, weight=1)  # Left column for text scales horizontally
         main_frame.grid_columnconfigure(1, weight=1)  # Right column for image scales horizontally
@@ -56,11 +56,10 @@ class HomePage(BasePage):
         )
         image_label.grid(row=0, column=1, padx=20, pady=20, sticky="new")  # Stretches horizontally
 
-        # Buttons - Place them below the content, spanning both columns
+        # Button frame
         button_frame = ctk.CTkFrame(self, fg_color="transparent")
-        button_frame.grid(row=2, column=0, columnspan=1, pady=10, sticky="ew")
+        button_frame.grid(row=2, column=0, pady=10, sticky="ew")
 
-        # Configure the button_frame columns to center the buttons
         button_frame.grid_columnconfigure(0, weight=1)
         button_frame.grid_columnconfigure(1, weight=1)
         button_frame.grid_columnconfigure(2, weight=1)
@@ -82,7 +81,7 @@ class HomePage(BasePage):
         # Button 1 - Prepare Submission
         prepare_button = ctk.CTkButton(
             button_frame,
-            text="Prepare Submission",
+            text="Create New Config",
             font=('Arial',self.controller.fontsize),
             command=lambda: controller.show_page("ConfigOutlinePage")
         )
@@ -91,7 +90,7 @@ class HomePage(BasePage):
         # Button 2 - Submit Data
         submit_button = ctk.CTkButton(
             button_frame,
-            text="Submit Data",
+            text="Load Config",
             font=('Arial',self.controller.fontsize),
             command=self.switch_to_submission
         )
@@ -114,3 +113,6 @@ class HomePage(BasePage):
         if askyesno("Submit Data", msg):
             self.controller.show_page("SubmissionPage")
 
+    def initialize(self):
+        """Called whenever monitor renders the page"""
+        pass

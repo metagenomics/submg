@@ -5,9 +5,10 @@ from tkinter.messagebox import showinfo
 from .base import BasePage
 from ..modules.utility import validate_parameter_combination
 
+
 class SubmissionPage(BasePage):
     def __init__(self, parent, controller):
-        super().__init__(parent, controller, "Submission")
+        super().__init__(parent, controller, "Submission Setup")
 
         # Create mainFrame and configure its grid
         main_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -39,11 +40,9 @@ class SubmissionPage(BasePage):
         )
         info_label.grid(row=0, column=0, padx=(20,0), pady=20, sticky="nw")  # Align to the top-left corner
 
-
         middle_frame = ctk.CTkFrame(main_frame)
         middle_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
         middle_frame.grid_columnconfigure(0, weight=1)  # Stretch the right frame
-
 
         middle_label = ctk.CTkLabel(
             middle_frame,
@@ -52,7 +51,7 @@ class SubmissionPage(BasePage):
             justify='left',
             wraplength=350
         )
-        middle_label.grid(row=0, column=0, padx=10, pady=0, columnspan=2, sticky="n")
+        middle_label.grid(row=0, column=0, padx=10, pady=(5, 0), columnspan=2, sticky="n")
 
         # File Picker
         self.file_path = ctk.StringVar("")
@@ -98,24 +97,10 @@ class SubmissionPage(BasePage):
         )
         staging_dir_label.grid(row=2, column=1, padx=10, pady=0, sticky="ew")
 
-        # Submission Mode Switch
-        self.submission_mode = ctk.StringVar(value="test")
-
-        mode_switch = ctk.CTkSwitch(
-            middle_frame, 
-            text="Use Test Server", 
-            font=('Arial',self.controller.fontsize),
-            variable=self.submission_mode, 
-            onvalue="test", 
-            offvalue="production"
-        )
-        mode_switch.grid(row=3, column=0, padx=10, pady=30, sticky="ew")
-
         # Checkboxes
         right_frame = ctk.CTkFrame(main_frame)
         right_frame.grid(row=0, column=2, padx=(0,20), pady=10, sticky="nsew")
         right_frame.grid_columnconfigure(0, weight=1)  # Stretch the frame
-
 
         right_label = ctk.CTkLabel(
             right_frame,
@@ -124,7 +109,7 @@ class SubmissionPage(BasePage):
             justify='left',
             wraplength=350
         )
-        right_label.grid(row=0, column=0, padx=10, pady=0, sticky="n")
+        right_label.grid(row=0, column=0, padx=10, pady=(5, 0), sticky="n")
 
         self.checkbox_samples = ctk.CTkCheckBox(right_frame,
                                                 text="Submit Samples")
@@ -142,7 +127,6 @@ class SubmissionPage(BasePage):
                                                 text="Submit MAGs")
         self.checkbox_mags.grid(row=5, column=0, padx=10, pady=10, sticky="ew")
 
-
         start_frame = ctk.CTkFrame(self, fg_color="transparent")
         start_frame.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
         start_frame.grid_columnconfigure(0, weight=1)  # Stretch
@@ -151,10 +135,9 @@ class SubmissionPage(BasePage):
             start_frame, 
             font=('Arial',self.controller.fontsize),
             text="Continue", 
-            command=self.execute_submission
+            command=self.continue_submission
         )
-        start_button.grid(row=0, column=0, padx=0, pady=0, sticky="ew")  # Align to bottom-right
-
+        start_button.grid(row=0, column=0, padx=0, pady=0, sticky="ew")
 
     def pick_file(self):
         # Open file dialog and store the selected file path
@@ -162,11 +145,9 @@ class SubmissionPage(BasePage):
         file_path = filedialog.askopenfilename(title="Choose Config File")
         if file_path:
             self.file_path.set(file_path)
-            display_path = file_path
-            if len(display_path) > max_display_len:
-                display_path = "..." + display_path[-max_display_len:]
+            display_path = self.controller.truncate_display_path(file_path,
+                                                                 max_display_len)
             self.display_path.set(display_path)
-
 
     def pick_staging_dir(self):
         # Use tkFileDialog.askdirectory() to select a directory
@@ -174,17 +155,11 @@ class SubmissionPage(BasePage):
         dir_path = filedialog.askdirectory(title="Choose Output Directory")
         if dir_path:
             self.staging_dir_path.set(dir_path)
-            display_path = dir_path
-            if len(display_path) > max_display_len:
-                display_path = "..." + display_path[-max_display_len:]
+            display_path = self.controller.truncate_display_path(dir_path,
+                                                                 max_display_len)
             self.staging_dir_display.set(display_path)
 
-
-    def execute_submission(self):
-        # Placeholder function to handle submission logic
-        print("Submission started using:", self.file_path.get())
-        print("Mode:", self.submission_mode.get())
-
+    def continue_submission(self):
         # Do we have config & path?
         config_file = self.file_path.get()
         staging_dir = self.staging_dir_path.get()
@@ -233,3 +208,7 @@ class SubmissionPage(BasePage):
         
         # Redirect to MonitorPage
         self.controller.show_page("MonitorPage")
+
+    def initialize(self):
+        """Called whenever monitor renders the page"""
+        pass
