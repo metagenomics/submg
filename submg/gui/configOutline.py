@@ -47,7 +47,7 @@ class ConfigOutlinePage(BasePage):
                  "and coverage options.",
             font=("Arial", self.controller.fontsize),
             justify='left',
-            wraplength=550
+            wraplength=650
         )
         info_label.grid(row=0,
                         column=0,
@@ -65,7 +65,7 @@ class ConfigOutlinePage(BasePage):
         self.checkbox_samples = ctk.CTkCheckBox(checkbox_frame, text="Submit Samples", command=self.toggle_entry_fields)
         self.checkbox_samples.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         self.entry_samples = ctk.CTkEntry(checkbox_frame, placeholder_text="how many")
-        self.entry_samples.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
+        self.entry_samples.grid(row=1, column=1, padx=0, pady=0, sticky="e")
         self.entry_samples.grid_remove()
         self.checkboxes_with_entries.append((self.checkbox_samples, self.entry_samples))
 
@@ -73,7 +73,7 @@ class ConfigOutlinePage(BasePage):
         self.checkbox_paired_reads = ctk.CTkCheckBox(checkbox_frame, text="Submit Paired Read Sets", command=self.toggle_entry_fields)
         self.checkbox_paired_reads.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
         self.entry_paired_reads = ctk.CTkEntry(checkbox_frame, placeholder_text="how many")
-        self.entry_paired_reads.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
+        self.entry_paired_reads.grid(row=2, column=1, padx=0, pady=0, sticky="e")
         self.entry_paired_reads.grid_remove()
         self.checkboxes_with_entries.append((self.checkbox_paired_reads, self.entry_paired_reads))
 
@@ -81,7 +81,7 @@ class ConfigOutlinePage(BasePage):
         self.checkbox_unpaired_reads = ctk.CTkCheckBox(checkbox_frame, text="Submit Unpaired Read Sets", command=self.toggle_entry_fields)
         self.checkbox_unpaired_reads.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
         self.entry_unpaired_reads = ctk.CTkEntry(checkbox_frame, placeholder_text="how many")
-        self.entry_unpaired_reads.grid(row=3, column=1, padx=10, pady=10, sticky="ew")
+        self.entry_unpaired_reads.grid(row=3, column=1, padx=0, pady=0, sticky="e")
         self.entry_unpaired_reads.grid_remove()
         self.checkboxes_with_entries.append((self.checkbox_unpaired_reads, self.entry_unpaired_reads))
 
@@ -99,7 +99,7 @@ class ConfigOutlinePage(BasePage):
 
         self.coverage_from_bam = ctk.CTkRadioButton(
             coverage_frame,
-            text="Coverage from BAM",
+            text="Compute coverage from BAM",
             variable=self.coverage_option,
             value=1  # Set this as value 1
         )
@@ -107,7 +107,7 @@ class ConfigOutlinePage(BasePage):
 
         self.coverage_from_tsv = ctk.CTkRadioButton(
             coverage_frame,
-            text="Coverage from TSV",
+            text="Kown coverage (TSV/manual input)",
             variable=self.coverage_option,
             value=0  # Set this as value 0
         )
@@ -208,6 +208,14 @@ class ConfigOutlinePage(BasePage):
             showinfo(
                 ("Invalid Parameters"),
                 "Please select an output file.",
+            )
+            return
+
+        # Check if quality cutoffs have been selected without submitting bins
+        if self.checkbox_quality_cutoffs.get() and not self.checkbox_bins.get():
+            showinfo(
+                ("Invalid Parameters"),
+                "Quality cutoffs can only be used when submitting bins.",
             )
             return
 

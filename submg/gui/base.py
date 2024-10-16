@@ -86,5 +86,5 @@ class BasePage(ctk.CTkFrame):
         msg = ("This will open the subMG documentation in your web browser. "
                "\n\nContinue?")
         if askyesno("Register Study", msg):
-            webbrowser.open(self.submg_repo)
+            webbrowser.open_new(self.submg_repo)
 
