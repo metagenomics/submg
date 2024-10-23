@@ -22,7 +22,11 @@ class BasePage(ctk.CTkFrame):
     def create_header(self, title_text):
         # Create a header frame
         header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        header_frame.grid(row=0, column=0, sticky="nsew")  # Stays at the top, full width
+        header_frame.grid(row=0,
+                          column=0,
+                          sticky="nsew",
+                          padx=10,
+                          pady=10)  # Stays at the top, full width
 
         # Configure the header frame grid
         header_frame.grid_columnconfigure(0, weight=0)  # Left logo stays fixed
@@ -30,7 +34,7 @@ class BasePage(ctk.CTkFrame):
         header_frame.grid_columnconfigure(2, weight=0)  # Right logo stays fixed
 
         logos_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
-        logos_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        logos_frame.grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
 
         # Left logo
         logo_label_subMG = ctk.CTkLabel(
@@ -38,7 +42,7 @@ class BasePage(ctk.CTkFrame):
             image=self.controller.logo_img_subMG,
             text=""
         )
-        logo_label_subMG.grid(row=0, column=0, padx=10, pady=15, sticky="e")
+        logo_label_subMG.grid(row=0, column=0, padx=5, pady=15, sticky="e")
 
         # Title label
         title_label = ctk.CTkLabel(
@@ -46,13 +50,17 @@ class BasePage(ctk.CTkFrame):
             text=title_text,
             font=("Arial", 22)
         )
-        title_label.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")  # Expands with resizing
+        title_label.grid(row=0, column=1, padx=0, pady=10, sticky="nsew")  # Expands with resizing
 
 
 
         # Buttons
         button_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
-        button_frame.grid(row=0, column=2, padx=10, pady=10, sticky="nsew")
+        button_frame.grid(row=0,
+                          column=2,
+                          padx=0,
+                          pady=0,
+                          sticky="nsew")
         # Home Button
         home_button = ctk.CTkButton(
             button_frame,
@@ -65,7 +73,7 @@ class BasePage(ctk.CTkFrame):
             font=('Arial',14),
             command=lambda: self.controller.show_page("HomePage")
         )
-        home_button.grid(row=0, column=0, padx=10, pady=2, sticky="n")
+        home_button.grid(row=0, column=0, padx=0, pady=2, sticky="n")
         manual_button = ctk.CTkButton(
             button_frame,
             text_color="#3a7ebf",
@@ -77,7 +85,7 @@ class BasePage(ctk.CTkFrame):
             font=('Arial',14),
             command=self.manual
         )
-        manual_button.grid(row=1, column=0, padx=10, pady=2, sticky="s")
+        manual_button.grid(row=1, column=0, padx=0, pady=2, sticky="s")
 
         # Ensure the header frame stays at the top
         header_frame.grid_rowconfigure(0, weight=0)  # Fixed height for the header

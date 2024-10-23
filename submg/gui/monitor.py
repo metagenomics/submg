@@ -50,12 +50,12 @@ class MonitorPage(BasePage):
         input_frame.grid_columnconfigure(3, weight=1)
 
         # Username and Password Fields
-        username_label = ctk.CTkLabel(input_frame, text="Username:", font=("Arial", 14))
+        username_label = ctk.CTkLabel(input_frame, text="ENA Username:", font=("Arial", 14))
         username_label.grid(row=0, column=0, sticky="w", padx=10, pady=10)
         self.username_entry = ctk.CTkEntry(input_frame)
         self.username_entry.grid(row=0, column=1, sticky="ew", padx=10, pady=10)
 
-        password_label = ctk.CTkLabel(input_frame, text="Password:", font=("Arial", 14))
+        password_label = ctk.CTkLabel(input_frame, text="ENA Password:", font=("Arial", 14))
         password_label.grid(row=0, column=2, sticky="w", padx=10, pady=10)
         self.password_entry = ctk.CTkEntry(input_frame, show="*")
         self.password_entry.grid(row=0, column=3, sticky="ew", padx=10, pady=10)

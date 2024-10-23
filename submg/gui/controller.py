@@ -6,8 +6,8 @@ import importlib.resources as pkg_resources
 from .home import HomePage
 from .configOutline import ConfigOutlinePage
 from .configForm import ConfigFormPage
-from .submission import SubmissionPage
 from .monitor import MonitorPage
+from .load import LoadConfigPage
 
 
 class MyApp(ctk.CTk):
@@ -16,15 +16,13 @@ class MyApp(ctk.CTk):
 
         self.title("subMG")
 
-        
-
         # Set the window as resizable (both horizontally and vertically)
         self.resizable(True, True)
 
         # Sizing
         self.logoHeight = 50
         self.imageWidth_flow = 600
-        self.imageWidth_submodes = 350
+        self.imageWidth_submodes = 400
         self.fontsize = 15
 
         # Submission data
@@ -57,14 +55,16 @@ class MyApp(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
 
         # Create a container frame using grid layout
-        container = ctk.CTkFrame(self, fg_color="transparent")
-        container.grid(row=0, column=0, sticky="nsew")
+        container = ctk.CTkFrame(self,
+                                 fg_color="transparent")
+        container.grid(row=0,
+                       column=0,
+                       padx=0,
+                       pady=0,
+                       sticky="nsew")
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
-        container.grid_rowconfigure(1, weight=1)
-        container.grid_columnconfigure(1, weight=1)
-        container.grid_rowconfigure(2, weight=1)
-        container.grid_columnconfigure(2, weight=1)
+
 
         # Dictionary to hold the pages
         self.pages = {}
@@ -73,8 +73,8 @@ class MyApp(ctk.CTk):
         for PageClass in (HomePage,
                           ConfigOutlinePage,
                           ConfigFormPage,
-                          SubmissionPage,
-                          MonitorPage):
+                          MonitorPage,
+                          LoadConfigPage):
             page_name = PageClass.__name__
             page = PageClass(parent=container, controller=self)
             self.pages[page_name] = page
@@ -143,3 +143,6 @@ class MyApp(ctk.CTk):
 def main():
     app = MyApp()
     app.mainloop()
+
+    if __name__ == "__main__":
+        main()

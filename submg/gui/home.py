@@ -12,11 +12,15 @@ class HomePage(BasePage):
 
         # Create main_frame and configure its grid
         main_frame = ctk.CTkFrame(self, fg_color="transparent")
-        main_frame.grid(row=1, column=0, sticky="nsew")  # Allow main frame to stretch both vertically and horizontally
+        main_frame.grid(row=1,
+                        column=0,
+                        padx=0,
+                        pady=0,
+                        sticky="nsew")  # Allow main frame to stretch both vertically and horizontally
 
         # Configure grid
         self.grid_rowconfigure(1, weight=1)  # Allow main frame to expand
-        main_frame.grid_rowconfigure(0, weight=0)  # Content row, no vertical scaling
+        main_frame.grid_rowconfigure(0, weight=1)  # Content row, no vertical scaling
         main_frame.grid_columnconfigure(0, weight=1)  # Left column for text scales horizontally
         main_frame.grid_columnconfigure(1, weight=1)  # Right column for image scales horizontally
 
@@ -43,9 +47,9 @@ class HomePage(BasePage):
             text=info_text,
             font=("Arial", self.controller.fontsize),
             justify='left',
-            wraplength=400  # Adjust wraplength as needed
+            wraplength=450,
         )
-        text_label.grid(row=0, column=0, padx=20, pady=20, sticky="new")  # Stretches horizontally
+        text_label.grid(row=0, column=0, padx=5, pady=20, sticky="new")  # Stretches horizontally
 
         # Right side - Image
         flow_img = controller.flow_img
@@ -54,7 +58,7 @@ class HomePage(BasePage):
             image=flow_img,
             text=""  # No text
         )
-        image_label.grid(row=0, column=1, padx=20, pady=20, sticky="new")  # Stretches horizontally
+        image_label.grid(row=0, column=1, padx=5, pady=20, sticky="new")  # Stretches horizontally
 
         # Button frame
         button_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -92,26 +96,29 @@ class HomePage(BasePage):
             button_frame,
             text="Load Config",
             font=('Arial',self.controller.fontsize),
-            command=self.switch_to_submission
+            command=self.load_config
         )
         submit_button.grid(row=0, column=2, padx=20, sticky="ew")
-    
+
     def register_study(self):
         msg = ("This will open the ENA documentation in your web browser. "
                "\n\nContinue?")
         if askyesno("Register Study", msg):
             webbrowser.open(self.ena_register_study_address)
 
-    def switch_to_submission(self):
-        # Ask user if they are sure they want to submit data. Explain
-        # that this option is only if they have a configuration file
-        # ready.
-        msg = ("To directly submit data, you need to have a configuration "
-                "file already prepared. If you don't have one, please use "
-                "the 'Prepare Submission' option instead. "
-                "\n\nContinue?")
-        if askyesno("Submit Data", msg):
-            self.controller.show_page("SubmissionPage")
+    def load_config(self):
+        self.controller.show_page("LoadConfigPage")
+
+    # def switch_to_submission(self):
+    #     # Ask user if they are sure they want to submit data. Explain
+    #     # that this option is only if they have a configuration file
+    #     # ready.
+    #     msg = ("To directly submit data, you need to have a configuration "
+    #             "file already prepared. If you don't have one, please use "
+    #             "the 'Prepare Submission' option instead. "
+    #             "\n\nContinue?")
+    #     if askyesno("Submit Data", msg):
+    #         self.controller.show_page("SubmissionPage")
 
     def initialize(self):
         """Called whenever monitor renders the page"""

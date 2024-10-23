@@ -133,7 +133,7 @@ class ConfigOutlinePage(BasePage):
 
         # Continue button
         continue_button = ctk.CTkButton(
-            left_frame,
+            main_frame,
             text="Continue",
             font=("Arial", self.controller.fontsize),
             command=self.continue_configuration
@@ -142,7 +142,7 @@ class ConfigOutlinePage(BasePage):
                              column=0,
                              padx=10,
                              pady=(60, 10),
-                             columnspan=2,
+                             columnspan=3,
                              sticky="sew")
 
         # Add submission modes image
