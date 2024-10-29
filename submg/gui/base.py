@@ -52,8 +52,6 @@ class BasePage(ctk.CTkFrame):
         )
         title_label.grid(row=0, column=1, padx=0, pady=10, sticky="nsew")  # Expands with resizing
 
-
-
         # Buttons
         button_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
         button_frame.grid(row=0,
@@ -71,7 +69,7 @@ class BasePage(ctk.CTkFrame):
             border_width=1,
             text="Home", 
             font=('Arial',14),
-            command=lambda: self.controller.show_page("HomePage")
+            command=self.controller.go_home
         )
         home_button.grid(row=0, column=0, padx=0, pady=2, sticky="n")
         manual_button = ctk.CTkButton(

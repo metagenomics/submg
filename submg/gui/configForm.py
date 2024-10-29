@@ -1,10 +1,12 @@
 # pages/config_form_page.py
+import os
 import customtkinter as ctk
 import yaml
 from tkinter import filedialog
-from tkinter.messagebox import showerror
+from tkinter.messagebox import showerror, askyesno
 from .base import BasePage
-from ..modules.statConf import YAMLCOMMENTS, GUICOMMENTS, GUIEXAMPLES, GUILINKS, YAML_PRETTYNAMES, YAML_MULTI_FILEKEYS, YAML_SINGLE_FILEKEYS
+from ..modules.configGen import write_gui_yaml
+from ..modules.statConf import YAMLCOMMENTS, GUICOMMENTS, GUIEXAMPLES, GUILINKS, YAML_PRETTYNAMES, YAML_MULTI_FILEKEYS, YAML_SINGLE_FILEKEYS, YAML_DIRKEYS, GUI_STATIC_ADDITIONAL_FIELDS
 import webbrowser
 
 class ConfigFormPage(BasePage):
@@ -17,10 +19,7 @@ class ConfigFormPage(BasePage):
             'samplesheet': 'ADDITIONAL_SAMPLESHEET_FIELDS',
         }
 
-        # Formatting
-        self.colors = {
-            'red': '#a31a15'
-        }
+
         self.item_font = 'Arial'
         self.title_font = 'Arial'
         self.item_font_size = 12
@@ -122,16 +121,6 @@ class ConfigFormPage(BasePage):
                                pady=(0,12),
                                sticky="nsew")
         self.button_frame.grid_columnconfigure(0, weight=1)
-        self.validate_config_button = ctk.CTkButton(
-            self.button_frame,
-            text="Validate",
-            command=lambda: self.validate_config()
-        )
-        self.validate_config_button.grid(row=0,
-                                         column=0,
-                                         padx=0,
-                                         pady=(0,5),
-                                         sticky="nsew")
         self.save_config_button = ctk.CTkButton(
             self.button_frame,
             text="Save as",
@@ -155,8 +144,6 @@ class ConfigFormPage(BasePage):
 
         # The dictionary that will keep the form structure and user input
         self.form_data = {}
-        self.picked_files = {}
-        self.picked_filelists = {}
         self.frame_row_counter = 1
 
     def padding_in_scrollable(self, s_frame: ctk.CTkScrollableFrame):
@@ -218,22 +205,25 @@ class ConfigFormPage(BasePage):
                    pady=self.item_y_padding)
 
     def load_form(self, form_path):
-        """ Read a yaml form from the specified path. Check if it
-            is a valid form. Translate it into a dictionary that 
-            will later be rendered
+        """ Read a yaml form from the specified path. Translate it into a
+            dictionary that will later be rendered. Remove the
+            submission_outline key from the dictionary.
         """
         with open(form_path, 'r') as file:
             self.original_form_data = yaml.safe_load(file)
 
-        #print("\n\nORIGINAL FORM DATA")
-        #for k,v in self.original_form_data.items():
-        #    print(k,v)
-        #print("\n\n")
+        if 'submission_outline' in self.original_form_data:
+            outline_items = self.original_form_data['submission_outline']
+            for item in self.controller.submission_items.keys():
+                if item in outline_items:
+                    self.controller.submission_items[item] = True
+                else:
+                    self.controller.submission_items[item] = False
+            self.original_form_data.pop('submission_outline')
 
     def render_form(self):
         """ Render the form based on the loaded yaml data """
 
-        print("\n\n RENDERING THE FORM \n\n")
         # Frame for core items
         self.core_frame = ctk.CTkFrame(self.form_frame)
         self.core_frame_rowcounter = 0
@@ -242,7 +232,7 @@ class ConfigFormPage(BasePage):
                               sticky="nsew",
                               padx=self.frame_x_padding,
                                 pady=self.frame_y_padding)
-        self.configure_frame_columns(self.core_frame, [1, 3])
+        self.configure_frame_columns(self.core_frame, [1, 2, 0])
         # Title label for the frame
         title_label = ctk.CTkLabel(self.core_frame,
                                    text="Core",
@@ -257,7 +247,6 @@ class ConfigFormPage(BasePage):
         core_has_lists = False
 
         for key, value in self.original_form_data.items():
-            print("\nPROCESSING KEY: ", key)
             # Check if the value is a dictionary, a list, a string or None
             if isinstance(value, dict):
 
@@ -273,179 +262,6 @@ class ConfigFormPage(BasePage):
 
                 self.form_data[key]["frame"] = new_frame
 
-                # item_has_lists = False
-                # new_frame = ctk.CTkFrame(self.form_frame)
-                # new_frame.grid(row=self.frame_row_counter,
-                #                column=0,
-                #                sticky="nsew",
-                #                padx=self.frame_x_padding,
-                #                pady=self.frame_y_padding)
-                # self.configure_frame_columns(new_frame, [1, 3, 0])
-
-                # self.frame_row_counter += 1
-                # self.form_data[key] = {"type": "nested",
-                #                        "frame": new_frame,
-                #                        "row_counter": 0,
-                #                        "items": {}}
-                # # Give the frame a title
-                # title_label = ctk.CTkLabel(new_frame,
-                #                            text=YAML_PRETTYNAMES[key],
-                #                            font=(self.item_font, self.title_font_size))
-                # title_label.grid(row=0,
-                #                  column=0,
-                #                  sticky="w",
-                #                  padx=self.item_x_padding,
-                #                  pady=self.item_y_padding)
-                # self.form_data[key]["row_counter"] += 1
-
-                # additional_manifest_fields = "not found"
-                # additional_samplesheet_fields = "not found"
-                # for subkey, subvalue in value.items():
-                #     # Handle the regular fields, collect the additional fields
-                #     if subkey == self.special_fieldnames['manifest']:
-                #         additional_manifest_fields = subvalue
-                #     elif subkey == self.special_fieldnames['samplesheet']:
-                #         additional_samplesheet_fields = subvalue
-                #     else:
-                #         self.create_nested_item(key, subkey, subvalue)
-                #         if isinstance(subvalue, list):
-                #             item_has_lists = True
-                # # Handle the additional fields
-                # if not additional_samplesheet_fields == "not found":
-                #     print("I AM HANDLING THE ADDITOINAL FIELDS FOR SAMPLESHEET for key ", key)
-                #     self.form_data[key]["items"]["additional_samplesheet_fields"] = {
-                #         'counter': 0,
-                #     }
-                #     # Create a title label & help button
-                #     title_label = ctk.CTkLabel(new_frame,
-                #                                text="Additional Fields (Samplesheet)",
-                #                                font=(self.item_font, self.item_font_size+2))
-                #     title_label.grid(row=self.form_data[key]["row_counter"],
-                #                      column=0,
-                #                      sticky="w",
-                #                      padx=self.item_x_padding,
-                #                      pady=(20, self.item_y_padding))
-
-                #     help_button = ctk.CTkButton(new_frame,
-                #                                 text="?",
-                #                                 width=30,
-                #                                 command=lambda: self.show_help(self.special_fieldnames['samplesheet']))
-                #     help_button.grid(row=self.form_data[key]["row_counter"],
-                #                      column=2,
-                #                      sticky="w",
-                #                      pady=(20, self.item_y_padding),
-                #                      padx=self.item_x_padding)
-                    
-                #     self.form_data[key]["row_counter"] += 1
-
-                #     # Create a frame for the additional samplesheet fields
-                #     additional_samplesheet_frame = ctk.CTkFrame(new_frame, fg_color="transparent")
-                #     additional_samplesheet_frame.grid(row=self.form_data[key]["row_counter"],
-                #                                         column=0,
-                #                                         sticky="nsew",
-                #                                         padx=0,
-                #                                         pady=0,
-                #                                         columnspan=3)
-                #     self.configure_frame_columns(additional_samplesheet_frame, [1, 3, 0])
-                #     self.form_data[key]["row_counter"] += 1
-
-                #     # Create static fields for the items already existing in the config
-                #     if isinstance(additional_samplesheet_fields, dict):
-                #         for field, value in additional_samplesheet_fields.items():
-                #             self.create_string_entry(additional_samplesheet_frame,
-                #                                         self.form_data[key]["items"]["additional_samplesheet_fields"]['counter'],
-                #                                         key,
-                #                                         field,
-                #                                         value,
-                #                                         is_additonal=True)
-                #             self.form_data[key]["items"]["additional_samplesheet_fields"]['counter'] += 1
-                #             if isinstance(value, list):
-                #                 item_has_lists = True
-                #     # Create a button to allow users to add more fields
-                #     add_samplesheet_field_button = ctk.CTkButton(
-                #         additional_samplesheet_frame,
-                #         text="Add Samplesheet Field",
-                #         width=15,
-                #         command=self.additional_field_command(key,
-                #                                               additional_samplesheet_frame,
-                #                                               'additional_samplesheet_fields')
-                #     )
-                #     print("I am adding the add samplesheet field button for key ", key)
-                #     add_samplesheet_field_button.grid(row=self.form_data[key]["row_counter"],
-                #                                         column=0,
-                #                                         sticky="w",
-                #                                         padx=self.item_x_padding,
-                #                                         pady=self.item_y_padding)
-                #     self.form_data[key]["row_counter"] += 1
-                # if not additional_manifest_fields == "not found":
-                #     print("I AM HANDLING THE ADDITOINAL FIELDS FOR MANIFEST for key ", key)
-                #     self.form_data[key]["items"]["additional_manifest_fields"] = {
-                #         'counter': 0,
-                #     }
-
-                #     # Create a title label & help button
-                #     title_label = ctk.CTkLabel(new_frame,
-                #                                text="Additional Fields (Manifest)",
-                #                                font=(self.item_font, self.item_font_size+2))
-                #     title_label.grid(row=self.form_data[key]["row_counter"],
-                #                      column=0,
-                #                      sticky="w",
-                #                      padx=self.item_x_padding,
-                #                      pady=(20, self.item_y_padding))
-
-                #     help_button = ctk.CTkButton(new_frame,
-                #                                 text="?",
-                #                                 width=30,
-                #                                 command=lambda: self.show_help(self.special_fieldnames['manifest']))
-                #     help_button.grid(row=self.form_data[key]["row_counter"],
-                #                      column=2,
-                #                      sticky="e",
-                #                      pady=(20, self.item_y_padding),
-                #                      padx=self.item_x_padding)
-                    
-                #     self.form_data[key]["row_counter"] += 1
-
-                #     # Create a frame for the additional manifest fields
-                #     additional_manifest_frame = ctk.CTkFrame(new_frame, fg_color="transparent")
-                #     additional_manifest_frame.grid(row=self.form_data[key]["row_counter"],
-                #                                     column=0,
-                #                                     sticky="nsew",
-                #                                     padx=0,
-                #                                     pady=0,
-                #                                     columnspan=3)
-                #     self.form_data[key]["row_counter"] += 1
-                #     self.configure_frame_columns(additional_manifest_frame, [1, 3, 0])
-                #     # Create static fields for the items already existing in the config
-                #     if isinstance(additional_manifest_fields, dict):
-                #         for field, value in additional_manifest_fields.items():
-                #             self.create_string_entry(additional_manifest_frame,
-                #                                         self.form_data[key]["items"]["additional_manifest_fields"]['counter'],
-                #                                         key,
-                #                                         field,
-                #                                         value,
-                #                                         is_additonal=True)
-                #             self.form_data[key]["items"]["additional_manifest_fields"]['counter'] += 1
-                #             if isinstance(value, list):
-                #                 item_has_lists = True
-                #     # Create a button to allow users to add more fields
-                #     print("I am creating the button for key ", key)
-                #     add_manifest_field_button = ctk.CTkButton(
-                #         additional_manifest_frame,
-                #         text="Add Manifest Field",
-                #         width=15,
-                #         command=self.additional_field_command(key,
-                #                                               additional_manifest_frame,
-                #                                               'additional_manifest_fields')
-                #     )
-                #     add_manifest_field_button.grid(row=self.form_data[key]["row_counter"],
-                #                                    column=0,
-                #                                    sticky="w",
-                #                                    padx=self.item_x_padding,
-                #                                    pady=self.item_y_padding)
-                #     self.form_data[key]["row_counter"] += 1
-
-                # if item_has_lists:
-                #     self.create_asterisk_label(new_frame, self.form_data[key]["row_counter"])
             else: # We have either a core item or a nested list
                 if isinstance(value, list):
                     # Is it a core item or a list of dictionaries?
@@ -523,31 +339,9 @@ class ConfigFormPage(BasePage):
 
         # Handle the additional samplesheet fields
         if not additional_samplesheet_fields == "not found":
-            print("I AM HANDLING THE ADDITOINAL FIELDS FOR SAMPLESHEET for key ", parent_key)
             self.form_data[parent_key]["items"]["additional_samplesheet_fields"] = {
                 'counter': 0,
             }
-            # Create a title label & help button
-            title_label = ctk.CTkLabel(new_frame,
-                                        text="Additional Fields (Samplesheet)",
-                                        font=(self.item_font, self.item_font_size+2))
-            title_label.grid(row=self.form_data[parent_key]["row_counter"],
-                                column=0,
-                                sticky="w",
-                                padx=self.item_x_padding,
-                                pady=(20, self.item_y_padding))
-
-            help_button = ctk.CTkButton(new_frame,
-                                        text="?",
-                                        width=30,
-                                        command=lambda: self.show_help(self.special_fieldnames['samplesheet']))
-            help_button.grid(row=self.form_data[parent_key]["row_counter"],
-                                column=2,
-                                sticky="w",
-                                pady=(20, self.item_y_padding),
-                                padx=self.item_x_padding)
-            
-            self.form_data[parent_key]["row_counter"] += 1
 
             # Create a frame for the additional samplesheet fields
             additional_samplesheet_frame = ctk.CTkFrame(new_frame, fg_color="transparent")
@@ -557,31 +351,52 @@ class ConfigFormPage(BasePage):
                                                 padx=0,
                                                 pady=0,
                                                 columnspan=3)
-            self.configure_frame_columns(additional_samplesheet_frame, [1, 3, 0])
+            self.configure_frame_columns(additional_samplesheet_frame, [1, 2, 0])
             self.form_data[parent_key]["row_counter"] += 1
 
+            # Create a title label & help button
+            title_label = ctk.CTkLabel(additional_samplesheet_frame,
+                                        text="Additional Fields (Samplesheet)",
+                                        font=(self.item_font, self.item_font_size+2))
+            title_label.grid(row=0,
+                                column=0,
+                                sticky="w",
+                                padx=self.item_x_padding,
+                                pady=(20, self.item_y_padding))
+
+            help_button = ctk.CTkButton(additional_samplesheet_frame,
+                                        text="?",
+                                        width=30,
+                                        command=lambda: self.show_help(self.special_fieldnames['samplesheet']))
+            help_button.grid(row=0,
+                                column=2,
+                                sticky="w",
+                                pady=(20, self.item_y_padding),
+                                padx=self.item_x_padding)
+            
             # Create static fields for the items already existing in the config
             if isinstance(additional_samplesheet_fields, dict):
                 for field, value in additional_samplesheet_fields.items():
-                    self.create_string_entry(additional_samplesheet_frame,
-                                             self.form_data[parent_key]["items"]["additional_samplesheet_fields"]['counter'],
-                                             parent_key,
-                                             field,
-                                             value,
-                                             is_additonal=True)
-                    self.form_data[parent_key]["items"]["additional_samplesheet_fields"]['counter'] += 1
+                    self.create_additional_field(
+                        additional_samplesheet_frame,
+                        parent_key,
+                        'additional_samplesheet_fields',
+                        field_name=field,
+                        field_value=value
+                    )
+                    # Counter is incremented in create_additional_field
+                    # self.form_data[parent_key]["items"]["additional_samplesheet_fields"]['counter'] += 1
                     if isinstance(value, list):
                         item_has_lists = True
             # Create a button to allow users to add more fields
             add_samplesheet_field_button = ctk.CTkButton(
-                additional_samplesheet_frame,
+                new_frame,
                 text="Add Samplesheet Field",
                 width=15,
                 command=self.additional_field_command(parent_key,
                                                       additional_samplesheet_frame,
                                                       'additional_samplesheet_fields')
             )
-            print("I am adding the add samplesheet field button for key ", parent_key)
             add_samplesheet_field_button.grid(row=self.form_data[parent_key]["row_counter"],
                                                 column=0,
                                                 sticky="w",
@@ -591,32 +406,10 @@ class ConfigFormPage(BasePage):
 
         # Handle the additional manifest fields
         if not additional_manifest_fields == "not found":
-            print("I AM HANDLING THE ADDITOINAL FIELDS FOR MANIFEST for key ", parent_key)
             self.form_data[parent_key]["items"]["additional_manifest_fields"] = {
                 'counter': 0,
             }
 
-            # Create a title label & help button
-            title_label = ctk.CTkLabel(new_frame,
-                                        text="Additional Fields (Manifest)",
-                                        font=(self.item_font, self.item_font_size+2))
-            title_label.grid(row=self.form_data[parent_key]["row_counter"],
-                                column=0,
-                                sticky="w",
-                                padx=self.item_x_padding,
-                                pady=(20, self.item_y_padding))
-
-            help_button = ctk.CTkButton(new_frame,
-                                        text="?",
-                                        width=30,
-                                        command=lambda: self.show_help(self.special_fieldnames['manifest']))
-            help_button.grid(row=self.form_data[parent_key]["row_counter"],
-                                column=2,
-                                sticky="e",
-                                pady=(20, self.item_y_padding),
-                                padx=self.item_x_padding)
-            
-            self.form_data[parent_key]["row_counter"] += 1
 
             # Create a frame for the additional manifest fields
             additional_manifest_frame = ctk.CTkFrame(new_frame, fg_color="transparent")
@@ -627,23 +420,46 @@ class ConfigFormPage(BasePage):
                                             pady=0,
                                             columnspan=3)
             self.form_data[parent_key]["row_counter"] += 1
-            self.configure_frame_columns(additional_manifest_frame, [1, 3, 0])
+            self.configure_frame_columns(additional_manifest_frame, [1, 2, 0])
+            
+
+            # Create a title label & help button
+            title_label = ctk.CTkLabel(additional_manifest_frame,
+                                        text="Additional Fields (Manifest)",
+                                        font=(self.item_font, self.item_font_size+2))
+            title_label.grid(row=0,
+                                column=0,
+                                sticky="w",
+                                padx=self.item_x_padding,
+                                pady=(20, self.item_y_padding))
+
+            help_button = ctk.CTkButton(additional_manifest_frame,
+                                        text="?",
+                                        width=30,
+                                        command=lambda: self.show_help(self.special_fieldnames['manifest']))
+            help_button.grid(row=0,
+                                column=2,
+                                sticky="e",
+                                pady=(20, self.item_y_padding),
+                                padx=self.item_x_padding)
+
             # Create static fields for the items already existing in the config
             if isinstance(additional_manifest_fields, dict):
                 for field, value in additional_manifest_fields.items():
-                    self.create_string_entry(additional_manifest_frame,
-                                                self.form_data[parent_key]["items"]["additional_manifest_fields"]['counter'],
-                                                parent_key,
-                                                field,
-                                                value,
-                                                is_additonal=True)
-                    self.form_data[parent_key]["items"]["additional_manifest_fields"]['counter'] += 1
+                    self.create_additional_field(
+                        additional_manifest_frame,
+                        parent_key,
+                        'additional_manifest_fields',
+                        field_name=field,
+                        field_value=value
+                    )
+                    # Counter is incremented in create_additional_field
+                    # self.form_data[parent_key]["items"]["additional_manifest_fields"]['counter'] += 1
                     if isinstance(value, list):
                         item_has_lists = True
             # Create a button to allow users to add more fields
-            print("I am creating the button for key ", parent_key)
             add_manifest_field_button = ctk.CTkButton(
-                additional_manifest_frame,
+                new_frame,
                 text="Add Manifest Field",
                 width=15,
                 command=self.additional_field_command(parent_key,
@@ -680,39 +496,7 @@ class ConfigFormPage(BasePage):
                                               data=item,
                                               parent_key=numbered_key)
             self.form_data[numbered_key]["frame"] = new_frame
-            # has_lists = False # are any of the subvalues lists?
-            # counter += 1
-            # numbered_key = f"{key} #{counter}"
-            # new_frame = ctk.CTkFrame(self.form_frame)
-            # new_frame.grid(row=self.frame_row_counter,
-            #                column=0,
-            #                sticky="nsew",
-            #                 padx=self.frame_x_padding,
-            #                 pady=self.frame_y_padding)
-            # self.configure_frame_columns(new_frame, [1,3])
-            # self.frame_row_counter += 1
-            # self.form_data[numbered_key] = {"type": "nested_numbered",
-            #                                  "frame": new_frame,
-            #                                  "row_counter": 0,
-            #                                  "items": {}}
-            # # Give the frame a title
-            # title = f"{YAML_PRETTYNAMES[key]} #{counter}"
-            # title_label = ctk.CTkLabel(new_frame,
-            #                            text=title,
-            #                            font=(self.title_font, self.title_font_size))
-            # title_label.grid(row=0,
-            #                  column=0,
-            #                  sticky="w",
-            #                  padx=self.item_x_padding,
-            #                  pady=self.item_y_padding)
-            # self.form_data[numbered_key]["row_counter"] += 1
 
-            # for subkey, subvalue in item.items():
-            #     self.create_nested_item(numbered_key, subkey, subvalue, new_frame)
-            #     if isinstance(subvalue, list):
-            #         has_lists = True
-            # if has_lists:
-            #     self.create_asterisk_label(new_frame, self.form_data[numbered_key]["row_counter"])
 
     def create_string_entry(self, frame, row_count, parent_key, key, value, is_additonal=False):
         """ Create a label and a string entry field.
@@ -720,23 +504,31 @@ class ConfigFormPage(BasePage):
             Add the entry to form_data.
         """
         # Create the left label
-        text = YAML_PRETTYNAMES[key]
+        text = YAML_PRETTYNAMES.get(key, key)
         if isinstance(value, list):
             text += "*"
-        label = ctk.CTkLabel(frame,
+        outline_frame = ctk.CTkFrame(frame)
+        outline_frame.grid(row=row_count,
+                           column=0,
+                           sticky="nsew",
+                           padx=self.item_x_padding,
+                           pady=(self.item_y_padding, 0))
+        label = ctk.CTkLabel(outline_frame,
                              font=(self.item_font, self.item_font_size),
+                             anchor=ctk.W,
                              text=text)
-        label.grid(row=row_count,
+        label.grid(row=0,
                    column=0,
-                   sticky="w",
+                   sticky="ew",
                    padx=self.item_x_padding,
                    pady=(self.item_y_padding, 0))
+
         
         # Create the entry field
         entry = ctk.CTkEntry(frame)
         entry.grid(row=row_count,
                    column=1,
-                   sticky="nsew",
+                   sticky="ew",
                    pady=(self.item_y_padding, 0),
                    padx=self.item_x_padding)
         
@@ -778,12 +570,19 @@ class ConfigFormPage(BasePage):
         """
         # Crteate the left label
         text = YAML_PRETTYNAMES[key]
-        label = ctk.CTkLabel(frame,
+        outline_frame = ctk.CTkFrame(frame)
+        outline_frame.grid(row=row_count,
+                           column=0,
+                           sticky="nsew",
+                           padx=self.item_x_padding,
+                           pady=(self.item_y_padding, 0))
+        label = ctk.CTkLabel(outline_frame,
                              font=(self.item_font, self.item_font_size),
+                             anchor=ctk.W,
                              text=text)
-        label.grid(row=row_count,
+        label.grid(row=0,
                    column=0,
-                   sticky="w",
+                   sticky="ew",
                    padx=self.item_x_padding,
                    pady=self.item_y_padding)
         
@@ -838,9 +637,9 @@ class ConfigFormPage(BasePage):
 
         # Read in the path from value
         if value is not None:
-            if not parent_key in self.picked_files:
-                self.picked_files[parent_key] = {}
-            self.picked_files[parent_key][key] = value
+            #if not parent_key in self.picked_files:
+            #    self.picked_files[parent_key] = {}
+            #self.picked_files[parent_key][key] = value
             self.form_data[parent_key]["items"][key] = {"type": "singlefile",
                                                         "widget": None,
                                                         "path": value}
@@ -853,10 +652,17 @@ class ConfigFormPage(BasePage):
         """
         # Create the left label
         text = YAML_PRETTYNAMES[key]
-        label = ctk.CTkLabel(frame,
+        outline_frame = ctk.CTkFrame(frame)
+        outline_frame.grid(row=row_count,
+                           column=0,
+                           sticky="nsew",
+                           padx=self.item_x_padding,
+                           pady=(self.item_y_padding, 0))
+        label = ctk.CTkLabel(outline_frame,
                              font=(self.item_font, self.item_font_size),
+                             anchor=ctk.W,
                              text=text)
-        label.grid(row=row_count,
+        label.grid(row=0,
                    column=0,
                    sticky="w",
                    padx=self.item_x_padding,
@@ -900,7 +706,7 @@ class ConfigFormPage(BasePage):
         # Create clear button
         clear_button = ctk.CTkButton(miniframe,
                                      text="Clear files",
-                                     fg_color=self.colors['red'],
+                                     fg_color=self.controller.colors['red'],
                                      width=50,
                                      command=lambda: self.clear_files(parent_key,
                                                                       key,
@@ -925,21 +731,111 @@ class ConfigFormPage(BasePage):
         # Set form data
         if parent_key == 'Core':
             self.form_data[key] = {"type": "multifile",
-                                   "widget": None}
+                                   "widget": None,
+                                    "pathlist": []}
         else:
             self.form_data[parent_key]["items"][key] = {"type": "multifile",
-                                                        "widget": None}
+                                                        "widget": None,
+                                                        "pathlist": []}
 
         # Read in the paths from value
         if value is not None:
-            for path in value:
-                if not parent_key in self.picked_filelists:
-                    self.picked_filelists[parent_key] = {}
-                if not key in self.picked_filelists[parent_key]:
-                    self.picked_filelists[parent_key][key] = []
-                if path not in self.picked_filelists[parent_key][key]:
-                    self.picked_filelists[parent_key][key].append(path)
-                    pathlabel.configure(text=f"picked: {len(self.picked_filelists[parent_key][key])}")
+            if not isinstance(value, list):
+                value = [value]
+
+            #if not parent_key in self.picked_filelists:
+            #    self.picked_filelists[parent_key] = {}
+            #self.picked_files[parent_key][key] = value
+            if parent_key == 'Core':
+                self.form_data[key] = {"type": "multifile",
+                                        "widget": None,
+                                        "pathlist": value}
+            else:
+                self.form_data[parent_key]["items"][key] = {"type": "multifile",
+                                                        "widget": None,
+                                                        "pathlist": value}
+            pathlabel.configure(text=f"picked: {len(value)}")
+                
+    def create_directory_picker(self, frame, row_count, parent_key, key, value):
+        """ Create a directory picker with a label, a button and a
+            picked-directory-label.
+            Read in the path from value and write it to form_data.
+        """
+        # Create the left label
+        text = YAML_PRETTYNAMES[key]
+        outline_frame = ctk.CTkFrame(frame)
+        outline_frame.grid(row=row_count,
+                           column=0,
+                           sticky="nsew",
+                           padx=self.item_x_padding,
+                           pady=(self.item_y_padding, 0))
+        label = ctk.CTkLabel(outline_frame,
+                             font=(self.item_font, self.item_font_size),
+                             anchor=ctk.W,
+                             text=text)
+        label.grid(row=0,
+                   column=0,
+                   sticky="ew",
+                   padx=self.item_x_padding,
+                   pady=self.item_y_padding)
+        
+        # Create a frame for the pick button and the picked-directory-label
+        miniframe = ctk.CTkFrame(frame, fg_color="transparent")
+        miniframe.grid(row=row_count,
+                       column=1,
+                       sticky="nsew",
+                       pady=self.item_y_padding,
+                       padx=self.item_x_padding)
+        self.configure_frame_columns(miniframe, [0, 10])
+        miniframe.grid_rowconfigure(0, weight=1)
+
+        # Create the picked-directory-label
+        pathlabel = ctk.CTkLabel(miniframe,
+                                 font=("Courier", 12),
+                                 text="no directory selected",
+                                 wraplength=250)
+        pathlabel.grid(row=0,
+                       column=1,
+                       sticky="ew",
+                       pady=self.item_y_padding,
+                       padx=0)
+        
+        # Create a directory picker button
+        button = ctk.CTkButton(miniframe,
+                               text="Pick directory",
+                               width=50,
+                               command=lambda: self.pick_directory(parent_key,
+                                                                   key,
+                                                                   pathlabel))
+        button.grid(row=0,
+                    column=0,
+                    sticky="w",
+                    pady=0,
+                    padx=(0,self.item_x_padding))
+        
+        # Add help button
+        help_button = ctk.CTkButton(frame,
+                                    text="?",
+                                    width=30,
+                                    command=lambda: self.show_help(key))
+        
+        help_button.grid(row=row_count,
+                         column=2,
+                         sticky="e",
+                         pady=0,
+                         padx=self.item_x_padding)
+        
+        # Set form_data
+        self.form_data[parent_key]["items"][key] = {"type": "directory",
+                                                    "widget": None}
+        
+        # Read in the path from value
+        if value is not None:
+            self.form_data[parent_key]["items"][key] = {"type": "directory",
+                                                        "widget": None,
+                                                        "path": value}
+            truncated_path = self.controller.truncate_display_path(value, max_display_len=14)
+            pathlabel.configure(text=truncated_path)
 
     def create_core_item(self, key, value):
         if key in YAML_SINGLE_FILEKEYS:
@@ -970,6 +866,8 @@ class ConfigFormPage(BasePage):
             filepicker = 'single'
         elif key in YAML_MULTI_FILEKEYS:
             filepicker = 'multi'
+        elif key in YAML_DIRKEYS:
+            filepicker = 'directory'
         else:
             filepicker = None
 
@@ -987,6 +885,8 @@ class ConfigFormPage(BasePage):
                                           value)
         elif filepicker == 'multi':
             self.create_multi_filepicker(frame, row_counter, parent_key, key, value)
+        elif filepicker == 'directory':
+            self.create_directory_picker(frame, row_counter, parent_key, key, value)
                 
         self.form_data[parent_key]["row_counter"] += 1
 
@@ -1009,80 +909,127 @@ class ConfigFormPage(BasePage):
     def create_additional_field(self,
                                 frame,
                                 parent_key,
-                                manifest_or_samplesheet):
-        """ Creates an empty item to allow a user to add a key value pair.
-            Also creates a button to remove the item.
+                                manifest_or_samplesheet,
+                                field_name=None,
+                                field_value=None):
+        """ Creates an empty item to allow a user to add a key-value pair.
+            For mandatory fields, creates a label instead of an entry for the key and a help button.
         """
-        print("Calling create_additional_field for ", parent_key, manifest_or_samplesheet)
-        row = self.form_data[parent_key]["items"][manifest_or_samplesheet]["counter"]
         self.form_data[parent_key]["items"][manifest_or_samplesheet]["counter"] += 1
-        # Create the left entry field (for the key)
-        key_entry = ctk.CTkEntry(frame)
-        key_entry.grid(row=row,
-                       column=0,
-                       sticky="w",
-                       pady=self.item_y_padding,
-                       padx=self.item_x_padding)
-        key_entry.insert(0, "your keyword")
-        # Create the right entry (for the value)
+        row = self.form_data[parent_key]["items"][manifest_or_samplesheet]["counter"]
+        
+
+        # Check if the field is mandatory
+        is_static_field = field_name in GUI_STATIC_ADDITIONAL_FIELDS
+
+        # Create the key widget
+        if is_static_field:
+            outline_frame = ctk.CTkFrame(frame, fg_color="#CFCFCF")
+            outline_frame.grid(row=row,
+                               column=0,
+                               sticky="nsew",
+                               padx=self.item_x_padding,
+                               pady=self.item_y_padding)
+            key_widget = ctk.CTkLabel(outline_frame,
+                                      text=field_name,
+                                      anchor=ctk.W,
+                                      font=(self.item_font, self.item_font_size))
+        else:
+            key_widget = ctk.CTkEntry(frame)
+            key_widget.insert(0, field_name or "your keyword")
+
+        key_widget.grid(row=row,
+                        column=0,
+                        sticky="ew",
+                        pady=self.item_y_padding,
+                        padx=self.item_x_padding)
+
+        # Create the value entry
         value_entry = ctk.CTkEntry(frame)
+        if field_value is not None:
+            if isinstance(field_value, list):
+                field_value = ', '.join(str(item) for item in field_value)
+            value_entry.insert(0, field_value)
         value_entry.grid(row=row,
-                         column=1,
-                         sticky="nsew",
-                         pady=self.item_y_padding,
-                         padx=self.item_x_padding)
-        value_entry.insert(0, "your value")
-        # Create the remove button
-        remove_button = ctk.CTkButton(frame,
-                                      text="x",
-                                      width=30,
-                                      fg_color=self.colors['red'],
-                                      command=lambda: self.remove_additional_field(parent_key,
-                                                                                   key_entry,
-                                                                                   value_entry,
-                                                                                   remove_button,
-                                                                                   manifest_or_samplesheet,
-                                                                                   row))
-        remove_button.grid(row=row,
-                           column=2,
-                           sticky="w",
-                           pady=self.item_y_padding,
-                           padx=self.item_x_padding)
-        # Add the new items to the form_data, using the counter as the key
+                        column=1,
+                        sticky="nsew",
+                        pady=self.item_y_padding,
+                        padx=self.item_x_padding)
+
+        # Create the appropriate button
+        if is_static_field:
+            # Help button
+            button = ctk.CTkButton(frame,
+                                text="?",
+                                width=30,
+                                command=lambda: self.show_help(field_name))
+        else:
+            # Remove button
+            button = ctk.CTkButton(frame,
+                                text="x",
+                                width=30,
+                                fg_color=self.controller.colors['red'],
+                                command=lambda: self.remove_additional_field(parent_key,
+                                                                                key_widget,
+                                                                                value_entry,
+                                                                                button,
+                                                                                manifest_or_samplesheet,
+                                                                                row))
+        button.grid(row=row,
+                    column=2,
+                    sticky="w",
+                    pady=self.item_y_padding,
+                    padx=self.item_x_padding)
+
+        # Update form_data
         self.form_data[parent_key]['items'][manifest_or_samplesheet][row] = {
-            'key': key_entry,
+            'type': 'additional_static' if is_static_field else 'additional',
+            'key': key_widget,
             'value': value_entry
         }
+
  
 
 
-
     def pick_multifile(self, parent_key, key, pathlabel):
-        file_path = filedialog.askopenfilenames()
+        file_paths = filedialog.askopenfilenames()
 
-        if file_path:
-            if not parent_key in self.picked_filelists:
-                self.picked_filelists[parent_key] = {}
-            if not key in self.picked_filelists[parent_key]:
-                self.picked_filelists[parent_key][key] = []
-            if file_path not in self.picked_filelists[parent_key][key]:
-                self.picked_filelists[parent_key][key].append(file_path)
-                pathlabel.configure(text=f"picked: {len(self.picked_filelists[parent_key][key])}")
+        if file_paths:
+            if parent_key == 'Core':
+                new_files = [fp for fp in file_paths if fp not in self.form_data[key]["pathlist"]]
+                if not new_files:
+                    showerror("Error", "All selected files were already picked")
+                else:
+                    self.form_data[key]["pathlist"].extend(new_files)
+                    pathlabel.configure(text=f"picked: {len(self.form_data[key]['pathlist'])}")
             else:
-                showerror("Error", "This file was already picked")
+                new_files = [fp for fp in file_paths if fp not in self.form_data[parent_key]["items"][key]["pathlist"]]
+                if not new_files:
+                    showerror("Error", "All selected files were already picked")
+                else:
+                    self.form_data[parent_key]["items"][key]["pathlist"].extend(new_files)
+                    pathlabel.configure(text=f"picked: {len(self.form_data[parent_key]['items'][key]['pathlist'])}")
+
 
     def pick_file(self, parent_key, key, pathlabel):
         file_path = filedialog.askopenfilename()
 
         if file_path:
-            if not parent_key in self.picked_files:
-                self.picked_files[parent_key] = {}
-            self.picked_files[parent_key][key] = file_path
             self.form_data[parent_key]["items"][key]["path"] = file_path
             truncated_path = self.controller.truncate_display_path(file_path, max_display_len=14)
             pathlabel.configure(text=truncated_path)
         else:
             pathlabel.configure(text="no file selected")
+
+    def pick_directory(self, parent_key, key, pathlabel):
+        directory = filedialog.askdirectory()
+
+        if directory:
+            self.form_data[parent_key]["items"][key]["path"] = directory
+            truncated_path = self.controller.truncate_display_path(directory, max_display_len=14)
+            pathlabel.configure(text=truncated_path)
+        else:
+            pathlabel.configure(text="no directory selected")
 
     def get_comment(self, key):
         """ Try to get a comment for the key from GUICOMMENTS. Use YAMLCOMMENTS
@@ -1092,48 +1039,327 @@ class ConfigFormPage(BasePage):
         return GUICOMMENTS.get(key, YAMLCOMMENTS.get(key, default))
 
     def clear_files(self, parent_key, key, pathlabel):
-        if parent_key in self.picked_filelists:
-            if key in self.picked_filelists[parent_key]:
-                self.picked_filelists[parent_key].pop(key)
-                pathlabel.configure(text="picked: 0")
+        """ Clear the list of picked files """
+        if parent_key == 'Core':
+            self.form_data[key]["pathlist"] = []
+        else:
+            self.form_data[parent_key]["items"][key]["pathlist"] = []
+        pathlabel.configure(text="picked: 0")
 
-    def validate_config(self):
-        """ Validate the configuration """
-        print("\n\tvalidate_config placeholder\n")
+    def extract_data(self, input_dict):
+        """
+        Recursively extract data from a nested dictionary of widgets.
+
+        Args:
+            input_dict (dict): The nested dictionary containing widget information.
+
+        Returns:
+            dict: A simplified dictionary with extracted values.
+        """
+        output = {}
+        nested_numbered_groups = {}
+        other_keys = {}
+
+        # First pass: group 'nested_numbered' items
+        for key, value in input_dict.items():
+            field_type = value.get('type')
+            if field_type == 'nested_numbered':
+                # Extract base name by removing the ' #number' suffix
+                if ' #' in key:
+                    base_name = key.split(' #')[0]
+                else:
+                    base_name = key
+                if base_name not in nested_numbered_groups:
+                    nested_numbered_groups[base_name] = []
+                nested_numbered_groups[base_name].append(value)
+            else:
+                other_keys[key] = value
+
+        # Process 'nested_numbered' groups
+        for base_name, group in nested_numbered_groups.items():
+            output_list = []
+            for item in group:
+                items = item.get('items', {})
+                extracted_item = {}
+                for item_key, item_value in items.items():
+                    if item_key in ['additional_samplesheet_fields', 'additional_manifest_fields']:
+                        # Handle additional fields
+                        additional_fields = {}
+                        for sub_key, field in item_value.items():
+                            if sub_key == 'counter':
+                                continue  # skip the counter
+                            if field.get('type') not in ['additional', 'additional_static']:
+                                continue  # include both 'additional' and 'additional_static'
+                            
+                            key_entry = field.get('key')
+                            value_entry = field.get('value')
+                            if key_entry and value_entry:
+                                if field.get('type') == 'additional_static':
+                                    # For static fields, the key is in a Label widget
+                                    field_key = key_entry.cget('text')
+                                else:
+                                    # For dynamic fields, the key is in an Entry widget
+                                    field_key = key_entry.get()
+                                
+                                field_value = value_entry.get()
+                                if ',' in field_value:
+                                    # Treat as list
+                                    items_list = [itm.strip() for itm in field_value.split(',') if itm.strip()]
+                                    additional_fields[field_key] = items_list or None
+                                else:
+                                    additional_fields[field_key] = field_value or None
+                        # Convert key to uppercase with underscores
+                        if item_key == 'additional_samplesheet_fields':
+                            output_key = 'ADDITIONAL_SAMPLESHEET_FIELDS'
+                        elif item_key == 'additional_manifest_fields':
+                            output_key = 'ADDITIONAL_MANIFEST_FIELDS'
+                        else:
+                            output_key = item_key.upper()
+                        
+                        # Only add to extracted_item if additional_fields is not empty
+                        if additional_fields:
+                            extracted_item[output_key] = additional_fields
+                    else:
+                        # Process other items recursively
+                        extracted = self.extract_data({item_key: item_value})
+                        if extracted:
+                            extracted_item.update(extracted)
+                # Append the extracted_item to the output_list
+                output_list.append(extracted_item or None)
+            # Assign the list to the base_name key if not empty
+            if output_list:
+                output[base_name] = output_list
+            else:
+                output[base_name] = None
+
+        # Now process other keys as usual
+        for key, value in other_keys.items():
+            field_type = value.get('type')
+
+            # Skip entries without a 'type' key
+            if not field_type:
+                if isinstance(value, dict):
+                    # Process nested dictionaries recursively
+                    nested_data = self.extract_data(value)
+                    if nested_data:
+                        output[key] = nested_data or None
+                continue
+
+            if field_type == 'string':
+                widget = value.get('widget')
+                if widget:
+                    try:
+                        # Retrieve string value from the widget
+                        output[key] = widget.get() or None
+                    except AttributeError:
+                        print(f"Warning: Widget for '{key}' does not have a 'get()' method.")
+                        output[key] = value.get('default', None)
+                else:
+                    # Fallback to default value if widget is None
+                    output[key] = value.get('default', None)
+
+            elif field_type == 'list':
+                widget = value.get('widget')
+                if widget:
+                    try:
+                        # Retrieve comma-separated string from the widget
+                        list_str = widget.get()
+                        # Split by comma and strip whitespace from each item
+                        items = [itm.strip() for itm in list_str.split(',') if itm.strip()]
+                        output[key] = items if items else None
+                    except AttributeError:
+                        print(f"Warning: Widget for '{key}' does not have a 'get()' method.")
+                        output[key] = value.get('default', None)
+                else:
+                    # Fallback to default list if widget is None
+                    output[key] = value.get('default', None)
+
+            elif field_type == 'singlefile':
+                # Retrieve the file path directly from the 'path' key
+                output[key] = value.get('path', None) or None
+
+            elif field_type == 'multifile':
+                # Retrieve the list of file paths directly from the 'pathlist' key
+                multifile_paths = value.get('pathlist', [])
+                if isinstance(multifile_paths, list):
+                    output[key] = multifile_paths if multifile_paths else None
+                else:
+                    print(f"Warning: 'pathlist' for '{key}' should be a list. Converting to list.")
+                    output[key] = [multifile_paths] if multifile_paths else None
+
+            elif field_type == 'directory':
+                # Retrieve the directory path directly from the 'path' key
+                output[key] = value.get('path', None) or None
+
+            elif field_type == 'nested':
+                items = value.get('items', {})
+                nested_data = {}
+                for item_key, item_value in items.items():
+                    if item_key in ['additional_samplesheet_fields', 'additional_manifest_fields']:
+                        # Handle additional fields
+                        additional_fields = {}
+                        for row_key, field in item_value.items():
+                            if row_key == 'counter':
+                                continue  # skip the counter
+                            if field.get('type') not in ['additional', 'additional_static']:
+                                continue  # include both 'additional' and 'additional_static'
+                            
+                            key_entry = field.get('key')
+                            value_entry = field.get('value')
+                            if key_entry and value_entry:
+                                if field.get('type') == 'additional_static':
+                                    # For static fields, the key is in a Label widget
+                                    field_key = key_entry.cget('text')
+                                else:
+                                    # For dynamic fields, the key is in an Entry widget
+                                    field_key = key_entry.get()
+                                
+                                field_value = value_entry.get()
+                                if ',' in field_value:
+                                    # Treat as list
+                                    items_list = [itm.strip() for itm in field_value.split(',') if itm.strip()]
+                                    additional_fields[field_key] = items_list or None
+                                else:
+                                    additional_fields[field_key] = field_value or None
+                        # Convert key to uppercase with underscores
+                        if item_key == 'additional_samplesheet_fields':
+                            output_key = 'ADDITIONAL_SAMPLESHEET_FIELDS'
+                        elif item_key == 'additional_manifest_fields':
+                            output_key = 'ADDITIONAL_MANIFEST_FIELDS'
+                        else:
+                            output_key = item_key.upper()
+                        
+                        # Only add to nested_data if additional_fields is not empty
+                        if additional_fields:
+                            nested_data[output_key] = additional_fields
+                    else:
+                        # Process other items recursively
+                        extracted_item = self.extract_data({item_key: item_value})
+                        if extracted_item:
+                            nested_data.update(extracted_item)
+                if nested_data:
+                    output[key] = nested_data or None
+
+            elif field_type in ['additional', 'additional_static']:
+                # Initialize additional_fields dictionary
+                if 'additional_fields' not in output:
+                    output['additional_fields'] = {}
+                
+                key_widget = value.get('key')
+                value_entry = value.get('value')
+                if key_widget and value_entry:
+                    if field_type == 'additional_static':
+                        field_key = key_widget.cget('text')
+                    else:
+                        field_key = key_widget.get()
+                    field_value = value_entry.get()
+                    if ',' in field_value:
+                        # Treat as list
+                        items_list = [itm.strip() for itm in field_value.split(',') if itm.strip()]
+                        output['additional_fields'][field_key] = items_list or None
+                    else:
+                        output['additional_fields'][field_key] = field_value or None
+
+            else:
+                # Handle other types or skip
+                print(f"Warning: Unhandled type '{field_type}' for key '{key}'. Skipping.")
+                continue
+
+        return output
+
+
+
+    def pretty_print_form_data(self, data, indent=0):
+        """
+        Pretty print a deeply nested dictionary, replacing CustomTkinter widgets with 'widget'.
+        """
+        for key, value in data.items():
+            # Print the key with the current indentation
+            print(" " * indent + str(key) + ": ", end="")
+
+            # Handle the value based on its type
+            if isinstance(value, dict):
+                # If it's a nested dictionary, call recursively with increased indentation
+                print("{")
+                self.pretty_print_form_data(value, indent + 4)
+                print(" " * indent + "}")
+            elif isinstance(value, list):
+                # If it's a list, print each item with increased indentation
+                print("[")
+                for item in value:
+                    print(" " * (indent + 4) + str(item) + ",")
+                print(" " * indent + "]")
+            elif isinstance(value, ctk.CTkBaseClass):
+                # Replace customtkinter widget with 'widget'
+                print("widget")
+            else:
+                # Otherwise, print the value directly
+                print(repr(value))
+
 
     def save_config(self):
         """ Save the configuration to a yaml file """
-        print("\n\tsave_config placeholder\n")
+
+        # Step 1: Display current configuration
+        #self.pretty_print_form_data(self.form_data)
+        output = self.extract_data(self.form_data)
+
+        print("form data is\n")
+        print(self.form_data)
+        print("\npretty form data is")
+        self.pretty_print_form_data(self.form_data)
+        print("\n")
+        print("output is")
+        print(output)
+        print("\n")
+
+        output['submission_outline'] = []
+        for key, value in self.controller.submission_items.items():
+            if value:
+                output['submission_outline'].append(key)
+
+        #self.pretty_print_form_data(output)
+
+        # Step 2: Open file picker dialog
+        outpath = filedialog.asksaveasfilename(
+            defaultextension=".yaml",
+            filetypes=[("YAML files", "*.yaml"), ("All files", "*.*")]
+        )
+
+        if not outpath:
+            return  # If no file is selected, return without saving
+
+        # # Step 3: Check if the output path exists and confirm overwrite
+        # if os.path.exists(outpath):
+        #     overwrite = askyesno(
+        #         "File Exists",
+        #         f"The file '{outpath}' already exists. Do you want to overwrite it?"
+        #     )
+        #     if not overwrite:
+        #         return  # If the user decides not to overwrite, return without saving
+        #     else:
+        #         os.remove(outpath)     
+
+        # Step 4: Call write_gui_yaml with the extracted data and output path
+        write_gui_yaml(output, outpath)
+        self.config_saved = True
+        self.controller.config_items["form_path"] = outpath
+        print(f"Configuration saved to: {outpath}")
+
 
     def go_to_submission(self):
         """ Go to the submission page """
-        print("\n\tgo_to_submission placeholder\n")
+        if not self.config_saved:
+            msg = ("Please save the configuration before proceeding to the "
+                   "submission. Click 'Home' if you want to abort the process.")
+            showerror("Please Save", msg)
+        else:
+            self.controller.show_page("LoadConfigPage")
+
 
     def initialize(self):
         """Called whenever controller renders the page"""
+        self.config_saved = False
         form_path = self.controller.config_items["form_path"]
         self.load_form(form_path)
         self.render_form()
-        
-        print("\n\n LE FORM DATA")
-        for a,b in self.form_data.items():
-            if isinstance(b, dict):
-                for c,d in b.items():
-                    if isinstance(d, dict):
-                        for e,f in d.items():
-                            if isinstance(f, dict):
-                                for g,h in f.items():
-                                    if isinstance(h, dict):
-                                        for i,j in h.items():
-                                            print(a,c,e,g,i,j)
-                                    else:
-                                        print(a,c,e,g,h)
-                            else:
-                                print(a,c,e,f)
-                    else:
-                        print(a,c,d)
-            else:
-                print(a,b)
-        print("\n\n")
-                
-

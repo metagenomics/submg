@@ -103,7 +103,7 @@ YAMLCOMMENTS = {
     'COMPLETENESS_SOFTWARE': "Software used to calculate completeness",
     'QUALITY_FILE': "tsv file containing quality values of each bin. Header must include 'Bin_id', 'Completeness', 'Contamination'. A CheckM output table will work here.",
     'NCBI_TAXONOMY_FILES' :"A list of files with NCBI taxonomy information about the bins. Consult the README to see how they should be structured.",
-    'MANUAL_TAXONOMY_FILE': "Scientific names and taxids for bins. See example file for the structure. Columns must be 'Bin_id', 'Tax_id' and 'Scientific_name'. Consult the README for more information.",
+    'MANUAL_TAXONOMY_FILE': "Optional field, intended for bins not covered in NCBI_TAXONOMY_FILE. Scientific names and taxids for bins. See example file for the structure. Columns must be 'Bin_id', 'Tax_id' and 'Scientific_name'. Consult the README for more information.",
     'BINNING_SOFTWARE': "Name of the software that was used for taxonomic binning.",
     'binning parameters': "Parameters used for taxonomic binning. For more information consult an appropriate ENA samplesheet template (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000047)",
     'taxonomic identity marker': "For more information consult an appropriate ENA samplesheet template (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000047)",
@@ -255,6 +255,16 @@ GUILINKS = {
                                    'Fields Allowed in Reads Manifest': 'https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#manifest-file'},
 }
 
+GUI_STATIC_ADDITIONAL_FIELDS = [
+    'geographic location (latitude)',
+    'geographic location (longitude)',
+    'broad-scale environmental context',
+    'local environmental context',
+    'environmental medium',
+    'binning parameters',
+    'taxonomic identity marker',
+]
+
 YAML_PRETTYNAMES = {
     'STUDY': 'Study Accession',
     'PROJECT_NAME': 'Project Name',
@@ -326,4 +336,8 @@ YAML_SINGLE_FILEKEYS = [
 YAML_MULTI_FILEKEYS = [
     "NCBI_TAXONOMY_FILES",
     "BAM_FILES",
+]
+
+YAML_DIRKEYS = [
+    "BINS_DIRECTORY",
 ]

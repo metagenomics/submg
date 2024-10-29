@@ -1,5 +1,6 @@
 # controller.py
 import customtkinter as ctk
+from tkinter.messagebox import askyesno
 from PIL import Image
 import importlib.resources as pkg_resources
 
@@ -16,36 +17,15 @@ class MyApp(ctk.CTk):
 
         self.title("subMG")
 
+        # Formatting
+        self.colors = {
+            'red': '#a31a15'
+        }
+
         # Set the window as resizable (both horizontally and vertically)
         self.resizable(True, True)
 
-        # Sizing
-        self.logoHeight = 50
-        self.imageWidth_flow = 600
-        self.imageWidth_submodes = 400
-        self.fontsize = 15
-
-        # Submission data
-        self.file_path = None
-        self.staging_dir_path = None
-        self.submission_mode = ctk.StringVar(value="1")
-        self.submission_items = {
-            "samples": False,
-            "reads": False,
-            "assembly": False,
-            "bins": False,
-            "mags": False,
-        }
-
-        # Config data
-        self.config_items = {
-            "samples": 0,
-            "unpaired_reads": 0,
-            "paired_reads": 0,
-            "assembly": False,
-            "bins": False,
-            "mags": False,
-        }
+        self.initialize_vars()
 
         # Load and resize images
         self.load_and_resize_images()
@@ -84,6 +64,47 @@ class MyApp(ctk.CTk):
 
         # Show the home page initially
         self.show_page("HomePage")
+
+    def initialize_vars(self):
+        # Sizing
+        self.logoHeight = 50
+        self.imageWidth_flow = 600
+        self.imageWidth_submodes = 400
+        self.fontsize = 15
+
+        # Submission data
+        self.file_path = None
+        self.staging_dir_path = None
+        self.submission_mode = ctk.StringVar(value="1")
+        self.submission_items = {
+            "samples": False,
+            "reads": False,
+            "assembly": False,
+            "bins": False,
+            "mags": False,
+        }
+
+        # Config data
+        self.config_items = {
+            "samples": 0,
+            "unpaired_reads": 0,
+            "paired_reads": 0,
+            "assembly": False,
+            "bins": False,
+            "mags": False,
+            "form_path": None,
+        }
+    
+    def go_home(self):
+        """ Ask user whether they really want to return. Clear all data. 
+            Switch to the HomePage.
+        """
+        msg = ("Are you sure you want to return to the home page? "
+               "All data that was not saved to a config file will be lost.")
+           
+        if askyesno("Return to Home", msg):
+            self.initialize_vars()
+            self.show_page("HomePage")
 
     def show_page(self, page_name):
         # Bring the selected page to the front

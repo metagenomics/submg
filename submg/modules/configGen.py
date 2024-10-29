@@ -6,6 +6,14 @@ from . import utility
 from .statConf import YAMLCOMMENTS, YAMLEXAMPLES, staticConfig
 
 
+def write_gui_yaml(data: dict,
+                   outpath: str) -> None:
+    """
+    Write a dictionary to a YAML file, with comments/examples.
+    """
+    __write_yaml(data, outpath)
+
+
 def __write_yaml(data: dict,
                  outpath: str,
                  no_comments: bool = False,
@@ -53,16 +61,16 @@ def __write_yaml(data: dict,
     final_output = '\n'.join(output_lines)
     outpath = os.path.abspath(outpath)
     
-    # Check if file exists
+    # Check if file exists. If it does, remove it and print a message.
     if os.path.exists(outpath):
-        print(f"\nERROR: The file '{outpath}' already exists.")
-        exit(1)
+        print(f"The file '{outpath}' already exists and will be overwritten.")
+        os.remove(outpath)
     
     # Write the string with comments and handle empty fields to the specified file
     with open(outpath, 'w') as file:
         file.write(final_output)
     
-    print(f">Config with empty fields written to {outpath}")
+    print(f">Config with written to {outpath}")
            
 
 def __check_parameters(outpath: str,
@@ -228,6 +236,19 @@ def __make_config_dict(submit_samples: int,
     if len(reads) > 0:
         config['PAIRED_END_READS'] = reads
 
+    # Add a submission outline  
+    config['submission_outline'] = []
+    if submit_samples:
+        config['submission_outline'].append('samples')
+    if submit_paired_end_reads or submit_single_reads:
+        config['submission_outline'].append('reads')
+    if submit_assembly:
+        config['submission_outline'].append('assembly')
+    if submit_bins:
+        config['submission_outline'].append('bins')
+    if submit_mags:
+        config['submission_outline'].append('mags')
+
     # If this is only a samples, reads, or reads+samples submission,
     # we can stop here
     if not submit_assembly and not submit_bins and not submit_mags:
@@ -310,7 +331,7 @@ def __make_config_dict(submit_samples: int,
             assert coverage_from_bam == False
         else:
             raise ValueError("Either coverage_from_bam or known_coverage must be set to True")
-        
+            
     return config
 
 def make_config(outpath: str,

@@ -13,8 +13,7 @@ class ConfigOutlinePage(BasePage):
         super().__init__(parent, controller, "Configuration Outline")
         self.controller = controller  # Store the controller for path truncation
 
-        self.coverage_option = IntVar(value=0)  # Default to 'Coverage from BAM'
-        self.output_file_path = None  # Store the output file path
+        self.initialize_vars()
 
         # Create mainFrame and configure its grid
         main_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -66,7 +65,6 @@ class ConfigOutlinePage(BasePage):
         self.checkbox_samples.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         self.entry_samples = ctk.CTkEntry(checkbox_frame, placeholder_text="how many")
         self.entry_samples.grid(row=1, column=1, padx=0, pady=0, sticky="e")
-        self.entry_samples.grid_remove()
         self.checkboxes_with_entries.append((self.checkbox_samples, self.entry_samples))
 
         # Checkbox and corresponding input field for Paired Reads
@@ -74,7 +72,6 @@ class ConfigOutlinePage(BasePage):
         self.checkbox_paired_reads.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
         self.entry_paired_reads = ctk.CTkEntry(checkbox_frame, placeholder_text="how many")
         self.entry_paired_reads.grid(row=2, column=1, padx=0, pady=0, sticky="e")
-        self.entry_paired_reads.grid_remove()
         self.checkboxes_with_entries.append((self.checkbox_paired_reads, self.entry_paired_reads))
 
         # Checkbox and corresponding input field for Unpaired Reads
@@ -82,7 +79,6 @@ class ConfigOutlinePage(BasePage):
         self.checkbox_unpaired_reads.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
         self.entry_unpaired_reads = ctk.CTkEntry(checkbox_frame, placeholder_text="how many")
         self.entry_unpaired_reads.grid(row=3, column=1, padx=0, pady=0, sticky="e")
-        self.entry_unpaired_reads.grid_remove()
         self.checkboxes_with_entries.append((self.checkbox_unpaired_reads, self.entry_unpaired_reads))
 
         # Other checkboxes without entry fields
@@ -164,10 +160,34 @@ class ConfigOutlinePage(BasePage):
         )
         image_label.grid(row=1, column=0, padx=10, pady=0, sticky="nw")  # Stretches horizontally
 
+        self.global_disable()
+
+    def initialize_vars(self):
+        """ Set all variables to default values """
+        self.coverage_option = IntVar(value=0)  # Default to 'Coverage from BAM'
+        self.output_file_path = None  # Store the output file path
+
+    def global_disable(self):
+        """ Uncheck all checkboxes, hide the entry fields and disable the continue button """
+        for checkbox, entry in self.checkboxes_with_entries:
+            checkbox.deselect()
+            entry.grid_remove()
+
+        self.checkbox_assembly.deselect()
+        self.checkbox_bins.deselect()
+        self.checkbox_mags.deselect()
+        self.checkbox_quality_cutoffs.deselect()
+        self.coverage_option.set(0)
+        self.file_label.configure(text="No file selected")
+
+        # Disable "Coverage from BAM" option on Windows
+        if sys.platform == "win32":
+            self.coverage_from_bam.configure(state="disabled")
+
     def select_output_file(self):
         file_path = filedialog.asksaveasfilename(
-            defaultextension=".txt",
-            filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")]
+            defaultextension=".yaml",
+            filetypes=[("YAML files", "*.yaml *.yml"), ("All Files", "*.*")]
         )
         
         if file_path:
@@ -249,8 +269,7 @@ class ConfigOutlinePage(BasePage):
                             submit_assembly=self.checkbox_assembly.get(),
                             submit_bins=self.checkbox_bins.get(),
                             submit_mags=self.checkbox_mags.get(),
-                            quality_cutoffs=self.checkbox_quality_cutoffs.get()
-        )
+                            quality_cutoffs=self.checkbox_quality_cutoffs.get())
 
         self.controller.show_page("ConfigFormPage")
 
@@ -262,4 +281,5 @@ class ConfigOutlinePage(BasePage):
                 entry.grid_remove()
 
     def initialize(self):
-        pass
+        self.initialize_vars()
+        self.global_disable()

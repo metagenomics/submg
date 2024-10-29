@@ -1,5 +1,6 @@
-# load.py
+# Importing necessary modules
 import customtkinter as ctk
+import yaml
 from tkinter import filedialog
 from tkinter.messagebox import showinfo
 from .base import BasePage
@@ -16,17 +17,50 @@ class LoadConfigPage(BasePage):
 
         # Configure grid
         self.grid_rowconfigure(1, weight=1)  # Allow main frame to expand
-        main_frame.grid_columnconfigure(0, weight=2)  # Equal sizing for info label
+        main_frame.grid_columnconfigure(0, weight=1)  # Equal sizing for info label
         main_frame.grid_columnconfigure(1, weight=1)
+        main_frame.grid_rowconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(1, weight=1)
+
+        # Image Label
+        image_frame = ctk.CTkFrame(main_frame)
+        image_frame.grid(row=0,
+                         column=1,
+                         rowspan=2,
+                         padx=10,
+                         pady=(0,10),
+                         sticky="ns")
+        image_label = ctk.CTkLabel(
+            image_frame,
+            image=self.controller.submodes_img,
+            text="",
+        )
+        image_label.grid(row=1,
+                         column=0,
+                         padx=10,
+                         pady=(0,0))
+        
+        image_title = ctk.CTkLabel(
+            image_frame,
+            text="Valid Submission Combinations",
+            font=("Arial", 16),
+            justify='left',
+            wraplength=450
+        )
+        image_title.grid(row=0,
+                         column=0,
+                         padx=(0,15),
+                         pady=(5,10),
+                         sticky="ne")
 
         # Info Label
         info_label = ctk.CTkLabel(
             main_frame,
-            text="You can open an existing config file from the disk. "
+            text="Please choose an existing config file from your disk. "
                  "\n\n"
                  "Depending on your config file, the tool might automatically "
                  "derive which data you want to submit. Otherwise, please "
-                 "choose the correct submission options manually."
+                 "choose the correct submission items manually."
                  "\n\n"
                  "You have to pick a staging directory on your local disk. "
                  "This directory will be used to store temporary files and "
@@ -36,19 +70,34 @@ class LoadConfigPage(BasePage):
                  "Your study has to exist on the server you are submitting to. ",
             font=("Arial", self.controller.fontsize),
             justify='left',
-            wraplength=450
+            wraplength=650
         )
-        info_label.grid(row=0, column=1, padx=(20, 20), pady=20, sticky="w")  # Align to the top-left corner
+        info_label.grid(row=0,
+                        column=0,
+                        padx=10,
+                        pady=10,
+                        sticky="nw")  # Align to the top-left corner
+
+        # bl_frame
+        bl_frame = ctk.CTkFrame(main_frame,
+                                fg_color="transparent")
+        bl_frame.grid(row=1,
+                      column=0,
+                      padx=(20,0),
+                      pady=10,
+                      sticky="nsew")
+        bl_frame.grid_columnconfigure(0, weight=1)  # Stretch the left frame
+        bl_frame.grid_columnconfigure(1, weight=1)
+        bl_frame.grid_rowconfigure(0, weight=1)
 
         # File Picker
-        picker_frame = ctk.CTkFrame(main_frame)
+        picker_frame = ctk.CTkFrame(bl_frame)
         picker_frame.grid(row=0,
                           column=0,
-                          padx=10,
-                          pady=10,
+                          padx=0,
+                          pady=0,
                           sticky="nsew")
-        picker_frame.grid_columnconfigure(0, weight=0)  # Stretch the right frame
-        picker_frame.grid_columnconfigure(1, weight=3)
+        picker_frame.grid_columnconfigure(0, weight=1)  # Stretch the right frame
         
 
         # Title
@@ -61,32 +110,24 @@ class LoadConfigPage(BasePage):
         )
         middle_label.grid(row=0, column=0, padx=10, pady=(10, 10), columnspan=2, sticky="n")
 
-        # Pickers
-        self.file_path = ctk.StringVar("")
-        self.display_path = ctk.StringVar("")
-        self.display_path.set("No file selected")
+        self.file_path = ""
+        self.staging_dir_path = ""
 
         file_picker_button = ctk.CTkButton(
             picker_frame, 
             font=('Arial',self.controller.fontsize),
             text="Pick Config File", 
-            command=self.pick_file
+            command=self.pick_config
         )
         file_picker_button.grid(row=1, column=0, padx=10, pady=(10,0), sticky="ew")
 
-        # File path display
-        file_path_label = ctk.CTkLabel(
+        self.file_path_label = ctk.CTkLabel(
             picker_frame, 
             font=('Arial',self.controller.fontsize),
-            textvariable=self.display_path,  # Will display the selected file path
-            anchor="e"
+            text="No file selected",  # Will display the selected file path
+            anchor="w"
         )
-        file_path_label.grid(row=1, column=1, padx=10, pady=(10,0), sticky="ew")
-
-        # Dir picker
-        self.staging_dir_path = ctk.StringVar("")
-        self.staging_dir_display = ctk.StringVar("")
-        self.staging_dir_display.set("No directory selected")
+        self.file_path_label.grid(row=2, column=0, padx=10, pady=(0,20), sticky="ew")
 
         staging_dir_picker_button = ctk.CTkButton(
             picker_frame, 
@@ -94,20 +135,19 @@ class LoadConfigPage(BasePage):
             text="Pick Staging Directory", 
             command=self.pick_staging_dir
         )
-        staging_dir_picker_button.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+        staging_dir_picker_button.grid(row=3, column=0, padx=10, pady=(10,0), sticky="ew")
 
-        # Staging dir path display
-        staging_dir_label = ctk.CTkLabel(
+        self.staging_dir_label = ctk.CTkLabel(
             picker_frame, 
             font=('Arial',self.controller.fontsize),
-            textvariable=self.staging_dir_display,  # Will display the selected dir path
-            anchor="e",
+            text="No directory selected",  # Will display the selected dir path
+            anchor="w",
         )
-        staging_dir_label.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
+        self.staging_dir_label.grid(row=4, column=0, padx=10, pady=(0,20), sticky="ew")
 
         # Checkboxes
-        self.checkbox_frame = ctk.CTkFrame(main_frame)
-        #checkbox_frame.grid(row=2, column=1, padx=(10,10), pady=10, sticky="nsew")
+        self.checkbox_frame = ctk.CTkFrame(bl_frame)
+        self.checkbox_frame.grid(row=0, column=1, padx=(10,10), pady=0, sticky="nsew")
         self.checkbox_frame.grid_columnconfigure(0, weight=1)  # Stretch the frame
 
         right_label = ctk.CTkLabel(
@@ -120,58 +160,176 @@ class LoadConfigPage(BasePage):
         right_label.grid(row=0, column=0, padx=10, pady=(5, 0), sticky="n")
 
         self.checkbox_samples = ctk.CTkCheckBox(self.checkbox_frame,
-                                                text="Submit Samples")
+                                                text="Submit Samples",
+                                                state="disabled")
         self.checkbox_samples.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         self.checkbox_reads = ctk.CTkCheckBox(self.checkbox_frame,
-                                                text="Submit Reads")
+                                                text="Submit Reads",
+                                                state="disabled")
         self.checkbox_reads.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
         self.checkbox_assembly = ctk.CTkCheckBox(self.checkbox_frame,
-                                                text="Submit Assembly")
+                                                text="Submit Assembly",
+                                                state="disabled")
         self.checkbox_assembly.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
         self.checkbox_bins = ctk.CTkCheckBox(self.checkbox_frame,
-                                                text="Submit Binned Contigs")
+                                                text="Submit Binned Contigs",
+                                                state="disabled")
         self.checkbox_bins.grid(row=4, column=0, padx=10, pady=10, sticky="ew")
         self.checkbox_mags = ctk.CTkCheckBox(self.checkbox_frame,
-                                                text="Submit MAGs")
+                                                text="Submit MAGs",
+                                                state="disabled")
         self.checkbox_mags.grid(row=5, column=0, padx=10, pady=10, sticky="ew")
 
-        start_frame = ctk.CTkFrame(self, fg_color="transparent")
-        start_frame.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
-        start_frame.grid_columnconfigure(0, weight=1)  # Stretch
+        button_frame = ctk.CTkFrame(self, fg_color="transparent")
+        button_frame.grid(row=3, column=0, padx=20, pady=0, sticky="ew")
+        button_frame.grid_columnconfigure(0, weight=1)
+        button_frame.grid_columnconfigure(1, weight=1)
 
-        start_button = ctk.CTkButton(
-            start_frame, 
+        self.edit_button = ctk.CTkButton(
+            button_frame,
             font=('Arial',self.controller.fontsize),
-            text="Continue", 
-            command=self.continue_submission
+            text="Edit Config",
+            command=lambda: self.controller.show_page("ConfigFormPage"),
+            state="disabled"
         )
-        start_button.grid(row=0, column=0, padx=0, pady=0, sticky="ew")
+        self.edit_button.grid(row=0, column=0, padx=0, pady=0, sticky="ew")
 
-    def pick_file(self):
-        # Open file dialog and store the selected file path
-        max_display_len = 30
+        self.start_button = ctk.CTkButton(
+            button_frame, 
+            font=('Arial',self.controller.fontsize),
+            text="Submit with Config", 
+            command=self.continue_submission,
+            state="disabled"
+        )
+        self.start_button.grid(row=0, column=1, padx=(5,0), pady=0, sticky="ew")
+
+    def initialize_vars(self):
+        # Initialize variables
+        self.max_display_len = 30
+        self.file_path = ""
+        self.staging_dir_path = ""
+        self.file_path_label.configure(text="No file selected")
+        self.staging_dir_label.configure(text="No directory selected")
+        if "form_path" in self.controller.config_items and self.controller.config_items["form_path"]:
+            self.file_path = self.controller.config_items["form_path"]
+            self.file_path_label.configure(
+                text=self.controller.truncate_display_path(
+                     self.file_path,
+                     self.max_display_len)
+            )
+
+    def global_disable(self):
+        """ Disable all checkboxes and the start and edit buttons"""
+        self.checkbox_samples.configure(state="disabled")
+        self.checkbox_reads.configure(state="disabled")
+        self.checkbox_assembly.configure(state="disabled")
+        self.checkbox_bins.configure(state="disabled")
+        self.checkbox_mags.configure(state="disabled")
+
+        if not self.file_path:
+            self.file_path_label.configure(text="No file selected")
+        
+        self.staging_dir_label.configure(text="No directory selected")
+
+        self.checkbox_samples.deselect()
+        self.checkbox_reads.deselect()
+        self.checkbox_assembly.deselect()
+        self.checkbox_bins.deselect()
+        self.checkbox_mags.deselect()
+
+        self.edit_button.configure(state="disabled")
+        self.start_button.configure(state="disabled")
+    
+    def pick_config(self):
         file_path = filedialog.askopenfilename(title="Choose Config File")
         if file_path:
-            self.file_path.set(file_path)
-            display_path = self.controller.truncate_display_path(file_path,
-                                                                 max_display_len)
-            self.display_path.set(display_path)
-            self.checkbox_frame.grid(row=2, column=0, padx=(10,10), pady=10, sticky="nsew")
+            display_path = self.controller.truncate_display_path(
+                file_path,
+                self.max_display_len)
+            self.file_path_label.configure(text=display_path)
+            self.file_path = file_path
+            self.load_config()
+
+    def load_config(self):
+        """ Open a file dialog to select a config file.
+            Derive a submission outline if possible.
+        """
+        if self.file_path:
+            # Try loading the yaml
+            try:
+                with open(self.file_path, "r") as file:
+                    config = yaml.safe_load(file)
+            except Exception as e:
+                showinfo(
+                    ("Invalid Config File"),
+                    f"Could not load the config file. Error: {e}",
+                )
+                return
+            
+            # Enable the checkboxes
+            self.checkbox_samples.configure(state="normal")
+            self.checkbox_reads.configure(state="normal")
+            self.checkbox_assembly.configure(state="normal")
+            self.checkbox_bins.configure(state="normal")
+            self.checkbox_mags.configure(state="normal")
+
+            # Enable the edit button
+            self.edit_button.configure(state="normal")
+
+            if 'submission_outline' in config:
+                # Set the checkboxes according to the config
+                outline_items = config['submission_outline']
+                if 'samples' in outline_items:
+                    self.checkbox_samples.select()
+                if 'reads' in outline_items:
+                    self.checkbox_reads.select()
+                if 'assembly' in outline_items:
+                    self.checkbox_assembly.select()
+                if 'bins' in outline_items:
+                    self.checkbox_bins.select()
+                if 'mags' in outline_items:
+                    self.checkbox_mags.select()
+                # Set the submission outline in the controller
+                self.controller.submission_items = {
+                    "samples": 'samples' in outline_items,
+                    "reads": 'reads' in outline_items,
+                    "assembly": 'assembly' in outline_items,
+                    "bins": 'bins' in outline_items,
+                    "mags": 'mags' in outline_items,
+                }
+                
+         
+            else:
+                showinfo(
+                    ("No Outline Items"),
+                    "The config file does not contain an 'outline_items' "
+                    "defining which data you intend to submit. "
+                    "Please select the submission items manually.",
+                )
+
+            self.controller.config_items['form_path'] = self.file_path
+
+            # Enable the start button if staging directory is also selected
+            if self.staging_dir_path:
+                self.start_button.configure(state="normal")
 
     def pick_staging_dir(self):
         # Use tkFileDialog.askdirectory() to select a directory
-        max_display_len = 30
         dir_path = filedialog.askdirectory(title="Choose Output Directory")
         if dir_path:
-            self.staging_dir_path.set(dir_path)
+            self.staging_dir_path = dir_path
             display_path = self.controller.truncate_display_path(dir_path,
-                                                                 max_display_len)
-            self.staging_dir_display.set(display_path)
+                                                                 self.max_display_len)
+            self.staging_dir_label.configure(text=display_path)
+
+            # Enable the start button if config file is also selected
+            if self.file_path:
+                self.start_button.configure(state="normal")
 
     def continue_submission(self):
         # Do we have config & path?
-        config_file = self.file_path.get()
-        staging_dir = self.staging_dir_path.get()
+        config_file = self.file_path
+        staging_dir = self.staging_dir_path
         if not config_file:
             showinfo(
                 ("Invalid Parameters"),
@@ -220,4 +378,7 @@ class LoadConfigPage(BasePage):
 
     def initialize(self):
         """Called whenever monitor renders the page"""
-        pass
+        self.initialize_vars()
+        self.global_disable()
+        if self.file_path:
+            self.load_config()

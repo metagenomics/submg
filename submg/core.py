@@ -342,7 +342,7 @@ def submit(args, listener=None):
         sver = staticConfig.submg_version
         wver = staticConfig.webin_cli_version
         loggingC.message(f">Running submg {sver} with webin-cli {wver}", 0)
-        if args.development_service == 1:
+        if args.development_service in [1, "1"]:
             loggingC.message((">Initializing a test submission to " \
                                "the ENA dev server."), 0)
             if args.minitest:
@@ -354,7 +354,7 @@ def submit(args, listener=None):
         else:
             loggingC.message((">Initializing a LIVE SUBMISSION to " \
                                "the ENA production server."), 0)
-            time.sleep(5) # Give user some extra time to notice message
+            time.sleep(10) # Give user some extra time to notice message
         print(" ")
 
         if not args.skip_checks:
