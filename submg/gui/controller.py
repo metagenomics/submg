@@ -45,11 +45,8 @@ class MyApp(ctk.CTk):
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
-
-        # Dictionary to hold the pages
+        # Create the pages and store them in a dictionary
         self.pages = {}
-
-        # Create the pages and store them in the dictionary
         for PageClass in (HomePage,
                           ConfigOutlinePage,
                           ConfigFormPage,
@@ -107,13 +104,15 @@ class MyApp(ctk.CTk):
             self.show_page("HomePage")
 
     def show_page(self, page_name):
-        # Bring the selected page to the front
+        """ Switches the user over to the respective page.
+        """
         page = self.pages[page_name]
         page.tkraise()
         page.initialize()
 
     def resize_image(self, path, width=None, height=None):
-        """Resizes an image while preserving its aspect ratio."""
+        """ Resizes an image while preserving its aspect ratio
+        """
         image = Image.open(path)
 
         if height and not width:
@@ -131,7 +130,8 @@ class MyApp(ctk.CTk):
         return ctkImage
 
     def load_and_resize_images(self):
-        """Loads and resizes images for the application."""
+        """ Loads and resizes images for the application.
+        """
 
         # Load and resize the images using pkg_resources
         with pkg_resources.path('submg.resources', 'gui_logo.png') as logo_path:
@@ -155,7 +155,8 @@ class MyApp(ctk.CTk):
         self.config_items = config_items
 
     def truncate_display_path(self, path, max_display_len):
-        """Truncates a path for display."""
+        """ Truncates a path from the left if it exceeds a certain length.
+        """
         if len(path) > max_display_len:
             return "..." + path[-max_display_len:]
         return path

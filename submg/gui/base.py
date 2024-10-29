@@ -20,6 +20,9 @@ class BasePage(ctk.CTkFrame):
         self.create_header(title_text)
 
     def create_header(self, title_text):
+        """ Creates elements from a header. We use this in all pages (and 
+            all pages inherit from BasePage).
+        """
         # Create a header frame
         header_frame = ctk.CTkFrame(self, fg_color="transparent")
         header_frame.grid(row=0,
@@ -89,6 +92,9 @@ class BasePage(ctk.CTkFrame):
         header_frame.grid_rowconfigure(0, weight=0)  # Fixed height for the header
     
     def manual(self):
+        """ Triggered when the "Manual" button is clicked. Opens the subMG
+            documentation in the user's web browser.
+        """
         msg = ("This will open the subMG documentation in your web browser. "
                "\n\nContinue?")
         if askyesno("Register Study", msg):

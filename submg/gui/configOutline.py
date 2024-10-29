@@ -163,12 +163,14 @@ class ConfigOutlinePage(BasePage):
         self.global_disable()
 
     def initialize_vars(self):
-        """ Set all variables to default values """
+        """ Set all variables to default values
+        """
         self.coverage_option = IntVar(value=0)  # Default to 'Coverage from BAM'
         self.output_file_path = None  # Store the output file path
 
     def global_disable(self):
-        """ Uncheck all checkboxes, hide the entry fields and disable the continue button """
+        """ Uncheck all checkboxes, hide the entry fields and disable the continue button
+        """
         for checkbox, entry in self.checkboxes_with_entries:
             checkbox.deselect()
             entry.grid_remove()

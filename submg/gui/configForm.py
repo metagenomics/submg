@@ -223,7 +223,6 @@ class ConfigFormPage(BasePage):
 
     def render_form(self):
         """ Render the form based on the loaded yaml data """
-
         # Frame for core items
         self.core_frame = ctk.CTkFrame(self.form_frame)
         self.core_frame_rowcounter = 0
@@ -298,9 +297,8 @@ class ConfigFormPage(BasePage):
 
     
     def make_form_fields(self, title, data, parent_key):
-        # Auslagern: Adding frame to form_data
-        # Increasing the row counter for numbered keys
-        
+        """ Create fields for a nested dictionary
+        """
         item_has_lists = False
         
         # Create new frame
@@ -482,6 +480,8 @@ class ConfigFormPage(BasePage):
         
 
     def create_list_of_nested_items(self, key, itemlist):
+        """ For a list of nested items, create a frame for each item
+        """
         counter = 0
         # Create a numbered frame with entry fields for each item
         for item in itemlist:
@@ -838,6 +838,8 @@ class ConfigFormPage(BasePage):
             pathlabel.configure(text=truncated_path)
 
     def create_core_item(self, key, value):
+        """ Create a core item in the core_frame
+        """
         if key in YAML_SINGLE_FILEKEYS:
             # throw error: core items are not supposed to have single a filepicker
             showerror("Error", f"Core item {key} is not supposed to have a single-item filepicker")
@@ -862,6 +864,8 @@ class ConfigFormPage(BasePage):
                            key,
                            value,
                            frame):
+        """ Create a nested item in the specified frame.
+        """
         if key in YAML_SINGLE_FILEKEYS:
             filepicker = 'single'
         elif key in YAML_MULTI_FILEKEYS:
@@ -913,7 +917,8 @@ class ConfigFormPage(BasePage):
                                 field_name=None,
                                 field_value=None):
         """ Creates an empty item to allow a user to add a key-value pair.
-            For mandatory fields, creates a label instead of an entry for the key and a help button.
+            For mandatory fields, creates a label instead of an entry for the
+            key and a help button.
         """
         self.form_data[parent_key]["items"][manifest_or_samplesheet]["counter"] += 1
         row = self.form_data[parent_key]["items"][manifest_or_samplesheet]["counter"]
@@ -992,6 +997,9 @@ class ConfigFormPage(BasePage):
 
 
     def pick_multifile(self, parent_key, key, pathlabel):
+        """ Pick a single field and add it to the list of picked files in a
+            multifile field.
+        """
         file_paths = filedialog.askopenfilenames()
 
         if file_paths:
@@ -1012,6 +1020,8 @@ class ConfigFormPage(BasePage):
 
 
     def pick_file(self, parent_key, key, pathlabel):
+        """ Pick a file and add it to the form_data
+        """
         file_path = filedialog.askopenfilename()
 
         if file_path:
@@ -1048,13 +1058,9 @@ class ConfigFormPage(BasePage):
 
     def extract_data(self, input_dict):
         """
-        Recursively extract data from a nested dictionary of widgets.
-
-        Args:
-            input_dict (dict): The nested dictionary containing widget information.
-
-        Returns:
-            dict: A simplified dictionary with extracted values.
+        Recursively extract data from the nested dictionary of widgets in
+        self.form_data. The extracted data is stored in a dictionary which
+        can be used to write a YAML config file.
         """
         output = {}
         nested_numbered_groups = {}

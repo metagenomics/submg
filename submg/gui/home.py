@@ -101,6 +101,9 @@ class HomePage(BasePage):
         submit_button.grid(row=0, column=2, padx=20, sticky="ew")
 
     def register_study(self):
+        """ Triggered when the user presses the 'Register Study' button. Opens
+            the ENA documentation in their web browser.
+        """
         msg = ("This will open the ENA documentation in your web browser. "
                "\n\nContinue?")
         if askyesno("Register Study", msg):
@@ -108,17 +111,6 @@ class HomePage(BasePage):
 
     def load_config(self):
         self.controller.show_page("LoadConfigPage")
-
-    # def switch_to_submission(self):
-    #     # Ask user if they are sure they want to submit data. Explain
-    #     # that this option is only if they have a configuration file
-    #     # ready.
-    #     msg = ("To directly submit data, you need to have a configuration "
-    #             "file already prepared. If you don't have one, please use "
-    #             "the 'Prepare Submission' option instead. "
-    #             "\n\nContinue?")
-    #     if askyesno("Submit Data", msg):
-    #         self.controller.show_page("SubmissionPage")
 
     def initialize(self):
         """Called whenever monitor renders the page"""
