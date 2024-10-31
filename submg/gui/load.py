@@ -192,7 +192,7 @@ class LoadConfigPage(BasePage):
             command=lambda: self.controller.show_page("ConfigFormPage"),
             state="disabled"
         )
-        self.edit_button.grid(row=0, column=0, padx=0, pady=0, sticky="ew")
+        self.edit_button.grid(row=0, column=0, padx=0, pady=(0,10), sticky="ew")
 
         self.start_button = ctk.CTkButton(
             button_frame, 
@@ -201,7 +201,7 @@ class LoadConfigPage(BasePage):
             command=self.continue_submission,
             state="disabled"
         )
-        self.start_button.grid(row=0, column=1, padx=(5,0), pady=0, sticky="ew")
+        self.start_button.grid(row=0, column=1, padx=(5,0), pady=(0,10), sticky="ew")
 
     def initialize_vars(self):
         # Initialize variables
