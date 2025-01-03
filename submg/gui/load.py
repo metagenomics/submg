@@ -1,8 +1,10 @@
 # Importing necessary modules
 import customtkinter as ctk
 import yaml
+import platform
+
 from tkinter import filedialog
-from tkinter.messagebox import showinfo
+from tkinter.messagebox import showinfo, showerror
 from .base import BasePage
 from ..modules.utility import validate_parameter_combination
 
@@ -265,6 +267,17 @@ class LoadConfigPage(BasePage):
                     f"Could not load the config file. Error: {e}",
                 )
                 return
+            
+            # Check whether this is a Windows system
+            if platform.system().lower() == "windows":
+                # If it is: Check if the config is Windows compatible
+                # (issue: pysam doesn't work on Windows, so we cannot process BAM files)
+                if "BAM_FILES" in config:
+                    showerror(
+                        "Invalid Config File",
+                        "This configuration file is set up to derive coverage from BAM files. This is not supported on Windows systems."
+                    )
+                    return
             
             # Enable the checkboxes
             self.checkbox_samples.configure(state="normal")

@@ -17,7 +17,10 @@ class MyApp(ctk.CTk):
 
         self.title("subMG")
 
-        # Formatting
+        # Prevent system settings from affecting appearance
+        ctk.set_appearance_mode("light")
+
+        # Define global colors
         self.colors = {
             'red': '#a31a15'
         }
@@ -27,10 +30,9 @@ class MyApp(ctk.CTk):
 
         self.initialize_vars()
 
-        # Load and resize images
         self.load_and_resize_images()
 
-        # Configure grid for the root window
+        # Configure grid for the root window - 1 row and 1 column
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
@@ -131,9 +133,9 @@ class MyApp(ctk.CTk):
 
     def load_and_resize_images(self):
         """ Loads and resizes images for the application.
+            Uses pkg_resources to load images from the resources folder.
         """
 
-        # Load and resize the images using pkg_resources
         with pkg_resources.path('submg.resources', 'gui_logo.png') as logo_path:
             self.logo_img_subMG = self.resize_image(logo_path, height=self.logoHeight - 15)
 

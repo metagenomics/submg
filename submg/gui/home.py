@@ -1,8 +1,12 @@
 # home.py
 import customtkinter as ctk
 from .base import BasePage
+from ..modules.webinWrapper import webin_cli_jar_available
+from ..modules.webinDownload import check_java, download_webin_cli
+from ..modules.statConf import staticConfig
+
 import webbrowser
-from tkinter.messagebox import askyesno
+from tkinter.messagebox import askyesno, showwarning
 
 class HomePage(BasePage):
     def __init__(self, parent, controller):
@@ -99,6 +103,43 @@ class HomePage(BasePage):
             command=self.load_config
         )
         submit_button.grid(row=0, column=2, padx=20, sticky="ew")
+
+        self.check_webin_cli()
+
+    def check_webin_cli():
+        """ Checks if java and the correct version of webin-cli are available.
+            If java is not available, the user is warned that only config
+            editing is possible but submission will fail.
+            If webin-cli is not available, the user is warned that submission
+            will be impossible. Afterwards, the user is offered to download
+            webin-cli. Then the function checks if it is now available and
+            warns the user if it is not.
+        """
+        if not check_java(soft=True):
+            java_version = staticConfig.java_version
+            showwarning("Java not found", 
+                        f"Java {java_version} or newer is required to submit "
+                        f"data. Only configuration editing is possible. If you "
+                        f"intend to submit data, please close this application "
+                        f"and install Java {java_version} or newer.")
+        if not webin_cli_jar_available():
+            webin_cli_version = staticConfig.webin_cli_version
+            showwarning("webin-cli not found", 
+                        f"webin-cli-{webin_cli_version}.jar is required to "
+                        f"submit data but was not found. You will not be able "
+                        f"to submit data without downloading webin-cli first.")
+            if askyesno("Download webin-cli",
+                        "Would you like to download webin-cli now?"):
+                download_webin_cli(staticConfig.webin_cli_version)
+            if not webin_cli_jar_available():
+                showwarning("webin-cli not found", 
+                            "Something went wrong and "
+                            "webin-cli-{version_string}.jar stil cannot be "
+                            "found. Please download webin-cli manually from "
+                            "the ENA website and place it in the same directory "
+                            "Please download webin-cli {version_string} "
+                            "manually from the ENA website and place it in the "
+                            "submg/modules directory.")
 
     def register_study(self):
         """ Triggered when the user presses the 'Register Study' button. Opens

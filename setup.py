@@ -19,6 +19,7 @@ setup(
         'tqdm>=4.64.1',
         'yaspin>=2.0',
         'customtkinter>=5.2.2',
+        'Pillow>=11.1.0',
     ],
     include_package_data=True,
     package_data={
@@ -39,7 +40,7 @@ setup(
     # Metadata
     author='ttubb',
     author_email='t.tubbesing@uni-bielefeld.de',
-    description='A tool for submitting metagenome data to ENA',
+    description='A tool for submitting metagenomics study data to the European Nucleotide Archive',
     keywords='Metagenome, MAG, ENA, Submission',
-    url='https://github.com/ttubb/submg',
+    url='https://github.com/metagenomics/submg',
 )

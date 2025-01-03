@@ -6,6 +6,34 @@ import signal
 from . import loggingC
 from .statConf import staticConfig
 
+
+def webin_cli_jar_available():
+    """ Check if the Webin CLI JAR file is present in the directory of this
+        script. Then check if it corresponds to the expected version.
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    jar_files = glob.glob(os.path.join(script_dir, 'webin*.jar'))
+    version_string = staticConfig.webin_cli_version
+    expected_filename = f"webin-cli-{version_string}.jar"
+    # Check if any JAR file corresponds to this version
+    for jar_file in jar_files:
+        if os.path.basename(jar_file) == expected_filename:
+            return True
+    # Log warning (either no JAR file found or wrong version)
+    if len(jar_files) == 0:
+        warn = (f"WARNING: webin-cli .jar file not found in "
+                f"{os.path.abspath(script_dir)}. ")
+    else:
+        warn = (f"WARNING: webin-cli .jar file found in "
+                f"{os.path.abspath(script_dir)}\n "
+                f"but it does not match the expected version "
+                f"{version_string}. ")
+    warn += (f"To download webin-cli, use the GUI or run the following "
+             f"command:\nsubmg-cli download_webin")
+    loggingC.message(warn, threshold=0)
+    return False
+
+
 def find_webin_cli_jar():
     """ Find the Webin CLI JAR file in the directory of this script.
     """
@@ -24,6 +52,7 @@ def find_webin_cli_jar():
         err = f"ERROR: webin_cli .jar file not found in {os.path.abspath(script_dir)}.\nYou can download the .jar by running the webin_downloader.py file in the submg/modules directory or manually from the ENA website."
         loggingC.message(err, threshold=-1)
         exit(1)
+
 
 def __webin_cli_validate(manifest,
                          inputdir,

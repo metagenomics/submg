@@ -1,4 +1,5 @@
 import os
+import platform
 
 from datetime import datetime
 
@@ -824,6 +825,27 @@ def __check_coverage(arguments: dict,
         loggingC.message(err, threshold=0)
 
 
+def __check_windows_pysam(config: dict):
+    """
+    Check whether this is a Windows system. If it is: Check if the config is
+    Windows compatible (pysam doesn't work on Windows, so we cannot process BAM
+    files if on Windows.)
+
+    Args:
+        config: The config file as a dictionary.
+    """
+    global checks_failed
+
+    if platform.system().lower() == "windows":
+        if "BAM_FILES" in config:
+            err = (
+                "\nERROR: This configuration file is set up to derive coverage "
+                "from BAM files (the YAML contains a BAM_FILES key). "
+                "This is not supported on Windows systems."
+            )
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
+
 
 def preflight_checks(arguments: dict) -> None:
     """
@@ -857,6 +879,7 @@ def preflight_checks(arguments: dict) -> None:
 
     # Check if the config file was filled out correctly
     testmode = arguments['development_service']
+    __check_windows_pysam(config)
     __check_study(config, testmode)
     __check_misc(arguments, config)
     __check_samples(arguments, config)
