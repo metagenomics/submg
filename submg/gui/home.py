@@ -106,7 +106,7 @@ class HomePage(BasePage):
 
         self.check_webin_cli()
 
-    def check_webin_cli():
+    def check_webin_cli(self):
         """ Checks if java and the correct version of webin-cli are available.
             If java is not available, the user is warned that only config
             editing is possible but submission will fail.
