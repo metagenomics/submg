@@ -263,10 +263,13 @@ def makecfg(args):
     Windows system.
     """
     if args.coverage_from_bam and sys.platform == "win32":
-        err = ("ERROR: The --coverage_from_bam option does not work on "
-                "Windows systems.")
-        loggingC.message(err, threshold=-1)
-        exit(1)
+        wrn = ("WARNING: The --coverage_from_bam option does not work on "
+                "Windows systems!\n "
+                "You can still create a config, but you will not be able to "
+                "submit it using a Windows machine.\n\n")
+        loggingC.message(wrn, threshold=-1)
+        # Wait for 10 seconds to give the user time to read the message
+        time.sleep(10)
         
     configGen.make_config(outpath=args.outfile,
                           submit_samples=args.submit_samples,

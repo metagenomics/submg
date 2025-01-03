@@ -203,7 +203,66 @@ def get_login():
     return os.environ['ENA_USER'], os.environ['ENA_PASSWORD']
 
 
-def read_yaml(file_path):
+
+def read_yaml(file_path, convert_file_paths=True):
+    """ 
+    Reads a YAML file and returns the data as a dictionary.
+
+    Args:
+        file_path (str): The path to the YAML file.
+        convert_file_paths (bool): If True, file paths will be converted to
+                                   absolute paths.
+    """
+    def convert_paths(data, base_path):
+        """
+        Recursively converts relative file paths in the dictionary to absolute paths.
+        
+        Args:
+            data: The dictionary or list to process.
+            base_path: The base directory to resolve relative paths.
+
+        Returns:
+            The dictionary or list with converted file paths.
+        """
+        if isinstance(data, dict):
+            return {
+                key: convert_paths(value, base_path) 
+                for key, value in data.items()
+            }
+        elif isinstance(data, list):
+            return [convert_paths(item, base_path) for item in data]
+        elif isinstance(data, str):
+            # Check if the string is a relative path
+            if not os.path.isabs(data) and os.path.exists(os.path.join(base_path, data)):
+                return os.path.abspath(os.path.join(base_path, data))
+        return data
+
+    try:
+        with open(file_path, 'r') as yaml_file:
+            data = yaml.safe_load(yaml_file)
+            if convert_file_paths:
+                base_path = os.path.dirname(os.path.abspath(file_path))
+                data = convert_paths(data, base_path)
+            return data
+    except FileNotFoundError:
+        err = f"\nERROR: YAML file not found at: {file_path}"
+        loggingC.message(err, threshold=-1)
+        exit(1)
+    except Exception as e:
+        err = f"\nERROR: An error occurred while reading {file_path}, error is:\n{e}"
+        loggingC.message(err, threshold=-1)
+        exit(1)
+
+
+def read_yaml(file_path, convert_file_paths=True):
+    """ 
+    Reads a YAML file and returns the data as a dictionary.
+
+    Args:
+        file_path (str): The path to the YAML file.
+        convert_file_paths (bool): If True, file paths will be converted to
+                                   absolute paths.
+    """
     try:
         with open(file_path, 'r') as yaml_file:
             data = yaml.safe_load(yaml_file)
