@@ -254,28 +254,6 @@ def read_yaml(file_path, convert_file_paths=True):
         exit(1)
 
 
-def read_yaml(file_path, convert_file_paths=True):
-    """ 
-    Reads a YAML file and returns the data as a dictionary.
-
-    Args:
-        file_path (str): The path to the YAML file.
-        convert_file_paths (bool): If True, file paths will be converted to
-                                   absolute paths.
-    """
-    try:
-        with open(file_path, 'r') as yaml_file:
-            data = yaml.safe_load(yaml_file)
-            return data
-    except FileNotFoundError:
-        err = f"\nERROR: YAML file not found at: {file_path}"
-        loggingC.message(err, threshold=-1)
-        exit(1)
-    except Exception as e:
-        err = f"\nERROR: An error occurred while reading {file_path}, error is:\n{e}"
-        loggingC.message(err, threshold=-1)
-        exit(1)
-
 
 def __strcast(value):
     """
