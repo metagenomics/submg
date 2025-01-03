@@ -30,7 +30,7 @@ def webin_cli_jar_available():
                 f"{version_string}. ")
     warn += (f"To download webin-cli, use the GUI or run the following "
              f"command:\nsubmg-cli download_webin")
-    loggingC.message(warn, threshold=0)
+    print(warn) # Cannot log because logging might not have been set up yet
     return False
 
 
