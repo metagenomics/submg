@@ -131,15 +131,15 @@ class HomePage(BasePage):
             if askyesno("Download webin-cli",
                         "Would you like to download webin-cli now?"):
                 download_webin_cli(staticConfig.webin_cli_version)
-            if not webin_cli_jar_available():
-                showwarning("webin-cli not found", 
-                            "Something went wrong and "
-                            "webin-cli-{version_string}.jar stil cannot be "
-                            "found. Please download webin-cli manually from "
-                            "the ENA website and place it in the same directory "
-                            "Please download webin-cli {version_string} "
-                            "manually from the ENA website and place it in the "
-                            "submg/modules directory.")
+                if not webin_cli_jar_available():
+                    showwarning("webin-cli not found", 
+                                "Something went wrong and "
+                                "webin-cli-{version_string}.jar stil cannot be "
+                                "found. Please download webin-cli manually from "
+                                "the ENA website and place it in the same directory "
+                                "Please download webin-cli {version_string} "
+                                "manually from the ENA website and place it in the "
+                                "submg/modules directory.")
 
     def register_study(self):
         """ Triggered when the user presses the 'Register Study' button. Opens
