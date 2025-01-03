@@ -1,4 +1,4 @@
-# About  <img align="right" style="float: right; margin-left: 10px; margin-top: 15px;" src="https://img.shields.io/github/v/release/ttubb/submg" alt="GitHub release (latest)">
+# About  <img align="right" style="float: right; margin-left: 10px; margin-top: 15px;" src="https://img.shields.io/github/v/release/metagenomics/submg" alt="GitHub release (latest)">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/logo_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/logo_light.png">
@@ -24,7 +24,7 @@ Please Note
 1. The tool is intended for submitting only metagenome datasets.
 2. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenomic bin. Bins should be submitted before MAGs.
 3. In case you intend to upload results based on third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
-4. Please [report any issues](https://github.com/ttubb/submg/issues/new) you have with this tool. [Feel free to ask us](https://github.com/ttubb/submg/discussions) for changes if the tool doesn't cover your use case.
+4. Please [report any issues](https://github.com/metagenomics/submg/issues/new) you have with this tool. [Feel free to ask us](https://github.com/metagenomics/submg/discussions) for changes if the tool doesn't cover your use case.
 
 &nbsp;
 &nbsp;
@@ -60,18 +60,33 @@ Please Note
 
 
 # Installation
+A docker container based on the main branch is available [through DockerHub](https://hub.docker.com/r/metagenomics/submg): `docker pull ttubb/submg`
 
-A container based on the main branch is available [through DockerHub](https://hub.docker.com/r/ttubb/submg): `docker pull ttubb/submg`
-
-If you want to install the tool locally, follow these steps:
+## Local Installation - Linux
 - Make sure the following software is installed
   - Python 3.8 or higher
-  - Java 1.8 or higher
+  - Java 17 or higher)
   - [wheel](https://pypi.org/project/wheel/) for Python
-- Clone this repository: `git clone https://github.com/ttubb/submg`
-- Switch into the directory that you just cloned
+- Download a [release](https://github.com/metagenomics/submg/releases) or clone the repository via: `git clone https://github.com/metagenomics/submg/`
+  - If you downloaded a release:
+    - Untar/unzip the file
+    - Switch into the directory that you just untarred/unzipped
+  - If you cloned the repository:
+    - Switch into the directory that you just cloned
 - Run `python -m pip install .`
-- Run `submg-cli download_webin` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli). 
+- Run `submg-cli download_webin` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli).
+- Use `submg-gui` to launch a graphic user interface or `submg-cli` to use the command line interface
+
+## Local Installation - Windows (GUI)
+If you only intend on using the graphic user interface (GUI), you can download a release from 1.0.0 upwards and launch the executable (`submg_win_gui.exe`).
+
+- Make sure the following software is installed
+  - Java 17 or higher. You can download OpenJDK installers from different sources, e.g.:
+    - [Eclipse/Adoptium](https://adoptopenjdk.net/)
+    - [Amazon/Corretto](https://aws.amazon.com/de/corretto/)
+    - [Oracle](https://jdk.java.net/)
+
+## Local Installation - Windows (Command Line Interface)
 
 # Usage
 subMG is intended to submit data related to a *single* (co-)assembly. All samples, sequncing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run subMG once for each assembly.
@@ -110,7 +125,7 @@ ENA provides a [development service](https://ena-docs.readthedocs.io/en/latest/s
 `Study` is used synonymously with `project` here. Before you can submit data using subMG, you need to have a `Study` object (= a project) in your ENA account. If you intend to submit annotation data, you will also need a [locus tag prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html). You can create both through the ENA webin portal on the [production server](https://www.ebi.ac.uk/ena/submit/webin/login) or the [development server](https://wwwdev.ebi.ac.uk/ena/submit/webin/login). Be aware that if you create the `Study` object on the production server, it can take up to 24h hours until it is available on the development server. This can cause test submissions to fail.
 
 ## The Config File
-A lot of (meta)data is required for a submission. To use subMG, you need to provide metadata and the locations of your files in a YAML document. Which information is required depends on the type of your submission. You can use `submg-cli makecfg` command to create a template for your config file. It will contain only the fields necessary for your specific submission, along with explanations and examples. Additionally, the `examples` directory contains examples of config files and the associated data. If you are unsure of how to fill out certain fields, please feel free to ask on the [github discussions page](https://github.com/ttubb/submg/discussions) of this project.
+A lot of (meta)data is required for a submission. To use subMG, you need to provide metadata and the locations of your files in a YAML document. Which information is required depends on the type of your submission. You can use `submg-cli makecfg` command to create a template for your config file. It will contain only the fields necessary for your specific submission, along with explanations and examples. Additionally, the `examples` directory contains examples of config files and the associated data. If you are unsure of how to fill out certain fields, please feel free to ask on the [github discussions page](https://github.com/metagenomics/submg/discussions) of this project.
 
 ## Submission Modes
 Not all combinations of items can be submitted. For example, it is not not possible to submit only samples and a co-assembly without also submitting the corresponding reads. The figure below illustrates all possible combinations of items that can be submitted.
@@ -187,4 +202,4 @@ When calculating completeness and contamination of a bin with tools like [CheckM
 If you absolutely need to submit such (presumably low quality) bins, you need to manually set the contamination value to 100 in the 'QUALITY_FILE' you provide under the bins section.
 
 # Support
-subMG is being actively developed. Please use the github [issue tracker](https://github.com/ttubb/submg/issues) to report problems. A [discussions page](https://github.com/ttubb/submg/discussions) is available for questions, comments and suggestions. 
+subMG is being actively developed. Please use the github [issue tracker](https://github.com/metagenomics/submg/issues) to report problems. A [discussions page](https://github.com/metagenomics/submg/discussions) is available for questions, comments and suggestions. 

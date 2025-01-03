@@ -23,14 +23,15 @@ def __read_mag_metadata(mag_metadata_file: str) -> dict:
         dict: A dictionary with the metadata for each bin.
     """
     metadata = {}
+
+    # Get the directory of the metadata file
+    metadata_dir = os.path.dirname(os.path.abspath(mag_metadata_file))
     
     with open(os.path.abspath(mag_metadata_file), 'r') as file:
         reader = csv.DictReader(file, delimiter='\t')
         for row in reader:
             bin_id = row['Bin_id']
-            #sample_id = row['Sample_id']
             quality_category = row['Quality_category']
-            #fasta_path = row['Fasta_path']
             flatfile_path = row['Flatfile_path']
             unlocalised_path = row['Unlocalised_path']
             chromosomes_path = row['Chromosomes_path']
@@ -44,13 +45,23 @@ def __read_mag_metadata(mag_metadata_file: str) -> dict:
                     loggingC.message(f"\nERROR: {fieldname} is missing for a MAG in {os.path.abspath(mag_metadata_file)} {problematic_bin}", threshold=-1)
                     exit(1)
 
-            metadata[bin_id] = {
-                #'Sample_id': sample_id,
-                'Quality_category': quality_category,
+            # Resolve paths relative to the metadata file location
+            paths = {
                 'Flatfile_path': flatfile_path,
-                #'Fasta_path': fasta_path,
                 'Unlocalised_path': unlocalised_path,
-                'Chromosomes_path': chromosomes_path,
+                'Chromosomes_path': chromosomes_path
+            }
+            resolved_paths = {
+                key: os.path.abspath(os.path.join(metadata_dir, value)) if not os.path.isabs(value) else value
+                for key, value in paths.items()
+            }
+
+            # Add results
+            metadata[bin_id] = {
+                'Quality_category': quality_category,
+                'Flatfile_path': resolved_paths['Flatfile_path'],
+                'Unlocalised_path': resolved_paths['Unlocalised_path'],
+                'Chromosomes_path': resolved_paths['Chromosomes_path'],
             }
     
     return metadata
