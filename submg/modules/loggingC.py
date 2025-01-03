@@ -78,6 +78,7 @@ def message(message: str,
     # If verbosity level is high enough
     if verbosity_level > threshold:
         # print to stdout
+        print(message)
         # broadcast to listeners
         for listener in listeners:
             listener(message)

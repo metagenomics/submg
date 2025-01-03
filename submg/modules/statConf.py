@@ -3,8 +3,8 @@ from dataclasses import dataclass, field
 @dataclass
 class staticConfig:
     submg_version: str = '1.0.0'
-    java_version: str = '1.8'
-    webin_cli_version: str = '7.0.1'
+    java_version: str = '17'
+    webin_cli_version: str = '8.0.0'
     ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/drop-box/submit/'
     ena_test_dropbox_url: str = 'https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/'
     ena_search_url: str = 'https://www.ebi.ac.uk/ena/portal/api/search'

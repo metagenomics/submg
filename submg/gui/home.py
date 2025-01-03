@@ -118,10 +118,10 @@ class HomePage(BasePage):
         if not check_java(soft=True):
             java_version = staticConfig.java_version
             showwarning("Java not found", 
-                        f"Java {java_version} or newer is required to submit "
+                        f"Java {java_version} or higher is required to submit "
                         f"data. Only configuration editing is possible. If you "
                         f"intend to submit data, please close this application "
-                        f"and install Java {java_version} or newer.")
+                        f"and install Java {java_version} or higher.")
         if not webin_cli_jar_available():
             webin_cli_version = staticConfig.webin_cli_version
             showwarning("webin-cli not found", 

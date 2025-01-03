@@ -35,7 +35,7 @@ def check_java(soft=False):
         if soft:
             return False
         sys.exit(f"\tfUnable to detect Java version. Please install Java "
-                 f"({java_version} or newer).")
+                 f"({java_version} or higher).")
 
 
 def download_webin_cli(version):
