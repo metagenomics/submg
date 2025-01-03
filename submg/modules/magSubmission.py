@@ -40,7 +40,7 @@ def __read_mag_metadata(mag_metadata_file: str) -> dict:
                 if row['Bin_id'] is None:
                     problematic_bin = ""
                 else:
-                    problematic_bin = f"(Bin_id: {row['Bin_id']}"
+                    problematic_bin = f"(Bin_id: {row['Bin_id']})"
                 if row[fieldname] is None:
                     loggingC.message(f"\nERROR: {fieldname} is missing for a MAG in {os.path.abspath(mag_metadata_file)} {problematic_bin}", threshold=-1)
                     exit(1)
@@ -51,10 +51,23 @@ def __read_mag_metadata(mag_metadata_file: str) -> dict:
                 'Unlocalised_path': unlocalised_path,
                 'Chromosomes_path': chromosomes_path
             }
-            resolved_paths = {
-                key: os.path.abspath(os.path.join(metadata_dir, value)) if not os.path.isabs(value) else value
-                for key, value in paths.items()
-            }
+
+            resolved_paths = {}
+            for key, value in paths.items():
+                if value is None:
+                    resolved_paths[key] = None
+                else:
+                    resolved_paths[key] = (
+                        os.path.abspath(os.path.join(metadata_dir, value))
+                        if not os.path.isabs(value) else value
+                    )
+
+            print("old paths")
+            for key, value in paths.items():
+                print(key, value)
+            print("new paths")
+            for key, value in resolved_paths.items():
+                print(key, value)
 
             # Add results
             metadata[bin_id] = {
@@ -65,6 +78,7 @@ def __read_mag_metadata(mag_metadata_file: str) -> dict:
             }
     
     return metadata
+
 
 
 def __prep_mags_samplesheet(config: dict,

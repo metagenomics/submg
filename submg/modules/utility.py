@@ -234,8 +234,6 @@ def read_yaml(file_path, convert_file_paths=True):
         elif isinstance(data, str):
             # Check if the string is a relative path
             if not os.path.isabs(data) and os.path.exists(os.path.join(base_path, data)):
-                print("I GOT KEY ", data)
-                print("AND MY OUTPUT IS ", os.path.abspath(os.path.join(base_path, data)))
                 return os.path.abspath(os.path.join(base_path, data))
         return data
 
