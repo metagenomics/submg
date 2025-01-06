@@ -28,6 +28,7 @@ def __report_tax_issues(issues):
     msg += "\nYou can manually enter taxonomy data for these bins into a .tsv file and specify it in the MANUAL_TAXONOMY_FILE field in the config file."
     msg += " If your annotation process failed to classify a bin even at domain level, consider excluding it from your submission. If you want to submit it anyways,"
     msg += " you may choose to add it to the MANUAL_TAXONOMY_FILES using taxid 155900 (unclassified organism)."
+    msg += " In some cases you might have to request a new taxon ID (see README for details)."
     loggingC.message(msg, threshold=-1) 
 
     # Give a detailed listing of the issues
