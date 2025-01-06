@@ -1,1 +1,0 @@
-EMBLmyGFF3 ../mag_gene_prediction/bin1.gff ../3bins/bin1.fa --environmental_sample --topology linear --molecule_type 'genomic DNA' --transl_table 11 --species 189685 --locus_tag LTAG01 -o bin1.embl --isolation_source 'biogas plant anaerobic digester' --project_id 'PRJEB71644'
