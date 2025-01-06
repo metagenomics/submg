@@ -1,7 +1,7 @@
 # submg/gui/__init__.py
 
-from . import base
-from . import configForm
-from . import configOutline
-from . import load
-from . import monitor
+from submg.gui import base
+from submg.gui import configForm
+from submg.gui import configOutline
+from submg.gui import load
+from submg.gui import monitor

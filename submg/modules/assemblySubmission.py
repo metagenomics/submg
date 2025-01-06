@@ -6,10 +6,10 @@ import shutil
 import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
 
-from . import utility, loggingC
-from .utility import from_config, stamped_from_config
-from .statConf import staticConfig
-from .webinWrapper import webin_cli
+from submg.modules import utility, loggingC
+from submg.modules.utility import from_config, stamped_from_config
+from submg.modules.statConf import staticConfig
+from submg.modules.webinWrapper import webin_cli
 
 def __prep_coassembly_samplesheet(config: dict,
                                   outdir: str,

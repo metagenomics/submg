@@ -5,8 +5,8 @@ import yaml
 from tkinter import filedialog
 from tkinter.messagebox import showerror, askyesno
 from .base import BasePage
-from ..modules.configGen import write_gui_yaml
-from ..modules.statConf import YAMLCOMMENTS, GUICOMMENTS, GUIEXAMPLES, GUILINKS, YAML_PRETTYNAMES, YAML_MULTI_FILEKEYS, YAML_SINGLE_FILEKEYS, YAML_DIRKEYS, GUI_STATIC_ADDITIONAL_FIELDS
+from submg.modules.configGen import write_gui_yaml
+from submg.modules.statConf import YAMLCOMMENTS, GUICOMMENTS, GUIEXAMPLES, GUILINKS, YAML_PRETTYNAMES, YAML_MULTI_FILEKEYS, YAML_SINGLE_FILEKEYS, YAML_DIRKEYS, GUI_STATIC_ADDITIONAL_FIELDS
 import webbrowser
 
 class ConfigFormPage(BasePage):

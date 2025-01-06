@@ -5,7 +5,7 @@ import subprocess
 import requests
 import sys
 
-from . import statConf
+from submg.modules import statConf
 
 
 def versions():

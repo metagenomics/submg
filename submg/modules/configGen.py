@@ -1,9 +1,9 @@
 import os
 import yaml
 
-from . import utility
+from submg.modules import utility
 
-from .statConf import YAMLCOMMENTS, YAMLEXAMPLES, staticConfig
+from submg.modules.statConf import YAMLCOMMENTS, YAMLEXAMPLES, staticConfig
 
 
 def write_gui_yaml(data: dict,

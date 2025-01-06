@@ -8,8 +8,8 @@ import requests
 import shutil
 
 from requests.auth import HTTPBasicAuth
-from . import loggingC, utility, binSubmission, enaSearching, webinWrapper
-from .statConf import staticConfig
+from submg.modules import loggingC, utility, binSubmission, webinWrapper
+from submg.modules.statConf import staticConfig
 
 
 def __read_mag_metadata(mag_metadata_file: str) -> dict:

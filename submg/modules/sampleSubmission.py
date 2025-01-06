@@ -1,8 +1,8 @@
 import os
 
-from . import loggingC, utility
-from .utility import from_config, stamped_from_config
-from .statConf import staticConfig
+from submg.modules import loggingC, utility
+from submg.modules.utility import from_config, stamped_from_config
+from submg.modules.statConf import staticConfig
 
 import requests
 

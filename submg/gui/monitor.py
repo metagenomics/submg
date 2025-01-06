@@ -3,8 +3,8 @@ import customtkinter as ctk
 from tkinter import scrolledtext
 import multiprocessing
 import queue
-from .base import BasePage
-from ..core import submit_through_gui
+from submg.gui.base import BasePage
+from submg.core import submit_through_gui
 
 def submission_wrapper(config_path, output_dir, development_service, verbosity,
                       submit_samples, submit_reads, submit_assembly,

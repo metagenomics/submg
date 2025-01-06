@@ -4,9 +4,9 @@ import customtkinter as ctk
 from tkinter import filedialog
 from tkinter import messagebox, IntVar
 from tkinter.messagebox import showinfo
-from .base import BasePage
-from ..modules.utility import validate_parameter_combination
-from ..core import makecfg_through_gui
+from submg.gui.base import BasePage
+from submg.modules.utility import validate_parameter_combination
+from submg.core import makecfg_through_gui
 
 class ConfigOutlinePage(BasePage):
     def __init__(self, parent, controller):

@@ -1,9 +1,9 @@
 # home.py
 import customtkinter as ctk
-from .base import BasePage
-from ..modules.webinWrapper import webin_cli_jar_available
-from ..modules.webinDownload import check_java, download_webin_cli
-from ..modules.statConf import staticConfig
+from submg.gui.base import BasePage
+from submg.modules.webinWrapper import webin_cli_jar_available
+from submg.modules.webinDownload import check_java, download_webin_cli
+from submg.modules.statConf import staticConfig
 
 import webbrowser
 from tkinter.messagebox import askyesno, showwarning

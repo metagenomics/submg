@@ -5,8 +5,8 @@ import platform
 
 from tkinter import filedialog
 from tkinter.messagebox import showinfo, showerror
-from .base import BasePage
-from ..modules.utility import validate_parameter_combination
+from submg.gui.base import BasePage
+from submg.modules.utility import validate_parameter_combination
 
 
 class LoadConfigPage(BasePage):

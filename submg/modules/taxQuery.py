@@ -4,8 +4,8 @@ import requests
 import time
 
 from tqdm import tqdm
-from . import utility, loggingC, binSubmission
-from .statConf import staticConfig
+from submg.modules import utility, loggingC, binSubmission
+from submg.modules.statConf import staticConfig
 
 
 def __report_tax_issues(issues):

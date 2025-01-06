@@ -1,16 +1,17 @@
 import os
 import platform
-
-from datetime import datetime
-
-from . import loggingC, utility, enaSearching, binSubmission, taxQuery
-from .statConf import staticConfig
-from .webinWrapper import find_webin_cli_jar
-from .taxQuery import taxid_from_scientific_name
 import time
 import csv
+from datetime import datetime
+
+from submg.modules import loggingC, utility, enaSearching, binSubmission, taxQuery
+from submg.modules.statConf import staticConfig
+from submg.modules.webinWrapper import find_webin_cli_jar
+from submg.modules.taxQuery import taxid_from_scientific_name
+
 
 checks_failed = False
+
 
 def __check_tsv(tsvfile: str,
                 required_columns: list):

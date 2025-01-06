@@ -3,8 +3,8 @@ import os
 import glob
 import signal
 
-from . import loggingC
-from .statConf import staticConfig
+from submg.modules import loggingC
+from submg.modules.statConf import staticConfig
 
 
 def webin_cli_jar_available():

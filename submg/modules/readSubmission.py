@@ -1,10 +1,10 @@
 import os
 import csv
 
-from . import loggingC, utility
-from .utility import from_config, stamped_from_config
-from .statConf import staticConfig
-from .webinWrapper import webin_cli
+from submg.modules import loggingC, utility
+from submg.modules.utility import from_config, stamped_from_config
+from submg.modules.statConf import staticConfig
+from submg.modules.webinWrapper import webin_cli
 
 import shutil
 import gzip

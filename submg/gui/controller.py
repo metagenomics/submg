@@ -4,11 +4,11 @@ from tkinter.messagebox import askyesno
 from PIL import Image
 import importlib.resources as pkg_resources
 
-from .home import HomePage
-from .configOutline import ConfigOutlinePage
-from .configForm import ConfigFormPage
-from .monitor import MonitorPage
-from .load import LoadConfigPage
+from submg.gui.home import HomePage
+from submg.gui.configOutline import ConfigOutlinePage
+from submg.gui.configForm import ConfigFormPage
+from submg.gui.monitor import MonitorPage
+from submg.gui.load import LoadConfigPage
 
 
 class MyApp(ctk.CTk):

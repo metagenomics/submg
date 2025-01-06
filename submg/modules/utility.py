@@ -11,11 +11,10 @@ import requests
 import hashlib
 import xml.etree.ElementTree as ET
 import concurrent.futures
-from tqdm import tqdm
 from yaspin import yaspin
 
-from . import loggingC
-from .statConf import staticConfig
+from submg.modules import loggingC
+from submg.modules.statConf import staticConfig
 
 
 # Global variable for timestamping data that is pulled from the config
