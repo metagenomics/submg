@@ -1,10 +1,14 @@
 # Custom
 todo.txt
+next_release.txt
 submg/*.jar
 submg/modules/*.jar
 examples/local*
 examples/taxo*
 examples/temp*
+examples/data/mapping/*tmp.sorted.bam
+examples/data/mapping/*tmp.sorted.bam.bai
+examples/data/mapping/*unindexed.bam.bai
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
