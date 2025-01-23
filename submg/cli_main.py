@@ -1,4 +1,4 @@
-from .core import (
+from submg.core import (
     init_argparse,
     download_webin,
     makecfg,

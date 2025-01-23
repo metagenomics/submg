@@ -13,6 +13,8 @@
 
 
 subMG aids in the submission of metagenomic study data to the European Nucleotide Archive (ENA). The tool can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in a configuration form, subMG derives additional information where required, creates samplesheets and manifests and finally uploads everything to your ENA account. You can use a combination of manual and subMG steps to submit your data (e.g. submitting samples and reads through the ENA web interface, then using subMG to submit the assembly and bins). A test mode is available for doing trial submissions to the ENA development server.
+subMG comes with an optional graphic user interface (GUI) which provides the same functionality as the command line interface (CLI).
+TODO: ADD GUI SCREENSHOT
 
 
 
@@ -21,7 +23,7 @@ subMG aids in the submission of metagenomic study data to the European Nucleotid
 &nbsp;
 
 Please Note
-1. The tool is intended for submitting only metagenome datasets.
+1. The tool is intended for submission of only metagenomic datasets.
 2. The [ENA definition of a MAG](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena) (Metagenome Assembled Genome) is different from a metagenomic bin. Bins should be submitted before MAGs.
 3. In case you intend to upload results based on third party data, [ENA ask you to contact their helpdesk](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).
 4. Please [report any issues](https://github.com/metagenomics/submg/issues/new) you have with this tool. [Feel free to ask us](https://github.com/metagenomics/submg/discussions) for changes if the tool doesn't cover your use case.
@@ -87,6 +89,8 @@ If you only intend on using the graphic user interface (GUI), you can download a
     - [Oracle](https://jdk.java.net/)
 
 ## Local Installation - Windows (Command Line Interface)
+
+## Local Installation - MacOS
 
 # Usage
 subMG is intended to submit data related to a *single* (co-)assembly. All samples, sequncing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run subMG once for each assembly.
@@ -161,36 +165,47 @@ Using the table below, MAG `m1` will be submitted as a medium quality contig ass
 A submission can take several hours to complete. We recommend using [nohup](https://en.wikipedia.org/wiki/Nohup), [tmux](https://github.com/tmux/tmux/wiki) or something similar to prevent the submission process from being interrupted. 
 
 # Taxonomy Assignment
-Assemblies and bins need a valid NCBI taxonomy (scientific name and taxonomic identifier) for submission. While in most cases the assignment works automatically, it is important to note that [environmental organism-level taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) has to be used for metagenome submissions. For example: Consider a bin that was classified only on the class level and was determined to belong to class `Clostridia`. The taxonomy id of the class `Clostridia` is `186801`. However, the correct environmental organism-level taxonomy for the bin is `uncultured Clostridia bacterium` with the taxid `244328`.
+Assemblies and bins need a valid NCBI taxonomy (scientific name and taxonomic identifier) for submission. For metagenome submissions, [environmental organism-level taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) is required.
 
-## GTDB-Toolkit Taxonomy
-If you did taxonomic annotation of bins based on [GTDB](https://gtdb.ecogenomic.org/), you can use the `gtdb_to_ncbi_majority_vote.py` script of the [GTDB-Toolkit](https://github.com/Ecogenomics/GTDBTk) to translate your results to NCBI taxonomy.
+For example: Consider a bin that was classified only on the class level and was determined to belong to class `Clostridia`. The taxonomy id of the class `Clostridia` is `186801`. However, the correct environmental organism-level taxonomy for the bin is `uncultured Clostridia bacterium` with the taxid `244328`.
+
+subMG will automatically derive environmental organism level taxonomy when users provide regular NCBI taxonomic annotation.
+
+## GTDB-Toolkit (GTDB-Tk) Taxonomy
+If you did taxonomic annotation of bins based on [GTDB](https://gtdb.ecogenomic.org/), you can use the `gtdb_to_ncbi_majority_vote.py` script of the [GTDB-Toolkit](https://github.com/Ecogenomics/GTDBTk) to translate your results to NCBI taxonomy. The output of `gtdb_to_ncbi_majority_vote.py` can directly be parsed by subMG.
+
+These tables are can be under the `NCBI_TAXONOMY_FILES` keyword in the configuration form.
 
 ## NCBI-Taxonomy
-You can provide tables with NCBI taxonomy information for each bin (see `./tests/bacteria_taxonomy.tsv` for an example - the output of `gtdb_to_ncbi_majority_vote.py` has the correct format already). subMG will use ENAs [suggest-for-submission-sendpoint](https://ena-docs.readthedocs.io/en/latest/retrieval/programmatic-access/taxon-api.html) to derive taxids that follow the [rules for bin taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html).
+You can provide one ore more tables with NCBI taxonomy information for your bins (you can find an example at `./examples/data/taxonomy/bacteria_taxonomy.tsv`). subMG will use ENAs [suggest-for-submission-sendpoint](https://ena-docs.readthedocs.io/en/latest/retrieval/programmatic-access/taxon-api.html) to derive taxids that follow the [rules for bin taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html).
 
-## Manually Specified Taxonomy
-Either in addition to those files, or as an alternative you can provide a `MANUAL_TAXONOMY` table. This should specify the correct taxids and scientific names for bins. An example of such a document can be found in `./examples/data/taxonomy/manual_taxonomy_3bins.tsv`. If a bin is present in this document, the taxonomic data from the NCBI taxonomy tables will be ignored.
+| Bin_id | NCBI_taxonomy                                                                 |
+|--------|------------------------------------------------------------------------------|
+| bin1   | d__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__;g__;s__     |
+| bin2   | d__Archaea;p__;c__;o__;f__;g__;s__ |
+| bin3   | d__Eukaryota;p__;c__Dothideomycetes;o__Pleosporales;f__Massarinaceae;g__Helminthosporium;s__ |
+
+These tables are can be under the `NCBI_TAXONOMY_FILES` keyword in the configuration form.
+
+The values in the `bin_id` field have to match the basenames of the bin fasta files (e.g. there needs to be a `bin1.fasta`, `bin1.fna` or similar in your `BINS_DIRECTORY`)
+
+The string in the 'NCBI_taxonomy' column has to adhere to the format shown in the above example: Taxonomic ranks are separated by semicolons. On each rank, a letter indicating the rank is followed by two underscores and the classification at that rank. The ranks have to be in the order 'domain', 'phylum', 'class', 'order', 'family', 'genus', 'species'. If a classification at a certain rank is unavailable, the rank itself still needs to be present in the string (e.g. "s__" where the species taxonomy is unknown).
 
 ## Taxonomy Assignment Failure
 In some cases subMG will be unable to assign a valid taxonomy to a bin. The submission will be aborted and you will be informed which bins are causing problems. In such cases you have to determine the correct scientific name and taxid for the bin and specify it in a [a manual taxonomy file](#manually-specified-taxonomy). This file then has to be referenced in the `MANUAL_TAXONOMY` field of your config. Remember to use [environmental organism-level taxonomies](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) when manually defining the taxonomy for your bin.
 
 A possible reason for a failed taxonomic assignment is that no proper taxid exists yet. This happens more often than one might expect. You can [create a taxon request](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy_requests.html) in the ENA Webin Portal to register the taxon.
 
-## NCBI Taxonomy File
-This file contains the NCBI taxonomy for bins. You can provide multiple taxonomy files covering different bins. If you created it with `gtdb_to_ncbi_majority_vote.py` of the [GTDB-Toolkit](https://github.com/Ecogenomics/GTDBTk) it will have the following, compatible format already. Alternatively, provide a .tsv file with the columns 'Bin_id' and 'NCBI_taxonomy'. The string in the 'NCBI_taxonomy' column has to adhere to the format shown below. Taxonomic ranks are separated by semicolons. On each rank, a letter indicating the rank is followed by two underscores and the classification at that rank. The ranks have to be in the order 'domain', 'phylum', 'class', 'order', 'family', 'genus', 'species'. If a classification at a certain rank is unavailable, the rank itself still needs to be present in the string (e.g. "s__").
-
-|Bin_id|NCBI_taxonomy|
-|---|---|
-|bin2|d__Archaea;p__Euryarchaeota;c__Methanomicrobia;o__Methanomicrobiales;f__Methanomicrobiaceae;g__;s__|
-
 ## Manual Taxonomy File
-In cases where subMG is unable to assign a valid taxonomy based on the NCBI taxonomy file, you can provide taxonomies for certain bins here manually. The table matches each 'Bin_id' to a 'Scientific_name' and a 'Tax_id'. Taxonomy information for the bins can be split between the NCBI Taxonomy File and this. If a bin is present in this document, the taxonomic data from the NCBI taxonomy tables will be ignored.
+In cases where subMG is unable to assign a valid taxonomy based on the NCBI taxonomy file, you can provide taxonomies for some of your bins here. The table has to be referenced under the keyword `MANUAL_TAXONOMY` in the configuration file. The table matches each `Bin_id` to a `Scientific_name` and a `Tax_id`. If a bin is present in this document, the taxonomic data from outher sources will be ignored.
 |Bin_id|Scientific_name|Tax_id|
 |---|---|---|
 |bin3|uncultured Paracoccus sp.|189685|
 
+An example of such a document can be found in `./examples/data/taxonomy/manual_taxonomy_3bins.tsv`. Again, values in the `bin_id` field have to match the basenames of the bin fasta files (e.g. there needs to be a `bin1.fasta`, `bin1.fna` or similar matching `bin1` of your table).
+
 ENA provides a [guideline for choosing taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html). You can query ENAs [suggest-for-submission-endpoint](https://ena-docs.readthedocs.io/en/latest/retrieval/programmatic-access/taxon-api.html) to find the correct taxid for a bin programmatically or directly through the browser (e.g. by navigating to https://www.ebi.ac.uk/ena/taxonomy/rest/suggest-for-submission/escherichia).
+
 
 # Edge Cases
 

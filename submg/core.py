@@ -4,21 +4,21 @@ import time
 import traceback
 import sys
 
-from .modules import loggingC
-from .modules import preflight
-from .modules import utility
-from .modules import webinDownload
-from .modules import configGen 
-from .modules import taxQuery
-from .modules import enaSearching
+from submg.modules import loggingC
+from submg.modules import preflight
+from submg.modules import utility
+from submg.modules import webinDownload
+from submg.modules import configGen 
+from submg.modules import taxQuery
+from submg.modules import enaSearching
 
-from .modules.statConf import staticConfig
-from .modules.utility import prepdir
-from .modules.sampleSubmission import submit_samples
-from .modules.readSubmission import submit_reads
-from .modules.assemblySubmission import submit_assembly
-from .modules.binSubmission import submit_bins, get_bin_quality
-from .modules.magSubmission import submit_mags
+from submg.modules.statConf import staticConfig
+from submg.modules.utility import prepdir
+from submg.modules.sampleSubmission import submit_samples
+from submg.modules.readSubmission import submit_reads
+from submg.modules.assemblySubmission import submit_assembly
+from submg.modules.binSubmission import submit_bins, get_bin_quality
+from submg.modules.magSubmission import submit_mags
 
 
 def init_argparse():

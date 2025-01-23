@@ -1,4 +1,4 @@
-from .gui import controller
+from submg.gui import controller
 
 
 def main():

@@ -1,10 +1,11 @@
 # pages/config_form_page.py
 import os
+os.environ['XMODIFIERS'] = "@im=none"
 import customtkinter as ctk
 import yaml
 from tkinter import filedialog
 from tkinter.messagebox import showerror, askyesno
-from .base import BasePage
+from submg.gui.base import BasePage
 from submg.modules.configGen import write_gui_yaml
 from submg.modules.statConf import YAMLCOMMENTS, GUICOMMENTS, GUIEXAMPLES, GUILINKS, YAML_PRETTYNAMES, YAML_MULTI_FILEKEYS, YAML_SINGLE_FILEKEYS, YAML_DIRKEYS, GUI_STATIC_ADDITIONAL_FIELDS
 import webbrowser
@@ -18,7 +19,6 @@ class ConfigFormPage(BasePage):
             'manifest': 'ADDITIONAL_MANIFEST_FIELDS',
             'samplesheet': 'ADDITIONAL_SAMPLESHEET_FIELDS',
         }
-
 
         self.item_font = 'Arial'
         self.title_font = 'Arial'

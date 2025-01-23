@@ -1,8 +1,13 @@
 # controller.py
+import os
+os.environ['XMODIFIERS'] = "@im=none"
+import sys
 import customtkinter as ctk
 from tkinter.messagebox import askyesno
 from PIL import Image
-import importlib.resources as pkg_resources
+#import importlib.resources as pkg_resources
+
+
 
 from submg.gui.home import HomePage
 from submg.gui.configOutline import ConfigOutlinePage
@@ -48,6 +53,7 @@ class MyApp(ctk.CTk):
         container.grid_columnconfigure(0, weight=1)
 
         # Create the pages and store them in a dictionary
+        self.currentpage = None
         self.pages = {}
         for PageClass in (HomePage,
                           ConfigOutlinePage,
@@ -108,9 +114,27 @@ class MyApp(ctk.CTk):
     def show_page(self, page_name):
         """ Switches the user over to the respective page.
         """
+        #if self.currentpage:
+        #    self.currentpage.destroy()
         page = self.pages[page_name]
+        self.currentpage = page
         page.tkraise()
         page.initialize()
+
+
+    def resource_path(self, package, resource):
+        """Get the absolute path to a resource, compatible with PyInstaller."""
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except AttributeError:
+            # When not running with PyInstaller, use the package's normal path
+            import importlib.resources as pkg_resources
+            with pkg_resources.path(package, resource) as resource_path:
+                return str(resource_path)
+
+        return os.path.join(base_path, package.replace('.', os.sep), resource)
+
 
     def resize_image(self, path, width=None, height=None):
         """ Resizes an image while preserving its aspect ratio
@@ -132,21 +156,41 @@ class MyApp(ctk.CTk):
         return ctkImage
 
     def load_and_resize_images(self):
-        """ Loads and resizes images for the application.
-            Uses pkg_resources to load images from the resources folder.
-        """
+        """Loads and resizes images for the application using resource_path."""
 
-        with pkg_resources.path('submg.resources', 'gui_logo.png') as logo_path:
-            self.logo_img_subMG = self.resize_image(logo_path, height=self.logoHeight - 15)
+        # Retrieve and resize images
+        logo_path = self.resource_path('submg.resources', 'gui_logo.png')
+        self.logo_img_subMG = self.resize_image(logo_path, height=self.logoHeight - 15)
 
-        with pkg_resources.path('submg.resources', 'nfdi4microbiota_light.png') as microbiota_path:
-            self.logo_img_microbiota = self.resize_image(microbiota_path, height=self.logoHeight)
+        microbiota_path = self.resource_path('submg.resources', 'nfdi4microbiota_light.png')
+        self.logo_img_microbiota = self.resize_image(microbiota_path, height=self.logoHeight)
 
-        with pkg_resources.path('submg.resources', 'gui_flow.png') as flow_path:
-            self.flow_img = self.resize_image(flow_path, width=self.imageWidth_flow)
+        flow_path = self.resource_path('submg.resources', 'gui_flow.png')
+        self.flow_img = self.resize_image(flow_path, width=self.imageWidth_flow)
 
-        with pkg_resources.path('submg.resources', 'submission_modes_dark.png') as nodes_path:
-            self.submodes_img = self.resize_image(nodes_path, width=self.imageWidth_submodes)
+        nodes_path = self.resource_path('submg.resources', 'submission_modes_dark.png')
+        self.submodes_img = self.resize_image(nodes_path, width=self.imageWidth_submodes)
+
+    #     # Resize the image
+    #     ctkImage = ctk.CTkImage(light_image=Image.open(path), size=(width, height))
+    #     return ctkImage
+
+    # def load_and_resize_images(self):
+    #     """ Loads and resizes images for the application.
+    #         Uses pkg_resources to load images from the resources folder.
+    #     """
+
+    #     with pkg_resources.path('submg.resources', 'gui_logo.png') as logo_path:
+    #         self.logo_img_subMG = self.resize_image(logo_path, height=self.logoHeight - 15)
+
+    #     with pkg_resources.path('submg.resources', 'nfdi4microbiota_light.png') as microbiota_path:
+    #         self.logo_img_microbiota = self.resize_image(microbiota_path, height=self.logoHeight)
+
+    #     with pkg_resources.path('submg.resources', 'gui_flow.png') as flow_path:
+    #         self.flow_img = self.resize_image(flow_path, width=self.imageWidth_flow)
+
+    #     with pkg_resources.path('submg.resources', 'submission_modes_dark.png') as nodes_path:
+    #         self.submodes_img = self.resize_image(nodes_path, width=self.imageWidth_submodes)
 
     def set_submission_data(self, file_path, staging_dir_path, submission_items):
         self.file_path = file_path

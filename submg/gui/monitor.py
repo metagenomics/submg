@@ -1,4 +1,6 @@
 # monitor.py
+import os
+os.environ['XMODIFIERS'] = "@im=none"
 import customtkinter as ctk
 from tkinter import scrolledtext
 import multiprocessing

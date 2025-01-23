@@ -54,7 +54,7 @@ def __read_mag_metadata(mag_metadata_file: str) -> dict:
 
             resolved_paths = {}
             for key, value in paths.items():
-                if value is None:
+                if value is None or value == "":
                     resolved_paths[key] = None
                 else:
                     resolved_paths[key] = (
@@ -311,6 +311,9 @@ def __stage_mag_submission(metadata,
         ['RUN_REF', run_accessions],
     ]
 
+    print("I received metadata for staging:")
+    for k,v in metadata.items():
+        print(k, v)
 
     # Add chromosome info & stage chromosome files
     if not metadata['Chromosomes_path'] is None:
@@ -353,6 +356,8 @@ def __stage_mag_submission(metadata,
     else:
         flatfile_path = metadata['Flatfile_path']
         gzipped_flatfile_target = os.path.join(staging_directory, "mag"+f"asmbly_upload{staticConfig.zipped_emblff_extension}")
+        print("Flatfile path is", flatfile_path)
+        print("Gzipped flatfile target is", gzipped_flatfile_target)
         if flatfile_path.endswith('.gz'):
             shutil.copyfile(flatfile_path, gzipped_flatfile_target)
         else:
@@ -415,8 +420,11 @@ def submit_mags(config: dict,
     
     # Extract data
     loggingC.message(">Reading MAG metadata", threshold=1)
-    mag_metdata_file = utility.from_config(config, 'MAGS', 'MAG_METADATA_FILE')
-    mag_metadata = __read_mag_metadata(mag_metdata_file)
+    mag_metadata_file = utility.from_config(config, 'MAGS', 'MAG_METADATA_FILE')
+    print("I AM READING LE MAG METADATA FROM FILE", mag_metadata_file)
+    mag_metadata = __read_mag_metadata(mag_metadata_file)
+    for k,v in mag_metadata.items():
+        print(k, v)
     
     bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')
         

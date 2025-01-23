@@ -1,4 +1,6 @@
 # Importing necessary modules
+import os
+os.environ['XMODIFIERS'] = "@im=none"
 import customtkinter as ctk
 import yaml
 import platform

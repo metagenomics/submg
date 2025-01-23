@@ -1,4 +1,6 @@
 # home.py
+import os
+os.environ['XMODIFIERS'] = "@im=none"
 import customtkinter as ctk
 from submg.gui.base import BasePage
 from submg.modules.webinWrapper import webin_cli_jar_available

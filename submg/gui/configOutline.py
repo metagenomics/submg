@@ -1,4 +1,5 @@
 import os
+os.environ['XMODIFIERS'] = "@im=none"
 import sys
 import customtkinter as ctk
 from tkinter import filedialog
