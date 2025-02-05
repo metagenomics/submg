@@ -236,19 +236,6 @@ def __make_config_dict(submit_samples: int,
     if len(reads) > 0:
         config['PAIRED_END_READS'] = reads
 
-    # Add a submission outline  
-    config['submission_outline'] = []
-    if submit_samples:
-        config['submission_outline'].append('samples')
-    if submit_paired_end_reads or submit_single_reads:
-        config['submission_outline'].append('reads')
-    if submit_assembly:
-        config['submission_outline'].append('assembly')
-    if submit_bins:
-        config['submission_outline'].append('bins')
-    if submit_mags:
-        config['submission_outline'].append('mags')
-
     # If this is only a samples, reads, or reads+samples submission,
     # we can stop here
     if not submit_assembly and not submit_bins and not submit_mags:
@@ -332,6 +319,19 @@ def __make_config_dict(submit_samples: int,
         else:
             raise ValueError("Either coverage_from_bam or known_coverage must be set to True")
             
+    # Add a submission outline  
+    config['submission_outline'] = []
+    if submit_samples:
+        config['submission_outline'].append('samples')
+    if submit_paired_end_reads or submit_single_reads:
+        config['submission_outline'].append('reads')
+    if submit_assembly:
+        config['submission_outline'].append('assembly')
+    if submit_bins:
+        config['submission_outline'].append('bins')
+    if submit_mags:
+        config['submission_outline'].append('mags')
+        
     return config
 
 def make_config(outpath: str,

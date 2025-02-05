@@ -115,6 +115,7 @@ YAMLCOMMENTS = {
     'MAG_METADATA_FILE': "A .tsv specifying 'Bin_id', 'Sample_id', 'Quality_category', 'Flatfile_path', 'Chromosomes_path' and 'Unlocalised_path' for all MAGs. See README for more details.",
     'MIN_COMPLETENESS': "Bins with smaller completeness value will be discarded (in percent, 0-100). Remove this row to ignore bin completeness.",
     'MAX_CONTAMINATION': "Bins with larger contamination value will be discarded (in percent, 0-100). Remove this row to ignore bin contamination (>100% contamination bins will still be discarded).",
+    'submission_outline': "This configuration form was created to submit the items listed below."
 }
 
 YAMLEXAMPLES = {
