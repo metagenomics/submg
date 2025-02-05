@@ -9,6 +9,9 @@ examples/temp*
 examples/data/mapping/*tmp.sorted.bam
 examples/data/mapping/*tmp.sorted.bam.bai
 examples/data/mapping/*unindexed.bam.bai
+venv_*
+dist/*
+old*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
