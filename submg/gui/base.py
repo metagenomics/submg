@@ -20,6 +20,7 @@ class BasePage(ctk.CTkFrame):
 
         # Header row
         self.create_header(title_text)
+        
 
     def create_header(self, title_text):
         """ Creates elements from a header. We use this in all pages (and 

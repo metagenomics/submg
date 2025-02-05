@@ -9,15 +9,10 @@ from submg.gui.base import BasePage
 from submg.modules.configGen import write_gui_yaml
 from submg.modules.statConf import YAMLCOMMENTS, GUICOMMENTS, GUIEXAMPLES, GUILINKS, YAML_PRETTYNAMES, YAML_MULTI_FILEKEYS, YAML_SINGLE_FILEKEYS, YAML_DIRKEYS, GUI_STATIC_ADDITIONAL_FIELDS
 import webbrowser
-import time
 
 class ConfigFormPage(BasePage):
     def __init__(self, parent, controller):
         super().__init__(parent, controller, "Configuration Form")
-
-        # This is where we will put all the frames in our form to flip through
-        self.pagination_list = []
-        self.pagination_index = 0
 
         # Static variables
         self.special_fieldnames = {
@@ -40,37 +35,6 @@ class ConfigFormPage(BasePage):
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.configure_frame_columns(self.main_frame, [10, 0])
 
-        # Create the pagination interface
-        self.pagination_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.pagination_frame.grid(row=1,
-                                   column=0,
-                                   padx=5,
-                                   sticky="nsew")
-        self.pagination_frame.grid_columnconfigure(0, weight=1)
-        self.pagination_frame.grid_columnconfigure(1, weight=1)
-        self.pagination_frame.grid_columnconfigure(2, weight=1)
-        self.previous_button = ctk.CTkButton(
-            self.pagination_frame,
-            text="Prev",
-            command=self.show_previous_page
-        )
-        self.previous_button.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-
-        self.page_indicator = ctk.CTkLabel(
-            self.pagination_frame,
-            text=f"1 / {len(self.pagination_list)}",  # Default to 1 when no pages are visible
-            font=("Arial", 14)
-        )
-        self.page_indicator.grid(row=0, column=1, padx=10, pady=5, sticky="n")
-
-        self.next_button = ctk.CTkButton(
-            self.pagination_frame,
-            text="Next",
-            command=self.show_next_page
-        )
-        self.next_button.grid(row=0, column=2, padx=10, pady=5, sticky="e")
-        
-
         # Create the form_frame as a CTkScrollableFrame
         self.form_frame = ctk.CTkScrollableFrame(self.main_frame,
                                                  border_color="#8C8C8C",
@@ -80,7 +44,7 @@ class ConfigFormPage(BasePage):
                              column=0,
                              padx=5,
                              pady=(0,10),
-                             rowspan=1,
+                             rowspan=2,
                              sticky="nsew")
         self.padding_in_scrollable(self.form_frame)
         self.form_frame.grid_rowconfigure(0, weight=0)
@@ -182,84 +146,6 @@ class ConfigFormPage(BasePage):
         self.form_data = {}
         self.frame_row_counter = 1
 
-
-    def update_page_indicator(self):
-        """ Update the page indicator label """
-        newlabel = f"{self.pagination_index + 1} / {len(self.pagination_list)}"
-        print("Setting page indicator to ", newlabel)
-        self.page_indicator.configure(
-            text=newlabel
-        )
-
-
-    def show_next_page(self):
-        """ Hide the currently visible form frame and move to the one that
-            is next up in the pagination list.
-        """
-        if self.pagination_index < len(self.pagination_list) - 1:
-            self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-            self.pagination_index += 1
-            self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-            self.update_page_indicator()
-
-    def show_previous_page(self):
-        """ Hide the currently visible form frame and move to the one that
-            is previous in the pagination list.
-        """
-        if self.pagination_index > 0:
-            self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-            self.pagination_index -= 1
-            self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-            self.update_page_indicator()
-
-
-    # def show_next_page(self):
-    #     """ Show the next page in the pagination list """
-    #     print("\nle next page ")
-    #     print("our pagination index is ", self.pagination_index)
-    #     for item in self.pagination_list:
-    #         print(f"Frame {item}")
-    #     if self.pagination_index < len(self.pagination_list) - 1:  # Check if we're not at the last page
-    #         print(f"Moving from page {self.pagination_index}")
-    #         # Hide the current frame
-    #         if self.pagination_index > 0:
-    #             print("calling toggle to hide at index ", self.pagination_index)
-    #             self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         else:
-    #             self.core_frame.grid_remove()
-    #         # Move to the next page
-    #         self.pagination_index += 1
-    #         print(f"To page {self.pagination_index} of {len(self.pagination_list)}")
-    #         # Show the next frame
-    #         print("calling toggle at index ", self.pagination_index)
-    #         print("which is ", self.pagination_list[self.pagination_index])
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         for item in self.pagination_list:
-    #             print(f"Frame {item} is visible: {item.winfo_ismapped()}")
-    #         # Update the page indicator
-    #         self.update_page_indicator()
-
-
-
-    # def show_previous_page(self):
-    #     print("\nle prev page")
-    #     """ Show the previous page in the pagination list """
-    #     if self.pagination_index > 0:  # Check if we're not at the first page
-    #         # Hide the current frame
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         # Move to the previous page
-    #         self.pagination_index -= 1
-    #         print(f"To page {self.pagination_index} of {len(self.pagination_list)}")
-    #         # Show the previous frame
-    #         if self.pagination_index > 0:
-    #             self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         else:
-    #             self.core_frame.grid(row=0, column=0, sticky="nsew", padx=self.frame_x_padding, pady=self.frame_y_padding)
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         # Update the page indicator
-    #         self.update_page_indicator()
-
-
     def padding_in_scrollable(self, s_frame: ctk.CTkScrollableFrame):
         """Adds padding to scrollbar of a scrollable frame."""
         
@@ -339,7 +225,6 @@ class ConfigFormPage(BasePage):
         """ Render the form based on the loaded yaml data """
         # Frame for core items
         self.core_frame = ctk.CTkFrame(self.form_frame)
-        self.pagination_list.append(self.core_frame)
         self.core_frame_rowcounter = 0
         self.core_frame.grid(row=0,
                               column=0,
@@ -373,8 +258,6 @@ class ConfigFormPage(BasePage):
                     title=YAML_PRETTYNAMES[key],
                     data=value,
                     parent_key=key)
-                
-                self.update_idletasks()
 
                 self.form_data[key]["frame"] = new_frame
 
@@ -412,29 +295,7 @@ class ConfigFormPage(BasePage):
             )
         return command
 
-        
-    def toggle_frame_visibility(self, frame):
-        #print("\n")
-        #print(f"toggle_frame_visibility called for: {frame}")
-        #print(f"while the index is at {self.pagination_index}")
-        #print(f"Frame visibility status before toggle: {frame.winfo_ismapped()}")
-        
-        if frame.winfo_ismapped():
-            #print("REMOVING FRAME")
-            frame.grid_remove()
-        else:
-            #print("ADDING FRAME")
-            frame.grid(row=0, column=0, sticky="nsew", padx=self.frame_x_padding, pady=self.frame_y_padding)
-            frame.update_idletasks()  # Force update to apply layout changes
-
-        # Debug visibility status after toggle
-        #print(f"Frame visibility status after toggle: {frame.winfo_ismapped()}")
-        #print(f"Frame viewable status: {frame.winfo_viewable()}")
-        #print(f"Frame width: {frame.winfo_width()}, height: {frame.winfo_height()}")
-
-
-
-
+    
     def make_form_fields(self, title, data, parent_key):
         """ Create fields for a nested dictionary
         """
@@ -442,7 +303,7 @@ class ConfigFormPage(BasePage):
         
         # Create new frame
         new_frame = ctk.CTkFrame(self.form_frame)
-        new_frame.grid(row=0, #self.frame_row_counter,
+        new_frame.grid(row=self.frame_row_counter,
                        column=0,
                        sticky="nsew",
                        padx=self.frame_x_padding,
@@ -615,12 +476,6 @@ class ConfigFormPage(BasePage):
             self.create_asterisk_label(new_frame,
                                        self.form_data[parent_key]["row_counter"])
 
-        # Put it in our pagination list
-        self.pagination_list.append(new_frame)
-
-        # Initially hide the frame
-        self.update_idletasks()
-        self.toggle_frame_visibility(new_frame)
         return new_frame
         
 
@@ -640,7 +495,6 @@ class ConfigFormPage(BasePage):
             new_frame = self.make_form_fields(title=title,
                                               data=item,
                                               parent_key=numbered_key)
-            self.update_idletasks()
             self.form_data[numbered_key]["frame"] = new_frame
 
 
@@ -1455,7 +1309,15 @@ class ConfigFormPage(BasePage):
         # Step 1: Display current configuration
         #self.pretty_print_form_data(self.form_data)
         output = self.extract_data(self.form_data)
+
+        print("form data is\n")
+        print(self.form_data)
+        print("\npretty form data is")
         self.pretty_print_form_data(self.form_data)
+        print("\n")
+        print("output is")
+        print(output)
+        print("\n")
 
         output['submission_outline'] = []
         for key, value in self.controller.submission_items.items():
@@ -1501,39 +1363,9 @@ class ConfigFormPage(BasePage):
             self.controller.show_page("LoadConfigPage")
 
 
-    #ef initialize(self):
-    #   """Called whenever controller renders the page"""
-    #   self.config_saved = False
-    #   form_path = self.controller.config_items["form_path"]
-    #   self.load_form(form_path)
-    #   self.render_form()
-
     def initialize(self):
         """Called whenever controller renders the page"""
         self.config_saved = False
-
-        # Hide the main frame
-        self.main_frame.grid_remove()
-
-        # Show placeholder
-        self.placeholder_label = ctk.CTkLabel(
-            self,
-            text="Creating form. This might take a while if you have a high number of items.",
-            font=(self.title_font, self.title_font_size)
-        )
-        self.placeholder_label.grid(row=1, column=0, padx=20, pady=20, sticky="nsew")
-
-        # Schedule the load_form and render_form to run after a short delay
-        self.after(100, self._load_and_render_form)
-
-    def _load_and_render_form(self):
-        """Loads the form and updates the UI."""
         form_path = self.controller.config_items["form_path"]
         self.load_form(form_path)
         self.render_form()
-
-        # Destroy placeholder and show main frame
-        self.placeholder_label.destroy()
-        self.main_frame.grid()
-        self.update_page_indicator()
-

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 
 from setuptools import setup, find_packages
 from setuptools.command.install import install
@@ -6,6 +7,23 @@ from setuptools.command.install import install
 class CustomInstall(install):
     def run(self):
         install.run(self)
+        try:
+            import tkinter
+        except ImportError:
+            print("\nERROR: 'tkinter' is not installed on your system.")
+            if sys.platform.startswith("linux"):
+                
+                print("To install tkinter, run one of the following commands:")
+                print("  Ubuntu/Debian: sudo apt install python3-tk")
+                print("  Fedora/CentOS: sudo dnf install python3-tkinter")
+                print("  Arch Linux: sudo pacman -S tk")
+            elif sys.platform == "darwin":
+                print("Please install tkinter to use the GUI.")
+            elif sys.platform.startswith("win"):
+                print("On Windows, 'tkinter' is included by default with the Python installer.")
+                print("Ensure you have the official Python installed from https://www.python.org/downloads/.")
+            else:
+                print("Please refer to your operating system's documentation for installing 'tkinter'.")
         print("\nIMPORTANT: Please run the 'submg-cli download_webin' command.")
 
 setup(
@@ -19,7 +37,7 @@ setup(
         'tqdm>=4.64.1',
         'yaspin>=2.0',
         'customtkinter>=5.2.2',
-        'Pillow>=11.1.0',
+        'Pillow>=10.4.0',
     ],
     include_package_data=True,
     package_data={

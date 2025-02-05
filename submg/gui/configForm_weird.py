@@ -9,17 +9,15 @@ from submg.gui.base import BasePage
 from submg.modules.configGen import write_gui_yaml
 from submg.modules.statConf import YAMLCOMMENTS, GUICOMMENTS, GUIEXAMPLES, GUILINKS, YAML_PRETTYNAMES, YAML_MULTI_FILEKEYS, YAML_SINGLE_FILEKEYS, YAML_DIRKEYS, GUI_STATIC_ADDITIONAL_FIELDS
 import webbrowser
-import time
+
 
 class ConfigFormPage(BasePage):
     def __init__(self, parent, controller):
         super().__init__(parent, controller, "Configuration Form")
 
-        # This is where we will put all the frames in our form to flip through
-        self.pagination_list = []
-        self.pagination_index = 0
-
-        # Static variables
+        # ------------------------------
+        # 1. BASIC CONFIG / CONSTANTS
+        # ------------------------------
         self.special_fieldnames = {
             'manifest': 'ADDITIONAL_MANIFEST_FIELDS',
             'samplesheet': 'ADDITIONAL_SAMPLESHEET_FIELDS',
@@ -34,101 +32,112 @@ class ConfigFormPage(BasePage):
         self.frame_x_padding = 0
         self.frame_y_padding = 5
 
-        # Create main_frame to hold form_frame and help_frame
+        # Keep track of form structure
+        self.form_data = {}
+        self.frame_row_counter = 1
+
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.grid(row=1, column=0, padx=(5,5), pady=0, sticky="nsew")
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.configure_frame_columns(self.main_frame, [10, 0])
 
-        # Create the pagination interface
-        self.pagination_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.pagination_frame.grid(row=1,
-                                   column=0,
-                                   padx=5,
-                                   sticky="nsew")
-        self.pagination_frame.grid_columnconfigure(0, weight=1)
-        self.pagination_frame.grid_columnconfigure(1, weight=1)
-        self.pagination_frame.grid_columnconfigure(2, weight=1)
-        self.previous_button = ctk.CTkButton(
-            self.pagination_frame,
-            text="Prev",
-            command=self.show_previous_page
+        # ------------------------------
+        # 2. FORM_FRAME (LEFT) - with pagination
+        # ------------------------------
+        # The scrollable container that holds everything for the form
+        self.form_frame = ctk.CTkScrollableFrame(
+            self.main_frame,
+            border_color="#8C8C8C",
+            border_width=2,
+            fg_color="transparent",
         )
-        self.previous_button.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-
-        self.page_indicator = ctk.CTkLabel(
-            self.pagination_frame,
-            text=f"1 / {len(self.pagination_list)}",  # Default to 1 when no pages are visible
-            font=("Arial", 14)
+        self.form_frame.grid(
+            row=0, column=0,
+            padx=5, pady=(0,10),
+            rowspan=2,
+            sticky="nsew"
         )
-        self.page_indicator.grid(row=0, column=1, padx=10, pady=5, sticky="n")
-
-        self.next_button = ctk.CTkButton(
-            self.pagination_frame,
-            text="Next",
-            command=self.show_next_page
-        )
-        self.next_button.grid(row=0, column=2, padx=10, pady=5, sticky="e")
-        
-
-        # Create the form_frame as a CTkScrollableFrame
-        self.form_frame = ctk.CTkScrollableFrame(self.main_frame,
-                                                 border_color="#8C8C8C",
-                                                 border_width=2,
-                                                 fg_color="transparent",)
-        self.form_frame.grid(row=0,
-                             column=0,
-                             padx=5,
-                             pady=(0,10),
-                             rowspan=1,
-                             sticky="nsew")
         self.padding_in_scrollable(self.form_frame)
         self.form_frame.grid_rowconfigure(0, weight=0)
         self.form_frame.grid_columnconfigure(0, weight=1)
 
-        # Help text frame, to the right of the form_frame
-        self.help_frame = ctk.CTkFrame(self.main_frame,
-                                       border_color="#8C8C8C",
-                                       border_width=2,
-                                       fg_color="transparent")
-        self.help_frame.grid(row=0,
-                             column=1,
-                             padx=5,
-                             pady=(0,10),
-                             sticky="nsew")
+        # 2a. A navigation frame inside form_frame (row=0)
+        self.navigation_frame = ctk.CTkFrame(
+            self.form_frame,
+            fg_color="transparent"
+        )
+        self.navigation_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
+
+        # Some layout for navigation_frame
+        self.navigation_frame.grid_columnconfigure(0, weight=1)
+        self.navigation_frame.grid_columnconfigure(1, weight=0)
+        self.navigation_frame.grid_columnconfigure(2, weight=1)
+
+        self.prev_button = ctk.CTkButton(
+            self.navigation_frame,
+            text="Previous",
+            command=self.show_previous_page
+        )
+        self.prev_button.grid(row=0, column=0, sticky="w")
+
+        self.page_label = ctk.CTkLabel(
+            self.navigation_frame,
+            text="Page 1/1",
+            font=(self.item_font, self.item_font_size)
+        )
+        self.page_label.grid(row=0, column=1, sticky="ew")
+
+        self.next_button = ctk.CTkButton(
+            self.navigation_frame,
+            text="Next",
+            command=self.show_next_page
+        )
+        self.next_button.grid(row=0, column=2, sticky="e")
+
+        # 2b. A page_container (row=1 of form_frame)
+        self.page_container = ctk.CTkFrame(
+            self.form_frame,
+            fg_color="transparent"
+        )
+        self.page_container.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+
+        # Let that row/column expand
+        self.form_frame.grid_rowconfigure(1, weight=1)
+        self.form_frame.grid_columnconfigure(0, weight=1)
+
+        # We'll store pages here
+        self.pages = []
+        self.current_page_index = 0
+
+        # ------------------------------
+        # 3. HELP_FRAME (RIGHT)
+        # ------------------------------
+        self.help_frame = ctk.CTkFrame(
+            self.main_frame,
+            border_color="#8C8C8C",
+            border_width=2,
+            fg_color="transparent"
+        )
+        self.help_frame.grid(row=0, column=1, padx=5, pady=(0,10), sticky="nsew")
         self.help_frame.grid_rowconfigure(0, weight=0)
         self.help_frame.grid_rowconfigure(1, weight=0)
         self.help_frame.grid_columnconfigure(0, weight=1)
 
         self.help_title = ctk.CTkLabel(
             self.help_frame,
-            text="Help & Examples\n"+80*" ",
-            font=(self.title_font, self.title_font_size))
-        self.help_title.grid(
-            row=0,
-            column=0,
-            sticky="new",
-            padx=10,
-            pady=(10,0)
+            text="Help & Examples\n" + 80*" ",
+            font=(self.title_font, self.title_font_size)
         )
+        self.help_title.grid(row=0, column=0, sticky="new", padx=10, pady=(10,0))
 
         self.help_label = ctk.CTkLabel(
             self.help_frame,
             wraplength=400,
-            text=(
-                "Click on the question mark next to an item to get more "
-                "information."
-            ),
+            text="Click on the question mark next to an item to get more information.",
             font=(self.item_font, self.item_font_size),
             justify='left'
         )
-        self.help_label.grid(
-            row=1,
-            column=0,
-            sticky="nw",
-            padx=10,
-            pady=(0,0)
-        )
+        self.help_label.grid(row=1, column=0, sticky="nw", padx=10, pady=(0,0))
 
         self.example_label = ctk.CTkLabel(
             self.help_frame,
@@ -137,151 +146,130 @@ class ConfigFormPage(BasePage):
             justify='left',
             font=("Courier", self.item_font_size)
         )
-        self.example_label.grid(
-            row=2,
-            column=0,
-            sticky="nw",
-            padx=10,
-            pady=0
-        )
+        self.example_label.grid(row=2, column=0, sticky="nw", padx=10, pady=0)
 
         self.hyperlink_miniframe = ctk.CTkFrame(self.help_frame, fg_color="transparent")
         self.hyperlink_miniframe.grid(row=3, column=0, sticky="nsew", padx=10, pady=10)
 
-        # Buttons in the bottom right of the screen
-        self.button_frame = ctk.CTkFrame(self.main_frame,
-                                         fg_color="transparent")
-        self.button_frame.grid(row=1,
-                               column=1,
-                               padx=5,
-                               pady=(0,12),
-                               sticky="nsew")
+        # ------------------------------
+        # 4. BOTTOM BUTTON FRAME
+        # ------------------------------
+        self.button_frame = ctk.CTkFrame(
+            self.main_frame,
+            fg_color="transparent"
+        )
+        self.button_frame.grid(row=1, column=1, padx=5, pady=(0,12), sticky="nsew")
         self.button_frame.grid_columnconfigure(0, weight=1)
+
         self.save_config_button = ctk.CTkButton(
             self.button_frame,
             text="Save as",
             command=lambda: self.save_config()
         )
-        self.save_config_button.grid(row=1,
-                                     column=0,
-                                     padx=0,
-                                     pady=(0,5),
-                                     sticky="nsew")
+        self.save_config_button.grid(row=1, column=0, padx=0, pady=(0,5), sticky="nsew")
+
         self.go_to_submission_button = ctk.CTkButton(
             self.button_frame,
             text="Go to Submission",
             command=lambda: self.go_to_submission()
         )
-        self.go_to_submission_button.grid(row=2,
-                                          column=0,
-                                          padx=0,
-                                          pady=(0,0),
-                                          sticky="nsew")
+        self.go_to_submission_button.grid(row=2, column=0, padx=0, pady=(0,0), sticky="nsew")
 
-        # The dictionary that will keep the form structure and user input
-        self.form_data = {}
-        self.frame_row_counter = 1
+    # ----------------------------------------------------------
+    # PAGINATION METHODS
+    # ----------------------------------------------------------
+    def show_page(self, page_index: int):
+        """ Hide the current page, show the requested page index, update label/buttons. """
+        if not self.pages:
+            return
+        # Hide current
+        if 0 <= self.current_page_index < len(self.pages):
+            self.pages[self.current_page_index].grid_forget()
 
+        # Clamp the requested index
+        if page_index < 0:
+            page_index = 0
+        elif page_index >= len(self.pages):
+            page_index = len(self.pages) - 1
 
-    def update_page_indicator(self):
-        """ Update the page indicator label """
-        newlabel = f"{self.pagination_index + 1} / {len(self.pagination_list)}"
-        print("Setting page indicator to ", newlabel)
-        self.page_indicator.configure(
-            text=newlabel
+        # Show the new page
+        self.pages[page_index].grid(row=0, column=0, sticky="nsew")
+        self.current_page_index = page_index
+
+        # Update page label: e.g. "1/5"
+        self.page_label.configure(
+            text=f"Page {page_index + 1}/{len(self.pages)}"
         )
 
+        # Enable/disable prev/next
+        if page_index <= 0:
+            self.prev_button.configure(state="disabled")
+        else:
+            self.prev_button.configure(state="normal")
 
-    def show_next_page(self):
-        """ Hide the currently visible form frame and move to the one that
-            is next up in the pagination list.
-        """
-        if self.pagination_index < len(self.pagination_list) - 1:
-            self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-            self.pagination_index += 1
-            self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-            self.update_page_indicator()
+        if page_index >= len(self.pages) - 1:
+            self.next_button.configure(state="disabled")
+        else:
+            self.next_button.configure(state="normal")
 
     def show_previous_page(self):
-        """ Hide the currently visible form frame and move to the one that
-            is previous in the pagination list.
+        self.show_page(self.current_page_index - 1)
+
+    def show_next_page(self):
+        self.show_page(self.current_page_index + 1)
+
+    # ----------------------------------------------------------
+    # CREATE PAGES + FRAMES
+    # ----------------------------------------------------------
+    def create_page_frame(self, title=None):
         """
-        if self.pagination_index > 0:
-            self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-            self.pagination_index -= 1
-            self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-            self.update_page_indicator()
+        Create a new scrollable frame that will become one 'page' in our pagination.
+        We won't grid() it yet. We'll store it in self.pages and show/hide dynamically.
+        """
+        page = ctk.CTkScrollableFrame(
+            self.page_container,
+            border_color="#8C8C8C",
+            border_width=2,
+            fg_color="transparent",
+        )
+        page.grid_columnconfigure(0, weight=1)
 
+        if title:
+            label = ctk.CTkLabel(
+                page,
+                text=title,
+                font=(self.title_font, self.title_font_size)
+            )
+            label.grid(row=0, column=0, sticky="w", padx=10, pady=10)
 
-    # def show_next_page(self):
-    #     """ Show the next page in the pagination list """
-    #     print("\nle next page ")
-    #     print("our pagination index is ", self.pagination_index)
-    #     for item in self.pagination_list:
-    #         print(f"Frame {item}")
-    #     if self.pagination_index < len(self.pagination_list) - 1:  # Check if we're not at the last page
-    #         print(f"Moving from page {self.pagination_index}")
-    #         # Hide the current frame
-    #         if self.pagination_index > 0:
-    #             print("calling toggle to hide at index ", self.pagination_index)
-    #             self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         else:
-    #             self.core_frame.grid_remove()
-    #         # Move to the next page
-    #         self.pagination_index += 1
-    #         print(f"To page {self.pagination_index} of {len(self.pagination_list)}")
-    #         # Show the next frame
-    #         print("calling toggle at index ", self.pagination_index)
-    #         print("which is ", self.pagination_list[self.pagination_index])
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         for item in self.pagination_list:
-    #             print(f"Frame {item} is visible: {item.winfo_ismapped()}")
-    #         # Update the page indicator
-    #         self.update_page_indicator()
+        return page
 
-
-
-    # def show_previous_page(self):
-    #     print("\nle prev page")
-    #     """ Show the previous page in the pagination list """
-    #     if self.pagination_index > 0:  # Check if we're not at the first page
-    #         # Hide the current frame
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         # Move to the previous page
-    #         self.pagination_index -= 1
-    #         print(f"To page {self.pagination_index} of {len(self.pagination_list)}")
-    #         # Show the previous frame
-    #         if self.pagination_index > 0:
-    #             self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         else:
-    #             self.core_frame.grid(row=0, column=0, sticky="nsew", padx=self.frame_x_padding, pady=self.frame_y_padding)
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         # Update the page indicator
-    #         self.update_page_indicator()
-
-
+    # ----------------------------------------------------------
+    # MISC HELPER METHODS
+    # ----------------------------------------------------------
     def padding_in_scrollable(self, s_frame: ctk.CTkScrollableFrame):
         """Adds padding to scrollbar of a scrollable frame."""
-        
-        if scrollbar:=getattr(s_frame, "_scrollbar", None):
+        if scrollbar := getattr(s_frame, "_scrollbar", None):
             padding = s_frame.cget("border_width") * 2
-            ctk.CTkScrollbar.grid_configure(scrollbar, padx=(0, padding))   
+            ctk.CTkScrollbar.grid_configure(scrollbar, padx=(0, padding))
+
+    def configure_frame_columns(self, frame, weighlist):
+        """ Configure the columns of a frame """
+        for i, weight in enumerate(weighlist):
+            frame.grid_columnconfigure(i, weight=weight)
 
     def show_help(self, key):
-        """Fetch the help text from YAMLCOMMENTS and display it in help_frame."""
-        # Show the help text
-        help_text = self.get_comment(key)
+        """Fetch help text from YAMLCOMMENTS and display in help_frame."""
+        help_text = self.get_comment(key)  # See get_comment below
         help_text += "\n\n\nExamples:"
         self.help_label.configure(text=help_text)
 
-        # Show an example
         example_text = GUIEXAMPLES.get(key, "No example available")
         self.example_label.configure(text=example_text)
 
-        # Remove all buttons in the hyperlink mini frame
         for widget in self.hyperlink_miniframe.winfo_children():
             widget.destroy()
-        # For each link in GUILINKS, create a button styled like a hyperlink
+
         links = GUILINKS.get(key, {})
         row = 0
         for link_text, link_url in links.items():
@@ -292,7 +280,7 @@ class ConfigFormPage(BasePage):
                 text_color="#3a7ebf",
                 hover_color="#b6d5de",
                 fg_color="transparent",
-                border_color="#3a7ebf", 
+                border_color="#3a7ebf",
                 border_width=1,
                 font=(self.item_font, 12),
                 command=lambda url=link_url: webbrowser.open_new(url)
@@ -300,28 +288,28 @@ class ConfigFormPage(BasePage):
             hyperlink_button.grid(row=row, column=0, padx=5, pady=5, sticky="nsew")
             row += 1
 
-    def configure_frame_columns(self, frame, weighlist):
-        """ Configure the columns of a frame """
-        for i, weight in enumerate(weighlist):
-            frame.grid_columnconfigure(i, weight=weight)
-
-
     def create_asterisk_label(self, frame, row_count):
         """ Create a label with an asterisk """
-        label = ctk.CTkLabel(frame,
-                             text="*comma-separated list",
-                             justify='left',
-                             font=(self.item_font, self.item_font_size-2, 'italic'))
-        label.grid(row=row_count,
-                   column=0,
-                   sticky="w",
-                   padx=self.item_x_padding,
-                   pady=self.item_y_padding)
+        label = ctk.CTkLabel(
+            frame,
+            text="*comma-separated list",
+            justify='left',
+            font=(self.item_font, self.item_font_size-2, 'italic')
+        )
+        label.grid(row=row_count, column=0, sticky="w",
+                   padx=self.item_x_padding, pady=self.item_y_padding)
+
+    def get_comment(self, key):
+        """ 
+        Try GUICOMMENTS first, else YAMLCOMMENTS, else default.
+        """
+        default = "No help available for this item"
+        return GUICOMMENTS.get(key, YAMLCOMMENTS.get(key, default))
 
     def load_form(self, form_path):
-        """ Read a yaml form from the specified path. Translate it into a
-            dictionary that will later be rendered. Remove the
-            submission_outline key from the dictionary.
+        """ Read a yaml form from the specified path. 
+            Translate it into self.original_form_data. 
+            Remove 'submission_outline' if present.
         """
         with open(form_path, 'r') as file:
             self.original_form_data = yaml.safe_load(file)
@@ -329,189 +317,166 @@ class ConfigFormPage(BasePage):
         if 'submission_outline' in self.original_form_data:
             outline_items = self.original_form_data['submission_outline']
             for item in self.controller.submission_items.keys():
-                if item in outline_items:
-                    self.controller.submission_items[item] = True
-                else:
-                    self.controller.submission_items[item] = False
+                self.controller.submission_items[item] = (item in outline_items)
             self.original_form_data.pop('submission_outline')
 
+    # ----------------------------------------------------------
+    # RENDER_FORM: Build All Pages
+    # ----------------------------------------------------------
     def render_form(self):
-        """ Render the form based on the loaded yaml data """
-        # Frame for core items
-        self.core_frame = ctk.CTkFrame(self.form_frame)
-        self.pagination_list.append(self.core_frame)
+        """
+        Render the entire form data as multiple pages.
+        - Page 1: 'Core' items (top-level scalars/lists that aren't lists of dicts)
+        - Additional pages: each top-level dict -> 1 page
+        - For top-level lists of dicts -> each item in that list -> 1 page
+        """
+        # Clear existing pages
+        self.pages.clear()
+        self.current_page_index = 0
+        self.form_data.clear()
+        self.frame_row_counter = 1  # reset if used
+
+        # 1) CORE PAGE
+        core_page = self.create_page_frame(title="Core")
+        self.pages.append(core_page)
+
+        # We'll manually place a sub-frame for the core inside core_page
+        self.core_frame = ctk.CTkFrame(core_page, fg_color="transparent")
+        self.core_frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
         self.core_frame_rowcounter = 0
-        self.core_frame.grid(row=0,
-                              column=0,
-                              sticky="nsew",
-                              padx=self.frame_x_padding,
-                                pady=self.frame_y_padding)
         self.configure_frame_columns(self.core_frame, [1, 2, 0])
-        # Title label for the frame
-        title_label = ctk.CTkLabel(self.core_frame,
-                                   text="Core",
-                                   font=(self.title_font, self.title_font_size))
-        title_label.grid(row=self.core_frame_rowcounter,
-                         column=0,
-                         sticky="w",
-                         pady=self.item_y_padding,
-                         padx=self.item_x_padding)
-        self.core_frame_rowcounter += 1
 
         core_has_lists = False
 
+        # Separate top-level items into "core" vs. "sub-dictionaries" vs. "lists-of-dicts"
         for key, value in self.original_form_data.items():
-            # Check if the value is a dictionary, a list, a string or None
             if isinstance(value, dict):
-
-                self.form_data[key] = {"type": "nested",
-                                        "frame": None,
-                                        "row_counter": 0,
-                                        "items": {}}
-
-                new_frame  = self.make_form_fields(
-                    title=YAML_PRETTYNAMES[key],
-                    data=value,
-                    parent_key=key)
-                
-                self.update_idletasks()
-
-                self.form_data[key]["frame"] = new_frame
-
-            else: # We have either a core item or a nested list
+                # We'll handle in step 2 (a separate page)
+                continue
+            elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict):
+                # We'll handle in step 3 (multiple pages)
+                continue
+            else:
+                # This is a "core" item (scalar or empty list or list of non-dict)
+                self.create_core_item(key, value)  # (SKIPPED method code, see your appended function)
                 if isinstance(value, list):
-                    # Is it a core item or a list of dictionaries?
-                    if len(value) > 0 and all(isinstance(item, dict) for item in value):
-                        # These are nested dictionaries
-                        self.create_list_of_nested_items(key, value)
-                    elif (len(value) == 0) or (not isinstance(value[0], dict)):
-                        # These is a core item list
-                        self.create_core_item(key, value)
-                        core_has_lists = True
-                    else:
-                        # Make a popup error message
-                        showerror("Error", "Invalid form data. Please check the yaml file.")
-                        return
-                else:
-                    # This is a non-list core item
-                    self.create_core_item(key, value)
+                    core_has_lists = True
+
         if core_has_lists:
             self.create_asterisk_label(self.core_frame, self.core_frame_rowcounter)
-            
 
-    def additional_field_command(self,
-                                 key,
-                                 frame,
-                                 manifest_or_samplesheet):
-        """ Command to create an additional field """
-        def command():
-            self.create_additional_field(
-                frame,
-                key,
-                manifest_or_samplesheet
-            )
-        return command
+        # 2) For each top-level dictionary -> one new page
+        for key, value in self.original_form_data.items():
+            if isinstance(value, dict):
+                # This dictionary gets its own page
+                self.form_data[key] = {
+                    "type": "nested",
+                    "frame": None,
+                    "row_counter": 0,
+                    "items": {}
+                }
+                page_frame = self.create_page_frame(title=YAML_PRETTYNAMES.get(key, key))
+                self.pages.append(page_frame)
 
-        
-    def toggle_frame_visibility(self, frame):
-        #print("\n")
-        #print(f"toggle_frame_visibility called for: {frame}")
-        #print(f"while the index is at {self.pagination_index}")
-        #print(f"Frame visibility status before toggle: {frame.winfo_ismapped()}")
-        
-        if frame.winfo_ismapped():
-            #print("REMOVING FRAME")
-            frame.grid_remove()
-        else:
-            #print("ADDING FRAME")
-            frame.grid(row=0, column=0, sticky="nsew", padx=self.frame_x_padding, pady=self.frame_y_padding)
-            frame.update_idletasks()  # Force update to apply layout changes
+                # We call make_form_fields, but pass in that page_frame
+                # We'll change make_form_fields to accept a parent_frame
+                new_frame = self.make_form_fields(
+                    title=YAML_PRETTYNAMES.get(key, key),
+                    data=value,
+                    parent_key=key,
+                    parent_frame=page_frame
+                )
+                self.form_data[key]["frame"] = new_frame
 
-        # Debug visibility status after toggle
-        #print(f"Frame visibility status after toggle: {frame.winfo_ismapped()}")
-        #print(f"Frame viewable status: {frame.winfo_viewable()}")
-        #print(f"Frame width: {frame.winfo_width()}, height: {frame.winfo_height()}")
+            elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict):
+                # 3) top-level lists of dict -> multiple pages
+                self.create_list_of_nested_items(key, value)
 
+        # Finally, show first page if we have any
+        if self.pages:
+            self.show_page(0)
 
+        print("\nLoaded pages:", len(self.pages))
 
+    def make_form_fields(self, title, data, parent_key, parent_frame):
+        """
+        Create fields for a nested dictionary, but place them in parent_frame.
+        Returns the sub-frame that holds actual fields.
 
-    def make_form_fields(self, title, data, parent_key):
-        """ Create fields for a nested dictionary
+        The old code created 'new_frame' inside self.form_frame.
+        Now we create 'new_frame' inside parent_frame.
         """
         item_has_lists = False
-        
-        # Create new frame
-        new_frame = ctk.CTkFrame(self.form_frame)
-        new_frame.grid(row=0, #self.frame_row_counter,
-                       column=0,
+
+        # We can place a sub-container inside parent_frame
+        new_frame = ctk.CTkFrame(parent_frame, fg_color="transparent")
+        new_frame.grid(row=self.frame_row_counter, column=0,
                        sticky="nsew",
                        padx=self.frame_x_padding,
                        pady=self.frame_y_padding)
         self.configure_frame_columns(new_frame, [1, 3, 0])
         self.frame_row_counter += 1
 
-        # Create title label for frame
-        title_label = ctk.CTkLabel(new_frame,
-                                   text=title,
-                                   font=(self.item_font, self.title_font_size))
-        title_label.grid(row=0,
-                         column=0,
-                         sticky="w",
+        # Title label
+        title_label = ctk.CTkLabel(
+            new_frame,
+            text=title,
+            font=(self.item_font, self.title_font_size)
+        )
+        title_label.grid(row=0, column=0, sticky="w",
                          padx=self.item_x_padding,
                          pady=self.item_y_padding)
         self.form_data[parent_key]["row_counter"] += 1
 
-        # Handle the regular fields, collect the additional fields
+        # Additional fields checks
         additional_manifest_fields = "not found"
         additional_samplesheet_fields = "not found"
+
         for subkey, subvalue in data.items():
             if subkey == self.special_fieldnames['manifest']:
                 additional_manifest_fields = subvalue
             elif subkey == self.special_fieldnames['samplesheet']:
                 additional_samplesheet_fields = subvalue
             else:
-                self.create_nested_item(parent_key, subkey, subvalue, new_frame)
+                # Normal nested item
+                self.create_nested_item(parent_key, subkey, subvalue, new_frame)  # (SKIPPED method code)
                 if isinstance(subvalue, list):
-                    item_has_lists = True   
+                    item_has_lists = True
 
-        # Handle the additional samplesheet fields
+        # Next, handle 'additional_samplesheet_fields'
         if not additional_samplesheet_fields == "not found":
             self.form_data[parent_key]["items"]["additional_samplesheet_fields"] = {
                 'counter': 0,
             }
-
-            # Create a frame for the additional samplesheet fields
             additional_samplesheet_frame = ctk.CTkFrame(new_frame, fg_color="transparent")
-            additional_samplesheet_frame.grid(row=self.form_data[parent_key]["row_counter"],
-                                                column=0,
-                                                sticky="nsew",
-                                                padx=0,
-                                                pady=0,
-                                                columnspan=3)
+            additional_samplesheet_frame.grid(
+                row=self.form_data[parent_key]["row_counter"],
+                column=0, sticky="nsew", padx=0, pady=0, columnspan=3
+            )
             self.configure_frame_columns(additional_samplesheet_frame, [1, 2, 0])
             self.form_data[parent_key]["row_counter"] += 1
 
-            # Create a title label & help button
-            title_label = ctk.CTkLabel(additional_samplesheet_frame,
-                                        text="Additional Fields (Samplesheet)",
-                                        font=(self.item_font, self.item_font_size+2))
-            title_label.grid(row=0,
-                                column=0,
-                                sticky="w",
-                                padx=self.item_x_padding,
-                                pady=(20, self.item_y_padding))
+            # Title + help
+            title_label = ctk.CTkLabel(
+                additional_samplesheet_frame,
+                text="Additional Fields (Samplesheet)",
+                font=(self.item_font, self.item_font_size+2)
+            )
+            title_label.grid(row=0, column=0, sticky="w",
+                             padx=self.item_x_padding,
+                             pady=(20, self.item_y_padding))
 
-            help_button = ctk.CTkButton(additional_samplesheet_frame,
-                                        text="?",
-                                        width=30,
-                                        command=lambda: self.show_help(self.special_fieldnames['samplesheet']))
-            help_button.grid(row=0,
-                                column=2,
-                                sticky="w",
-                                pady=(20, self.item_y_padding),
-                                padx=self.item_x_padding)
-            
-            # Create static fields for the items already existing in the config
+            help_button = ctk.CTkButton(
+                additional_samplesheet_frame,
+                text="?",
+                width=30,
+                command=lambda: self.show_help(self.special_fieldnames['samplesheet'])
+            )
+            help_button.grid(row=0, column=2, sticky="w",
+                             pady=(20, self.item_y_padding),
+                             padx=self.item_x_padding)
+
+            # Existing fields
             if isinstance(additional_samplesheet_fields, dict):
                 for field, value in additional_samplesheet_fields.items():
                     self.create_additional_field(
@@ -521,11 +486,10 @@ class ConfigFormPage(BasePage):
                         field_name=field,
                         field_value=value
                     )
-                    # Counter is incremented in create_additional_field
-                    # self.form_data[parent_key]["items"]["additional_samplesheet_fields"]['counter'] += 1
                     if isinstance(value, list):
                         item_has_lists = True
-            # Create a button to allow users to add more fields
+
+            # Button to add new
             add_samplesheet_field_button = ctk.CTkButton(
                 new_frame,
                 text="Add Samplesheet Field",
@@ -534,53 +498,48 @@ class ConfigFormPage(BasePage):
                                                       additional_samplesheet_frame,
                                                       'additional_samplesheet_fields')
             )
-            add_samplesheet_field_button.grid(row=self.form_data[parent_key]["row_counter"],
-                                                column=0,
-                                                sticky="w",
-                                                padx=self.item_x_padding,
-                                                pady=(self.item_y_padding,3*self.item_y_padding))
+            add_samplesheet_field_button.grid(
+                row=self.form_data[parent_key]["row_counter"],
+                column=0, sticky="w",
+                padx=self.item_x_padding,
+                pady=(self.item_y_padding, 3*self.item_y_padding)
+            )
             self.form_data[parent_key]["row_counter"] += 1
 
-        # Handle the additional manifest fields
+        # Next, handle 'additional_manifest_fields'
         if not additional_manifest_fields == "not found":
             self.form_data[parent_key]["items"]["additional_manifest_fields"] = {
                 'counter': 0,
             }
-
-
-            # Create a frame for the additional manifest fields
             additional_manifest_frame = ctk.CTkFrame(new_frame, fg_color="transparent")
-            additional_manifest_frame.grid(row=self.form_data[parent_key]["row_counter"],
-                                            column=0,
-                                            sticky="nsew",
-                                            padx=0,
-                                            pady=0,
-                                            columnspan=3)
+            additional_manifest_frame.grid(
+                row=self.form_data[parent_key]["row_counter"],
+                column=0, sticky="nsew", padx=0, pady=0, columnspan=3
+            )
             self.form_data[parent_key]["row_counter"] += 1
             self.configure_frame_columns(additional_manifest_frame, [1, 2, 0])
-            
 
-            # Create a title label & help button
-            title_label = ctk.CTkLabel(additional_manifest_frame,
-                                        text="Additional Fields (Manifest)",
-                                        font=(self.item_font, self.item_font_size+2))
-            title_label.grid(row=0,
-                                column=0,
-                                sticky="w",
-                                padx=self.item_x_padding,
-                                pady=(20, self.item_y_padding))
+            # Title + help
+            title_label = ctk.CTkLabel(
+                additional_manifest_frame,
+                text="Additional Fields (Manifest)",
+                font=(self.item_font, self.item_font_size+2)
+            )
+            title_label.grid(row=0, column=0, sticky="w",
+                             padx=self.item_x_padding,
+                             pady=(20, self.item_y_padding))
 
-            help_button = ctk.CTkButton(additional_manifest_frame,
-                                        text="?",
-                                        width=30,
-                                        command=lambda: self.show_help(self.special_fieldnames['manifest']))
-            help_button.grid(row=0,
-                                column=2,
-                                sticky="e",
-                                pady=(20, self.item_y_padding),
-                                padx=self.item_x_padding)
+            help_button = ctk.CTkButton(
+                additional_manifest_frame,
+                text="?",
+                width=30,
+                command=lambda: self.show_help(self.special_fieldnames['manifest'])
+            )
+            help_button.grid(row=0, column=2, sticky="e",
+                             pady=(20, self.item_y_padding),
+                             padx=self.item_x_padding)
 
-            # Create static fields for the items already existing in the config
+            # Existing fields
             if isinstance(additional_manifest_fields, dict):
                 for field, value in additional_manifest_fields.items():
                     self.create_additional_field(
@@ -590,59 +549,75 @@ class ConfigFormPage(BasePage):
                         field_name=field,
                         field_value=value
                     )
-                    # Counter is incremented in create_additional_field
-                    # self.form_data[parent_key]["items"]["additional_manifest_fields"]['counter'] += 1
                     if isinstance(value, list):
                         item_has_lists = True
-            # Create a button to allow users to add more fields
+
+            # Button to add new
             add_manifest_field_button = ctk.CTkButton(
                 new_frame,
                 text="Add Manifest Field",
                 width=15,
-                command=self.additional_field_command(parent_key,
-                                                        additional_manifest_frame,
-                                                        'additional_manifest_fields')
+                command=self.additional_field_command(
+                    parent_key,
+                    additional_manifest_frame,
+                    'additional_manifest_fields'
+                )
             )
-            add_manifest_field_button.grid(row=self.form_data[parent_key]["row_counter"],
-                                           column=0,
-                                           sticky="w",
-                                           padx=self.item_x_padding,
-                                           pady=(self.item_y_padding, 3*self.item_y_padding))
+            add_manifest_field_button.grid(
+                row=self.form_data[parent_key]["row_counter"],
+                column=0, sticky="w",
+                padx=self.item_x_padding,
+                pady=(self.item_y_padding, 3*self.item_y_padding)
+            )
             self.form_data[parent_key]["row_counter"] += 1
 
-        # Add the asterisk label
         if item_has_lists:
-            self.create_asterisk_label(new_frame,
-                                       self.form_data[parent_key]["row_counter"])
+            self.create_asterisk_label(
+                new_frame,
+                self.form_data[parent_key]["row_counter"]
+            )
 
-        # Put it in our pagination list
-        self.pagination_list.append(new_frame)
-
-        # Initially hide the frame
-        self.update_idletasks()
-        self.toggle_frame_visibility(new_frame)
         return new_frame
-        
 
     def create_list_of_nested_items(self, key, itemlist):
-        """ For a list of nested items, create a frame for each item
-        """
+        """ For a list of nested items, create one *page* per item. """
         counter = 0
-        # Create a numbered frame with entry fields for each item
         for item in itemlist:
             counter += 1
             numbered_key = f"{key} #{counter}"
-            self.form_data[numbered_key] = {"type": "nested_numbered",
-                                            "frame": None,
-                                            "row_counter": 0,
-                                            "items": {}}
-            title = f"{YAML_PRETTYNAMES[key]} #{counter}"
-            new_frame = self.make_form_fields(title=title,
-                                              data=item,
-                                              parent_key=numbered_key)
-            self.update_idletasks()
+            self.form_data[numbered_key] = {
+                "type": "nested_numbered",
+                "frame": None,
+                "row_counter": 0,
+                "items": {}
+            }
+
+            title = f"{YAML_PRETTYNAMES.get(key, key)} #{counter}"
+
+            # Make a new page for this item
+            page_frame = self.create_page_frame(title=title)
+            self.pages.append(page_frame)
+
+            # Then build the form fields inside it
+            new_frame = self.make_form_fields(
+                title=title,
+                data=item,
+                parent_key=numbered_key,
+                parent_frame=page_frame
+            )
             self.form_data[numbered_key]["frame"] = new_frame
 
+    # ----------------------------------------------------------
+    # --- BELOW ARE THE METHODS YOU SAID YOU WILL APPEND ---
+    # (create_string_entry, create_single_filepicker, 
+    #  create_multi_filepicker, create_directory_picker, 
+    #  create_core_item, create_nested_item, remove_additional_field,
+    #  create_additional_field, pick_multifile, pick_file, clear_files,
+    #  extract_data, pretty_print_form_data, save_config,
+    #  go_to_submission, initialize)
+    #
+    # They remain unchanged, so we skip them here.
+    # ----------------------------------------------------------
 
     def create_string_entry(self, frame, row_count, parent_key, key, value, is_additonal=False):
         """ Create a label and a string entry field.
@@ -1455,7 +1430,15 @@ class ConfigFormPage(BasePage):
         # Step 1: Display current configuration
         #self.pretty_print_form_data(self.form_data)
         output = self.extract_data(self.form_data)
+
+        print("form data is\n")
+        print(self.form_data)
+        print("\npretty form data is")
         self.pretty_print_form_data(self.form_data)
+        print("\n")
+        print("output is")
+        print(output)
+        print("\n")
 
         output['submission_outline'] = []
         for key, value in self.controller.submission_items.items():
@@ -1501,39 +1484,9 @@ class ConfigFormPage(BasePage):
             self.controller.show_page("LoadConfigPage")
 
 
-    #ef initialize(self):
-    #   """Called whenever controller renders the page"""
-    #   self.config_saved = False
-    #   form_path = self.controller.config_items["form_path"]
-    #   self.load_form(form_path)
-    #   self.render_form()
-
     def initialize(self):
         """Called whenever controller renders the page"""
         self.config_saved = False
-
-        # Hide the main frame
-        self.main_frame.grid_remove()
-
-        # Show placeholder
-        self.placeholder_label = ctk.CTkLabel(
-            self,
-            text="Creating form. This might take a while if you have a high number of items.",
-            font=(self.title_font, self.title_font_size)
-        )
-        self.placeholder_label.grid(row=1, column=0, padx=20, pady=20, sticky="nsew")
-
-        # Schedule the load_form and render_form to run after a short delay
-        self.after(100, self._load_and_render_form)
-
-    def _load_and_render_form(self):
-        """Loads the form and updates the UI."""
         form_path = self.controller.config_items["form_path"]
         self.load_form(form_path)
         self.render_form()
-
-        # Destroy placeholder and show main frame
-        self.placeholder_label.destroy()
-        self.main_frame.grid()
-        self.update_page_indicator()
-

@@ -67,7 +67,8 @@ A docker container based on the main branch is available [through DockerHub](htt
 ## Local Installation - Linux
 - Make sure the following software is installed
   - Python 3.8 or higher
-  - Java 17 or higher)
+  - Java 17 or higher (e.g. via `sudo apt install openjdk-21-jre-headless`)
+  - (only for the GUI) tkinter (e.g. via `apt install python3-tk`)
   - [wheel](https://pypi.org/project/wheel/) for Python
 - Download a [release](https://github.com/metagenomics/submg/releases) or clone the repository via: `git clone https://github.com/metagenomics/submg/`
   - If you downloaded a release:
@@ -77,7 +78,7 @@ A docker container based on the main branch is available [through DockerHub](htt
     - Switch into the directory that you just cloned
 - Run `python -m pip install .`
 - Run `submg-cli download_webin` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli).
-- Use `submg-gui` to launch a graphic user interface or `submg-cli` to use the command line interface
+- Use `submg-cli` to run the command line interface or `submg-gui` to run the graphic user interface (not recommended for submitting large datasets)
 
 ## Local Installation - Windows (GUI)
 If you only intend on using the graphic user interface (GUI), you can download a release from 1.0.0 upwards and launch the executable (`submg_win_gui.exe`).

@@ -6,52 +6,106 @@ import signal
 from submg.modules import loggingC
 from submg.modules.statConf import staticConfig
 
+import platform
+def get_persistent_storage_path():
+    """Returns the appropriate persistent storage directory based on the OS."""
+    system = platform.system()
+    if system == "Windows":
+        return os.path.join(os.getenv("APPDATA"), "submg")
+    elif system == "Darwin":  # macOS
+        return os.path.join(os.path.expanduser("~/Library/Application Support"), "submg")
+    else:  # Linux and other Unix-like OS
+        return os.path.join(os.path.expanduser("~/.config"), "submg")
+
+# def webin_cli_jar_available():
+#     """ Check if the Webin CLI JAR file is present in the directory of this
+#         script. Then check if it corresponds to the expected version.
+#     """
+#     script_dir = os.path.dirname(os.path.abspath(__file__))
+#     jar_files = glob.glob(os.path.join(script_dir, 'webin*.jar'))
+#     version_string = staticConfig.webin_cli_version
+#     expected_filename = f"webin-cli-{version_string}.jar"
+#     # Check if any JAR file corresponds to this version
+#     for jar_file in jar_files:
+#         if os.path.basename(jar_file) == expected_filename:
+#             return True
+#     # Log warning (either no JAR file found or wrong version)
+#     if len(jar_files) == 0:
+#         warn = (f"WARNING: webin-cli .jar file not found in "
+#                 f"{os.path.abspath(script_dir)}. ")
+#     else:
+#         warn = (f"WARNING: webin-cli .jar file found in "
+#                 f"{os.path.abspath(script_dir)}\n "
+#                 f"but it does not match the expected version "
+#                 f"{version_string}. ")
+#     warn += (f"To download webin-cli, use the GUI or run the following "
+#              f"command:\nsubmg-cli download_webin")
+#     print(warn) # Cannot log because logging might not have been set up yet
+#     return False
 
 def webin_cli_jar_available():
-    """ Check if the Webin CLI JAR file is present in the directory of this
-        script. Then check if it corresponds to the expected version.
+    """Check if the Webin CLI JAR file is present in the directory of this script.
+       Then check if it corresponds to the expected version.
     """
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    jar_files = glob.glob(os.path.join(script_dir, 'webin*.jar'))
+    storage_dir = get_persistent_storage_path()
+    jar_files = glob.glob(os.path.join(storage_dir, 'webin*.jar'))
     version_string = staticConfig.webin_cli_version
     expected_filename = f"webin-cli-{version_string}.jar"
-    # Check if any JAR file corresponds to this version
+    
     for jar_file in jar_files:
         if os.path.basename(jar_file) == expected_filename:
             return True
-    # Log warning (either no JAR file found or wrong version)
+    
     if len(jar_files) == 0:
-        warn = (f"WARNING: webin-cli .jar file not found in "
-                f"{os.path.abspath(script_dir)}. ")
+        warn = (f"WARNING: webin-cli .jar file not found in {storage_dir}. ")
     else:
-        warn = (f"WARNING: webin-cli .jar file found in "
-                f"{os.path.abspath(script_dir)}\n "
-                f"but it does not match the expected version "
-                f"{version_string}. ")
-    warn += (f"To download webin-cli, use the GUI or run the following "
-             f"command:\nsubmg-cli download_webin")
-    print(warn) # Cannot log because logging might not have been set up yet
+        warn = (f"WARNING: webin-cli .jar file found in {storage_dir}\n "
+                f"but it does not match the expected version {version_string}. ")
+    warn += (f"To download webin-cli, use the GUI or run the following command:\nsubmg-cli download_webin")
+    print(warn)
     return False
 
 
-def find_webin_cli_jar():
-    """ Find the Webin CLI JAR file in the directory of this script.
-    """
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    #parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
+# def find_webin_cli_jar():
+#     """ Find the Webin CLI JAR file in the directory of this script.
+#     """
+#     script_dir = os.path.dirname(os.path.abspath(__file__))
+#     #parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
     
-    jar_files = glob.glob(os.path.join(script_dir, 'webin*.jar'))
+#     jar_files = glob.glob(os.path.join(script_dir, 'webin*.jar'))
+    
+#     if len(jar_files) == 1:
+#         return jar_files[0]
+#     elif len(jar_files) > 1:
+#         err = f"ERROR: Multiple webin-cli .jar files found in {os.path.abspath(script_dir)}. Please ensure there's only one."
+#         loggingC.message(err, threshold=-1)
+#         exit(1)
+#     else:
+#         err = f"ERROR: webin_cli .jar file not found in {os.path.abspath(script_dir)}.\nYou can download the .jar by running the webin_downloader.py file in the submg/modules directory or manually from the ENA website."
+#         loggingC.message(err, threshold=-1)
+#         exit(1)
+
+
+
+
+
+def find_webin_cli_jar():
+    """Finds the Webin CLI JAR file in the persistent storage directory."""
+    storage_dir = get_persistent_storage_path()
+    jar_files = glob.glob(os.path.join(storage_dir, 'webin*.jar'))
     
     if len(jar_files) == 1:
         return jar_files[0]
     elif len(jar_files) > 1:
-        err = f"ERROR: Multiple webin-cli .jar files found in {os.path.abspath(script_dir)}. Please ensure there's only one."
+        err = f"ERROR: Multiple webin-cli .jar files found in {storage_dir}. Please ensure there's only one."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     else:
-        err = f"ERROR: webin_cli .jar file not found in {os.path.abspath(script_dir)}.\nYou can download the .jar by running the webin_downloader.py file in the submg/modules directory or manually from the ENA website."
+        err = f"ERROR: webin-cli .jar file not found in {storage_dir}.\nYou can download the .jar by running the webin_downloader.py file in the submg/modules directory or manually from the ENA website."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
+
+
 
 
 def __webin_cli_validate(manifest,
