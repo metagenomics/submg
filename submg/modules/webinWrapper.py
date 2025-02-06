@@ -16,7 +16,7 @@ def get_persistent_storage_path():
     elif system == "Darwin":  # macOS
         return os.path.join(os.path.expanduser("~/Library/Application Support"), "submg")
     else:  # Linux and other Unix-like OS
-        return os.path.join(os.path.expanduser("~/.config"), "submg")
+        return os.path.join(os.path.expanduser("~/.local/share/submg/"), "submg")
 
 # def webin_cli_jar_available():
 #     """ Check if the Webin CLI JAR file is present in the directory of this
