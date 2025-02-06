@@ -2,6 +2,7 @@ import subprocess
 import os
 import glob
 import signal
+import sys
 
 from submg.modules import loggingC
 from submg.modules.statConf import staticConfig

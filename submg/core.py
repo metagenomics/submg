@@ -333,9 +333,7 @@ def submit(args, listener=None):
     Args:
         args (argparse.Namespace): The arguments object.
     """
-    print("I AM RUNNING SUBMIT!")
     loggingC.set_up_logging(args.logging_dir, args.verbosity, listener)
-    print("I HAVE SET UP LOGGING!")
     
     if args.timestamps or (args.timestamps is None and args.development_service):
         utility.set_up_timestamps(vars(args))
@@ -344,7 +342,6 @@ def submit(args, listener=None):
         loggingC.message("ERROR: The --minitest mode cannot be used for a submission to the ENA production server.",
                          threshold=-1)
         
-    print("TRY BLOCK")
     try:
         sver = staticConfig.submg_version
         wver = staticConfig.webin_cli_version
