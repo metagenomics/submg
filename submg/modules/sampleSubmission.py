@@ -174,7 +174,7 @@ def submit_samples(config: dict,
     # Make a samplesheet and stage it
     loggingC.message(">Preparing samplesheet for biological samples", threshold=0)
     sample_staging_dir = os.path.join(staging_dir, 'biological_samples')
-    os.makedirs(sample_staging_dir, exist_ok=False)
+    os.makedirs(sample_staging_dir, exist_ok=True)
     samplesheet = __prep_samplesheet(config,
                                      sample_staging_dir)
         
@@ -182,7 +182,7 @@ def submit_samples(config: dict,
     # Upload the samplesheet
     loggingC.message(">Uploading samplesheet for biological samples", threshold=0)
     sample_logging_dir = os.path.join(logging_dir, 'biological_samples')
-    os.makedirs(sample_logging_dir, exist_ok=False)
+    os.makedirs(sample_logging_dir, exist_ok=True)
     sample_accessions = __submit_samplesheet(samplesheet,
                                      sample_staging_dir,
                                      sample_logging_dir,

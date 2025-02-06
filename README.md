@@ -64,7 +64,15 @@ Please Note
 # Installation
 A docker container based on the main branch is available [through DockerHub](https://hub.docker.com/r/metagenomics/submg): `docker pull ttubb/submg`
 
-## Local Installation - Linux
+## Local Installation - Linux (GUI Standalone)
+If you only intend on using the graphic user interface (GUI), you can download an executable from the [releases page](https://github.com/metagenomics/submg/releases) (`submg_linux_gui`).
+
+- Make sure the following software is installed
+  - Java 17 or higher (e.g. via `sudo apt install openjdk-21-jre-headless`)
+  - Python 3.8 or higher
+  - Python-Tk (e.g. via `apt-get install python3-tk`)
+
+## Local Installation - Linux (Command Line Interface)
 - Make sure the following software is installed
   - Python 3.8 or higher
   - Java 17 or higher (e.g. via `sudo apt install openjdk-21-jre-headless`)
@@ -79,19 +87,31 @@ A docker container based on the main branch is available [through DockerHub](htt
 - Run `python -m pip install .`
 - Run `submg-cli download_webin` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli).
 - Use `submg-cli` to run the command line interface or `submg-gui` to run the graphic user interface (not recommended for submitting large datasets)
+  - Make sure to download ENA's webin-CLI, either through the gui or by running `submg-cli download_webin`
 
-## Local Installation - Windows (GUI)
-If you only intend on using the graphic user interface (GUI), you can download a release from 1.0.0 upwards and launch the executable (`submg_win_gui.exe`).
+## Local Installation - Windows (GUI Standalone)
+If you only intend on using the graphic user interface (GUI), you can download an executable from the [releases page](https://github.com/metagenomics/submg/releases) (`submg_win_gui.exe`).
 
 - Make sure the following software is installed
   - Java 17 or higher. You can download OpenJDK installers from different sources, e.g.:
     - [Eclipse/Adoptium](https://adoptopenjdk.net/)
     - [Amazon/Corretto](https://aws.amazon.com/de/corretto/)
     - [Oracle](https://jdk.java.net/)
+  - [Python 3.8 or higher](https://www.python.org/downloads/windows/)
+    - Make sure to check the `tcl/tk` box during installation
 
 ## Local Installation - Windows (Command Line Interface)
-
-## Local Installation - MacOS
+- Make sure the following software is installed
+  - Java 17 or higher. You can download OpenJDK installers from different sources, e.g.:
+    - [Eclipse/Adoptium](https://adoptopenjdk.net/)
+    - [Amazon/Corretto](https://aws.amazon.com/de/corretto/)
+    - [Oracle](https://jdk.java.net/)
+  - [Python 3.8 or higher](https://www.python.org/downloads/windows/)
+    - Make sure to check the `tcl/tk` box during installation
+  - [wheel](https://pypi.org/project/wheel/) for Python (install via `python -m pip install wheel`)
+- Download a [release](https://github.com/metagenomics/submg/releases) or clone the repository via: `git clone https://github.com/metagenomics/submg/` (you will need [git for windows](https://git-scm.com/downloads/win) to do the latter)
+- Open a command prompt and run `python -m pip install .`
+  - Make sure to download ENA's webin-CLI, either through the gui or by running `submg-cli download_webin`
 
 # Usage
 subMG is intended to submit data related to a *single* (co-)assembly. All samples, sequncing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run subMG once for each assembly.
@@ -108,15 +128,15 @@ export ENA_PASSWORD=your_ena_password
 
 3 - Create a template config file using:
 ```
-submg-cli makecfg --outfile /path/to/your/config.yaml --submit_samples 2 --submit_paired_end_reads 2 --submit_assembly --submit_bins
+submg-cli makecfg --outfile /path/to/your/config.yaml --submit_samples 2 --submit_paired_end_reads 2 --submit_assembly --submit_bins --coverage_from_bam
 ```
 4 - Fill out the config file (it contains explanations and examples for each line)
 
-5 - Submit your data to the development server using:
+5 - Do a test submission of to the [ENA Development Service](#ena-development-service):
 ```
 submg-cli submit --config /path/to/your/config.yaml --staging_dir /path/to/empty/directory1 --logging_dir /path/to/empty/directory2 --submit_samples --submit_reads --submit_assembly --submit_bins
 ```
-6 - If there are no errors, create a study object through the web interface of the [ENA production server](https://www.ebi.ac.uk/ena/submit/webin/login)
+6 - If there are no errors, create a study object through the web interface of the [ENA production service](https://www.ebi.ac.uk/ena/submit/webin/login)
 
 7 - Submit your data to the production server using
 ```
