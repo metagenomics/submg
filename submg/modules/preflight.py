@@ -867,6 +867,23 @@ def preflight_checks(arguments: dict) -> None:
     # Read data from the YAML config file
     config = utility.read_yaml(arguments['config'])
 
+    # Check if webin-cli can be found
+    loggingC.message(f">Checking if webin-cli can be found", threshold=1)
+    find_webin_cli_jar()
+
+    # Check for login data
+    utility.get_login()
+
+   # Create staging dir if it doesn't exist
+    if not os.path.exists(arguments['staging_dir']):
+        os.makedirs(arguments['staging_dir'])
+
+    # Check if staging dir is empty
+    if os.listdir(arguments['staging_dir']):
+        err = f"\nERROR: Staging directory is not empty: {arguments['staging_dir']}"
+        loggingC.message(err, threshold=-1)
+        exit(1)
+
     # Skip checks if requested
     if arguments['skip_checks'] == True:
         message = f"WARNING: Skipping ALL preflight checks."
@@ -889,23 +906,6 @@ def preflight_checks(arguments: dict) -> None:
     __check_bins(arguments, config, testmode)
     __check_mags(arguments, config, testmode)
     __check_coverage(arguments, config, testmode)
-
-    # Check if webin-cli can be found
-    loggingC.message(f">Checking if webin-cli can be found", threshold=1)
-    find_webin_cli_jar()
-
-    # Check for login data
-    utility.get_login()
-
-    # Create staging dir if it doesn't exist
-    if not os.path.exists(arguments['staging_dir']):
-        os.makedirs(arguments['staging_dir'])
-
-    # Check if staging dir is empty
-    if os.listdir(arguments['staging_dir']):
-        err = f"\nERROR: Staging directory is not empty: {arguments['staging_dir']}"
-        loggingC.message(err, threshold=-1)
-        exit(1)
 
     if checks_failed:
         msg = f"\nSome preflight checks failed. If you are sure that the data " \
