@@ -8,6 +8,8 @@ In this tutorial, you will
 - fill the form with all the (meta)data needed for submission
 - use subMG to upload the toy dataset to the ENA development service.
 
+**Important**: You will need an ENA account fort his tutorial. Newly created accounts cannot perform test submissions right away. Submission to the development service only works the after ENA development server's database has been synced, which occurs sometime after midnight GMT. If you plan on doing this tutorial and do not have an ENA account, you will need to create one and wait for the synchronization to happen before proceeding with the tutorial.
+
 ## Installation
 Please refer to the [Installation](https://github.com/metagenomics/submg/#installation) section of the subMG README for instructions on how to install subMG on your operating system. For this tutorial, you need to install the CLI version of the tool. Make sure to activate your python virtual environment if you installed the tool in a venv.
 
@@ -16,14 +18,8 @@ ENA provides a development service to trial your submission before uploading you
 
 ## ENA Account
 An ENA account is required for data submission. If you do not have an account already, you can register at [the EBI website](https://www.ebi.ac.uk/ena/submit/webin).
-```
-Fragen an Dorian:
 
-- Bitte lege zuerst einen Testaccount beim [Development Service](https://wwwdev.ebi.ac.uk/ena/submit/webin/accountInfo) an. Funktioniert das?
-    - Kannst du dich mit diesem Account auf der [Dev Homepage](https://wwwdev.ebi.ac.uk/ena/submit) einloggen?
-- Bitte lege anschließend einen Account auf https://www.ebi.ac.uk/ena/submit/webin an
-    - Kannst dich mit diesem Account DIREKT (ohne Wartezeit) beim [Development Service](https://wwwdev.ebi.ac.uk/ena/submit) einloggen?
-```
+**Important**: Newly created accounts cannot perform test submissions ([see above](#submg-tutorial)).
 
 ## Creating a Study
 If a study is already registered with your ENA account, you can use it for this tutorial. Since we are only using the development service here, your existing study will not be affected.
