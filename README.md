@@ -78,6 +78,7 @@ If you only intend on using the graphic user interface (GUI), you can download a
   - Java 17 or higher (e.g. via `sudo apt install openjdk-21-jre-headless`)
   - (only for the GUI) tkinter (e.g. via `apt install python3-tk`)
   - [wheel](https://pypi.org/project/wheel/) for Python
+- It is recommended to use a [python virtual environment](https://docs.python.org/3/library/venv.html) for the remaining steps
 - Download a [release](https://github.com/metagenomics/submg/releases) or clone the repository via: `git clone https://github.com/metagenomics/submg/`
   - If you downloaded a release:
     - Untar/unzip the file
@@ -110,8 +111,10 @@ If you only intend on using the graphic user interface (GUI), you can download a
     - Make sure to check the `tcl/tk` box during installation
   - [wheel](https://pypi.org/project/wheel/) for Python (install via `python -m pip install wheel`)
 - Download a [release](https://github.com/metagenomics/submg/releases) or clone the repository via: `git clone https://github.com/metagenomics/submg/` (you will need [git for windows](https://git-scm.com/downloads/win) to do the latter)
+- It is recommended to use a [python virtual environment](https://docs.python.org/3/library/venv.html) for the remaining steps
 - Open a command prompt and run `python -m pip install .`
-  - Make sure to download ENA's webin-CLI, either through the gui or by running `submg-cli download-webin`
+- Make sure to download ENA's webin-CLI, either through the gui or by running `submg-cli download-webin`
+
 
 # Usage
 subMG is intended to submit data related to a *single* (co-)assembly. All samples, sequncing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run subMG once for each assembly.
