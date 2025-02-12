@@ -166,9 +166,9 @@ ASSEMBLY:
 ```
 
 ### Binned Contigs
-We don't provide a list of individual files for binned contigs, but instead specify a directory. It is important that *every* file in this directory represents a set of binned contigs. subMG comes with a minimal example in the `examples/data/3bins` directory.
+We don't provide a list of individual files for binned contigs, but instead specify a directory. It is important that *every* file in this directory represents a set of binned contigs. subMG comes with a minimal example in the `examples/data/2bins` directory.
 
-For binned contigs, it is mandatory to provide information about the quality of the resulting metagenomic bins. The completeness software field should indicate which software was used to compute this. Furthermore, we need to supply a `.tsv` table with quality information for all bins. It needs to contain the columns `Bin_id`, `Completeness` and `Contamination`. The bin ids have to correspond to the basenames of files in the binned contigs directory. [CheckM](https://github.com/Ecogenomics/CheckM) uses this format by default for the tabular output. For the tutorial we can use the file at `examples/data/checkm_quality_3bins.tsv`
+For binned contigs, it is mandatory to provide information about the quality of the resulting metagenomic bins. The completeness software field should indicate which software was used to compute this. Furthermore, we need to supply a `.tsv` table with quality information for all bins. It needs to contain the columns `Bin_id`, `Completeness` and `Contamination`. The bin ids have to correspond to the basenames of files in the binned contigs directory. [CheckM](https://github.com/Ecogenomics/CheckM) uses this format by default for the tabular output. For the tutorial we can use the file at `examples/data/checkm_quality_2bins.tsv`
 
 We need to submit [valid taxonomic information](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html) for our metagenomic bins. We can provide this information to subMG as a `.tsv` table with the columns 'Bin_id', 'Tax_id' and 'Scientific_name' in the `MANUAL_TAXONOMY_FILE` field. The easier option is usally to provide one ore more tables with NCBI taxonomy data in the `NCBI_TAXONOMY_FILES` field. The output of [GTDB-Tk's](https://github.com/Ecogenomics/GTDBTk) `gtdb_to_ncbi_majority_vote.py` script can be used here. subMG will then derive the correct taxonomy for submission automatically. For more information about the topic, consult the [Taxonomy section of the subMG README](https://github.com/metagenomics/submg/#taxonomy-assignment). For our toy dataset, we can use the two taxonomy files located at `examples/data/taxonomy/archaea_taxonomy.tsv` and `examples/data/taxonomy/bacteria_taxonomy.tsv`.
 
@@ -178,9 +178,9 @@ Since we chose the `--known_coverage` option instead of `--coverage_from_bam`, w
 
 ```
 BINS:
-  BINS_DIRECTORY: "<your_submg_directory>/examples/data/3bins"
+  BINS_DIRECTORY: "<your_submg_directory>/examples/data/2bins"
   COMPLETENESS_SOFTWARE: "CheckM"
-  QUALITY_FILE: "<your_submg_directory>/examples/data/checkm_quality_3bins.tsv"
+  QUALITY_FILE: "<your_submg_directory>/examples/data/checkm_quality_2bins.tsv"
   NCBI_TAXONOMY_FILES: ["<your_submg_directory>/examples/data/taxonomy/archaea_taxonomy.tsv", "<your_submg_directory>/examples/data/taxonomy/bacteria_taxonomy.tsv"]
   MANUAL_TAXONOMY_FILE:
   BINNING_SOFTWARE: "metabat2"
