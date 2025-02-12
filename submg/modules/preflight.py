@@ -858,9 +858,6 @@ def preflight_checks(arguments: dict) -> None:
     Returns:
         The config file as a dictionary.
     """
-    msg = f">Running preflight checks. You can skip these by using the --skip_checks flag."
-    loggingC.message(msg, threshold=0)
-
     # Check if config file exists
     if not os.path.isfile(arguments['config']):
         err = f"\nERROR: The config file '{arguments['config']}' does not exist."
@@ -877,6 +874,9 @@ def preflight_checks(arguments: dict) -> None:
         time.sleep(delay)
         loggingC.message(message, threshold=0)
         return config
+
+    msg = f">Running preflight checks. You can skip these by using the --skip_checks flag."
+    loggingC.message(msg, threshold=0)
 
     # Check if the config file was filled out correctly
     testmode = arguments['development_service']
