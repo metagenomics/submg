@@ -150,7 +150,7 @@ def __check_study(config: dict,
                        "cannot be found on the ENA server. This might be okay " \
                        "if you just created this study on the development " \
                        "server. If that is the case, consider using " \
-                       "--skip_checks"
+                       "--skip-checks"
                 loggingC.message(wrn, threshold=-1)
                 checks_failed = True
         else:
@@ -277,7 +277,7 @@ def __check_read_type(paired: bool,
             if not enaSearching.sample_accession_exists(sample_accession, False):
                 if not enaSearching.sample_accession_exists(sample_accession, testmode):
                     if testmode:
-                        wrn = f"\nWARNING: The sample accession '{sample_accession}' cannot be found on the ENA server. This might be okay if you just created it on the development server. Consider using --skip_checks"
+                        wrn = f"\nWARNING: The sample accession '{sample_accession}' cannot be found on the ENA server. This might be okay if you just created it on the development server. Consider using --skip-checks"
                         loggingC.message(wrn, threshold=-1)
                         checks_failed = True
                     else:
@@ -491,7 +491,7 @@ def __check_assembly(arguments: dict,
                                    "be found on the ENA server. This might be " \
                                    "okay if you just created it on the " \
                                    "development server. Consider using " \
-                                   "--skip_checks"
+                                   "--skip-checks"
                             loggingC.message(wrn, threshold=-1)
                             checks_failed = True
                         else:
@@ -892,7 +892,7 @@ def preflight_checks(arguments: dict) -> None:
         loggingC.message(message, threshold=0)
         return config
 
-    msg = f">Running preflight checks. You can skip these by using the --skip_checks flag."
+    msg = f">Running preflight checks. You can skip these by using the --skip-checks flag."
     loggingC.message(msg, threshold=0)
 
     # Check if the config file was filled out correctly
@@ -910,7 +910,7 @@ def preflight_checks(arguments: dict) -> None:
     if checks_failed:
         msg = f"\nSome preflight checks failed. If you are sure that the data " \
                 "you provided is correct, you can skip these checks by using " \
-                "the --skip_checks flag. If any ERROR messages are not " \
+                "the --skip-checks flag. If any ERROR messages are not " \
                 "adressed, they are likely to cause failure, sometimes after " \
                 "partial submission of the data."
         loggingC.message(msg, threshold=-1)

@@ -41,7 +41,7 @@ def init_argparse():
     
     subparsers = parser.add_subparsers(dest='mode')
 
-    subparsers.add_parser('download_webin',
+    subparsers.add_parser('download-webin',
                           help='Download a compatible '
                           'version of the webin-cli .jar file')
 
@@ -55,12 +55,12 @@ def init_argparse():
                                help="Path to the YAML file containing "
                                "metadata and filepaths. Mandatory")
     parser_submit.add_argument("-g",
-                               "--staging_dir",
+                               "--staging-dir",
                                required=True,
                                help="Directory where files will be staged for "
                                "upload. Must be empty. May use up a lot of "
                                "disk space. Mandatory.")
-    parser_submit.add_argument("-l", "--logging_dir",
+    parser_submit.add_argument("-l", "--logging-dir",
                                required=True,
                                help="Directory where log files will be "
                                "stored. Must be empty. Mandatory.")
@@ -71,7 +71,7 @@ def init_argparse():
                                help="Control the amount of logging to stdout. "
                                "[default 1]")
     parser_submit.add_argument("-d",
-                               "--development_service",
+                               "--development-service",
                                type=int,
                                choices=[0, 1],
                                default=1,
@@ -89,42 +89,42 @@ def init_argparse():
                                default=4,
                                help="Number of threads used to process .bam "
                                "files. [default 4]")
-    parser_submit.add_argument("--keep_depth_files",
+    parser_submit.add_argument("--keep-depth-files",
                                action="store_true",
                                help="Do not delete depth files after running. "
                                "[default false]")
     parser_submit.add_argument("-r",
-                               "--submit_reads",
+                               "--submit-reads",
                                action="store_true",
                                default=False,
                                help="Use if you want to submit reads.")
     parser_submit.add_argument("-s",
-                               "--submit_samples",
+                               "--submit-samples",
                                action="store_true",
                                default=False,
                                help="Use if you want to submit (biological) "
                                "sample objects.")
     parser_submit.add_argument("-a",
-                               "--submit_assembly",
+                               "--submit-assembly",
                                action="store_true",
                                default=False,
                                help="Use if you want to submit one assembly. "
                                "To submit multiple assemblies, you need to "
                                "use the tool multiple times.")
     parser_submit.add_argument("-b",
-                               "--submit_bins",
+                               "--submit-bins",
                                action="store_true",
                                default=False,
                                help="Use if you want to submit metagenome "
                                "bins (note that bins are different from MAGs "
                                "in the ENA definition).")
     parser_submit.add_argument("-m",
-                               "--submit_mags",
+                               "--submit-mags",
                                action="store_true",
                                default=False,
                                help="Use if you want to submit "
                                "metagenome-assembled genomes (MAGs).")
-    parser_submit.add_argument("--skip_checks",
+    parser_submit.add_argument("--skip-checks",
                                action="store_true",
                                default=False,
                                help="Skip preflight checks. Use with caution.")
@@ -135,7 +135,7 @@ def init_argparse():
                                "items. This prevents name clashes when "
                                "submitting the same data multiple times during "
                                "testing. Defaults to true when using the "
-                               "development_service, defaults to false "
+                               "development-service, defaults to false "
                                "otherwise.")
 
     parser_makecfg = subparsers.add_parser('makecfg',
@@ -148,62 +148,62 @@ def init_argparse():
                                 help="Path to the empty config that will be "
                                 "generated.")
     parser_makecfg.add_argument("-c",
-                                "--no_comments",
+                                "--no-comments",
                                 action="store_true",
                                 default=False,
                                 help="Do not include field descriptions in "
                                 "the config file.")
     parser_makecfg.add_argument("-s",
-                                "--submit_samples",
+                                "--submit-samples",
                                 type=int, default=0,
                                 help="If you want to submit (biological) "
                                 "sample objects, specify how many.")    
     parser_makecfg.add_argument("-rs",
-                                "--submit_single_reads",
+                                "--submit-unpaired-reads",
                                 type=int,
                                 default=0,
                                 help="If you want to submit non-paired read "
                                 "files, specify how many.")
     parser_makecfg.add_argument("-rp",
-                                "--submit_paired_end_reads",
+                                "--submit-paired-end-reads",
                                 type=int,
                                 default=0,
                                 help="If you want to submit paired-end read "
                                 "files, specify how many.")
     parser_makecfg.add_argument("-b",
-                                "--submit_bins",
+                                "--submit-bins",
                                 action="store_true",
                                 default=False,
                                 help="Use if you want to submit metagenome "
                                 "bins (note that bins are different from MAGs "
                                 "in the ENA definition).")
     parser_makecfg.add_argument("-m",
-                                "--submit_mags",
+                                "--submit-mags",
                                 action="store_true",
                                 default=False,
                                 help="Use if you want to submit "
                                 "metagenome-assembled genomes (MAGs).")
     parser_makecfg.add_argument("-a",
-                                "--submit_assembly",
+                                "--submit-assembly",
                                 action="store_true",
                                 default=False,
                                 help="Use if you want to submit one assembly. "
                                 "To submit multiple assemblies, you need to "
                                 "use the tool multiple times.")
     parser_makecfg.add_argument("-q",
-                                "--bin_quality_cutoffs",
+                                "--bin-quality-cutoffs",
                                 action="store_true",
                                 default=False,
                                 help="Include fields for bin quality cutoff "
                                 "(contamination & completeness) in config.")
 
     coverage_group = parser_makecfg.add_mutually_exclusive_group(required=False)
-    coverage_group.add_argument("--coverage_from_bam",
+    coverage_group.add_argument("--coverage-from-bam",
                                 action="store_true",
                                 help="Coverages will be calculated from a "
                                 "list of .bam files that you provide. WARNING: "
                                 "This does not work on windows systems.")
-    coverage_group.add_argument("--known_coverage",
+    coverage_group.add_argument("--known-coverage",
                                 action="store_true",
                                 help="Coverages are already known and you "
                                 "provide them as a .bam file.")
@@ -224,7 +224,7 @@ def download_webin():
 
 def makecfg_through_gui(outpath,
                         submit_samples,
-                        submit_single_reads,
+                        submit_unpaired_reads,
                         submit_paired_end_reads,
                         coverage_from_bam,
                         known_coverage,
@@ -233,7 +233,7 @@ def makecfg_through_gui(outpath,
                         submit_mags,
                         quality_cutoffs):
     if coverage_from_bam and sys.platform == "win32":
-        err = ("ERROR: The --coverage_from_bam option does not work on "
+        err = ("ERROR: The --coverage-from-bam option does not work on "
                 "Windows systems.")
         loggingC.message(err, threshold=-1)
         exit(1)
@@ -243,7 +243,7 @@ def makecfg_through_gui(outpath,
     print("known coverage", known_coverage)
     configGen.make_config(outpath=outpath,
                           submit_samples=submit_samples,
-                          submit_single_reads=submit_single_reads,
+                          submit_unpaired_reads=submit_unpaired_reads,
                           submit_paired_end_reads=submit_paired_end_reads,
                           coverage_from_bam=coverage_from_bam,
                           known_coverage=known_coverage,
@@ -259,11 +259,11 @@ def makecfg(args):
     Create a .yml file containing the fields a user needs to fill in order to
     create a submission for their specific setup.
 
-    Will exit with an error if the user tries to use --coverage_from_bam on a
+    Will exit with an error if the user tries to use --coverage-from-bam on a
     Windows system.
     """
     if args.coverage_from_bam and sys.platform == "win32":
-        wrn = ("WARNING: The --coverage_from_bam option does not work on "
+        wrn = ("WARNING: The --coverage-from-bam option does not work on "
                 "Windows systems!\n "
                 "You can still create a config, but you will not be able to "
                 "submit it using a Windows machine.\n\n")
@@ -273,7 +273,7 @@ def makecfg(args):
         
     configGen.make_config(outpath=args.outfile,
                           submit_samples=args.submit_samples,
-                          submit_single_reads=args.submit_single_reads,
+                          submit_unpaired_reads=args.submit_unpaired_reads,
                           submit_paired_end_reads=args.submit_paired_end_reads,
                           coverage_from_bam=args.coverage_from_bam,
                           known_coverage=args.known_coverage,

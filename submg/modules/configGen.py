@@ -75,7 +75,7 @@ def __write_yaml(data: dict,
 
 def __check_parameters(outpath: str,
                        submit_samples: int,
-                       submit_single_reads: int,
+                       submit_unpaired_reads: int,
                        submit_paired_end_reads: int,
                        coverage_from_bam: bool,
                        known_coverage: bool,
@@ -90,7 +90,7 @@ def __check_parameters(outpath: str,
     Args:
         outpath (str): The path where the config should be written
         submit_samples (int): The number of samples to be submitted
-        submit_single_reads (int): The number of single read sets to be submitted
+        submit_unpaired_reads (int): The number of single read sets to be submitted
         submit_paired_end_reads (int): The number of paired-end read sets to be submitted
         coverage_from_bam (bool): Whether the coverage should be calculated from a BAM file
         known_coverage (bool): Whether the coverage is already known
@@ -105,7 +105,7 @@ def __check_parameters(outpath: str,
         exit(1)
 
     # Are we submitting any reads?
-    if submit_single_reads or submit_paired_end_reads:
+    if submit_unpaired_reads or submit_paired_end_reads:
         submit_reads = True
     else:
         submit_reads = False
@@ -115,7 +115,7 @@ def __check_parameters(outpath: str,
         print("coverage from bam is", coverage_from_bam)
         print("known coverage is", known_coverage)
         if (submit_assembly or submit_bins or submit_mags):
-            print("\nERROR: You must specify exactly one of --coverage_from_bam or --known_coverage when submitting assemblies, bins or MAGs.")
+            print("\nERROR: You must specify exactly one of --coverage-from-bam or --known-coverage when submitting assemblies, bins or MAGs.")
             exit(1)
 
     # Check if quality cuttoffs make sense
@@ -134,7 +134,7 @@ def __check_parameters(outpath: str,
 
 
 def __make_config_dict(submit_samples: int,
-                       submit_single_reads: int,
+                       submit_unpaired_reads: int,
                        submit_paired_end_reads: int,
                        coverage_from_bam: bool,
                        known_coverage: bool,
@@ -147,7 +147,7 @@ def __make_config_dict(submit_samples: int,
 
     Args:
         submit_samples (int): The number of samples to be submitted
-        submit_single_reads (int): The number of single read sets to be submitted
+        submit_unpaired_reads (int): The number of single read sets to be submitted
         submit_paired_end_reads (int): The number of paired-end read sets to be submitted
         coverage_from_bam (bool): Whether the coverage should be calculated from a BAM file
         known_coverage (bool): Whether the coverage is already known
@@ -200,7 +200,7 @@ def __make_config_dict(submit_samples: int,
 
     # Make the SINGLE READ section
     reads = []
-    for _ in range(submit_single_reads):
+    for _ in range(submit_unpaired_reads):
         entry = {'NAME': None,
                  'SEQUENCING_INSTRUMENT': None,
                  'LIBRARY_SOURCE': None,
@@ -256,7 +256,7 @@ def __make_config_dict(submit_samples: int,
         assembly['ASSEMBLY_SOFTWARE'] = None
         assembly['collection date'] = None
         assembly['geographic location (country and/or sea)'] = None
-    if (submit_single_reads + submit_paired_end_reads) == 0: # We need the accessions of the reads
+    if (submit_unpaired_reads + submit_paired_end_reads) == 0: # We need the accessions of the reads
         assembly['RUN_ACCESSIONS'] = list()
     if submit_assembly:
         if known_coverage:
@@ -317,13 +317,13 @@ def __make_config_dict(submit_samples: int,
         elif known_coverage:
             assert coverage_from_bam == False
         else:
-            raise ValueError("Either coverage_from_bam or known_coverage must be set to True")
+            raise ValueError("Either --coverage-from-bam or --known-coverage must be set to True")
             
     # Add a submission outline  
     config['submission_outline'] = []
     if submit_samples:
         config['submission_outline'].append('samples')
-    if submit_paired_end_reads or submit_single_reads:
+    if submit_paired_end_reads or submit_unpaired_reads:
         config['submission_outline'].append('reads')
     if submit_assembly:
         config['submission_outline'].append('assembly')
@@ -336,7 +336,7 @@ def __make_config_dict(submit_samples: int,
 
 def make_config(outpath: str,
                 submit_samples: int,
-                submit_single_reads: int,
+                submit_unpaired_reads: int,
                 submit_paired_end_reads: int,
                 coverage_from_bam: bool,
                 known_coverage: bool,
@@ -352,7 +352,7 @@ def make_config(outpath: str,
     Args:
         outpath (str): The path where the config should be written
         submit_samples (int): The number of samples to be submitted
-        submit_single_reads (int): The number of single read sets to be submitted
+        submit_unpaired_reads (int): The number of single read sets to be submitted
         submit_paired_end_reads (int): The number of paired-end read sets to be submitted
         coverage_from_bam (bool): Whether the coverage should be calculated from a BAM file
         known_coverage (bool): Whether the coverage is already known
@@ -363,7 +363,7 @@ def make_config(outpath: str,
     # Test if this is a valid combination of parameters
     __check_parameters(outpath,
                        submit_samples,
-                       submit_single_reads,
+                       submit_unpaired_reads,
                        submit_paired_end_reads,
                        coverage_from_bam,
                        known_coverage,
@@ -375,7 +375,7 @@ def make_config(outpath: str,
     
     # Assemble all the fields we need
     config_fields = __make_config_dict(submit_samples,
-                                       submit_single_reads,
+                                       submit_unpaired_reads,
                                        submit_paired_end_reads,
                                        coverage_from_bam,
                                        known_coverage,

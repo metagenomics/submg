@@ -2,7 +2,7 @@
 # ABOUT: Coverage is derived from one unindexed .bam file.
 # ABOUT: Taxonomy is read from the MANUAL_TAXONOMY file
 # USAGE: navigate to the <examples> directory
-# USAGE: submg-cli submit --config 03_samples_reads_assembly.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_samples --submit_reads --submit_assembly
+# USAGE: submg-cli submit --config 03_samples_reads_assembly.yaml --staging-dir <path/to/staging/dir> --logging-dir <path/to/logging/dir> --submit-samples --submit-reads --submit-assembly
 
 
 STUDY: "PRJEB71644"                                                           # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"

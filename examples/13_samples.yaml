@@ -1,6 +1,6 @@
 # ABOUT: This is a config for submitting 2 samples
 # USAGE: navigate to the <examples> directory
-# USAGE: submg-cli submit --config 13_samples.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_samples
+# USAGE: submg-cli submit --config 13_samples.yaml --staging-dir <path/to/staging/dir> --logging-dir <path/to/logging/dir> --submit-samples
 
 
 STUDY: "PRJEB71644"                                                           # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"

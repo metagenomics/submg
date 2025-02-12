@@ -421,10 +421,7 @@ def submit_mags(config: dict,
     # Extract data
     loggingC.message(">Reading MAG metadata", threshold=1)
     mag_metadata_file = utility.from_config(config, 'MAGS', 'MAG_METADATA_FILE')
-    print("I AM READING LE MAG METADATA FROM FILE", mag_metadata_file)
     mag_metadata = __read_mag_metadata(mag_metadata_file)
-    for k,v in mag_metadata.items():
-        print(k, v)
     
     bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')
         

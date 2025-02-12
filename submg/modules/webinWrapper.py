@@ -62,7 +62,7 @@ def webin_cli_jar_available():
     else:
         warn = (f"WARNING: webin-cli .jar file found in {storage_dir}\n "
                 f"but it does not match the expected version {version_string}. ")
-    warn += (f"To download webin-cli, use the GUI or run the following command:\nsubmg-cli download_webin")
+    warn += (f"To download webin-cli, use the GUI or run the following command:\nsubmg-cli download-webin")
     print(warn)
     return False
 

@@ -24,7 +24,7 @@ class CustomInstall(install):
                 print("Ensure you have the official Python installed from https://www.python.org/downloads/.")
             else:
                 print("Please refer to your operating system's documentation for installing 'tkinter'.")
-        print("\nIMPORTANT: Please run the 'submg-cli download_webin' command.")
+        print("\nIMPORTANT: Please run the 'submg-cli download-webin' command.")
 
 setup(
     name='submg',

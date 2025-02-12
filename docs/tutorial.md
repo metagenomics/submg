@@ -46,10 +46,10 @@ These items do not correspond to the actual submission steps, but subMG abstract
 ## Creating a Configuration Form
 We provide the data & metadata of our study to subMG by filling out a configuration form. The `makecfg` command will create a minimal configuration form that is tailored to our submission. To specify what you wish to submit, run the following command:
 ```
-submg-cli makecfg --submit_samples 2 --submit_paired_end_reads 2 --submit_assembly --submit_bins --known_coverage --outfile <path_to_your_new_config.yaml>
+submg-cli makecfg --submit-samples 2 --submit-paired-end-reads 2 --submit-assembly --submit-bins --known-coverage --outfile <path_to_your_new_config.yaml>
 ```
 For samples and read sets it is neccessary to specify how many of these items you intend to submit. The empty form will be created at `<path_to_your_new_config.yaml>` specified by the `--outfile` argument.
-The `--known_coverage` argument indicates that we have coverage information for our metagenome assembly and metagenomic bins already, so subMG will not have to derive this information from `.bam` files.
+The `--known-coverage` argument indicates that we have coverage information for our metagenome assembly and metagenomic bins already, so subMG will not have to derive this information from `.bam` files.
 
 ## Filling Your Configuration Form
 Open the `yaml` form we just created with a text editor of your choice. Every field not starting with `ADDITIONAL` is _mandatory_, meaning it has to be filled out for ENA to accept your submission.
@@ -150,7 +150,7 @@ Collection date is an ISO 8601 entry (as explained in the [samples](#samples) se
 
 See the [samples](#samples) section regarding the 'geographic location (country and/or sea)' field. Should this be a co-assembly based on samples from different locations, you can enter "not applicable".
 
-Since we chose the `--known_coverage` option in the beginning, we now have to provide a depth of coverage value for our assembly.
+Since we chose the `--known-coverage` option in the beginning, we now have to provide a depth of coverage value for our assembly.
 
 ```
 ASSEMBLY:                                         
@@ -174,7 +174,7 @@ We need to submit [valid taxonomic information](https://ena-docs.readthedocs.io/
 
 The software that was used for the binning of contigs needs to be named (e.g. "VAMB" or "maxbin2").
 
-Since we chose the `--known_coverage` option instead of `--coverage_from_bam`, we need to supply a `.tsv` table with depth of coverage information for each metagenomic bin. This table has to contain the columns `Bin_id` and `Coverage`. A coverage table for our three mock bins is available at `examples/data/bin_coverage.tsv`.
+Since we chose the `--known-coverage` option instead of `--coverage-from-bam`, we need to supply a `.tsv` table with depth of coverage information for each metagenomic bin. This table has to contain the columns `Bin_id` and `Coverage`. A coverage table for our three mock bins is available at `examples/data/bin_coverage.tsv`.
 
 ```
 BINS:
@@ -211,15 +211,15 @@ You should have completely filled out your configuration form during the previou
 
 For the submission, you will need two directories: One where subMG will stage all files prior to upload, and one where the tool will write logs. You can start the submission to the test server using the `submit` command. You will have to specify the aforementioned directories, the location of you configuration form and the types of items you'd like to submit.
 ```
-submg-cli submit --config <path_to_your_config_form> --staging_dir <path_to_your_staging_directory> --logging_dir <path_to_your_logging_directory> --submit_samples --submit_reads --submit_assembly --submit_bins
+submg-cli submit --config <path_to_your_config_form> --staging-dir <path_to_your_staging_directory> --logging_dir <path_to_your_logging_directory> --submit-samples --submit-reads --submit-assembly --submit-bins
 ```
 
-Most likely you will receive an error because the accession of your study only exists on the development server. Add the `--skip_checks` flag to your command to circumvent this.
+Most likely you will receive an error because the accession of your study only exists on the development server. Add the `--skip-checks` flag to your command to circumvent this.
 ```
-submg-cli submit --config <path_to_your_config_form> --staging_dir <path_to_your_staging_directory> --logging_dir <path_to_your_logging_directory> --submit_samples --submit_reads --submit_assembly --submit_bins --skip_checks
+submg-cli submit --config <path_to_your_config_form> --staging-dir <path_to_your_staging_directory> --logging_dir <path_to_your_logging_directory> --submit-samples --submit-reads --submit-assembly --submit-bins --skip-checks
 ```
 
-It is recommended to always submit to the test server before starting an actual submission. As such, submitting to the test server is the default behaviour in subMG. If you want to submit to the production service, add `--development_service 0` to your command.
+It is recommended to always submit to the test server before starting an actual submission. As such, submitting to the test server is the default behaviour in subMG. If you want to submit to the production service, add `--development-service 0` to your command.
 
 ## Completed Configuration Form
 For the form below to work, you need to

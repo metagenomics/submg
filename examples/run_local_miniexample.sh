@@ -16,11 +16,11 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_assembly \
---submit_bins \
---submit_mags
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-assembly \
+--submit-bins \
+--submit-mags
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 

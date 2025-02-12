@@ -2,7 +2,7 @@
 # ABOUT: Coverage is precomputed and provided under BINS|COVERAGE_FILE
 # ABOUT: Taxonomy is derived from `gtdb_to_ncbi_majority_vote.py` output and a MANUAL_TAXONOMY_FILE
 # USAGE: navigate to the <examples> directory
-# USAGE: submg-cli submit --config 10_bins_mags.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_bins --submit_mags
+# USAGE: submg-cli submit --config 10_bins_mags.yaml --staging-dir <path/to/staging/dir> --logging-dir <path/to/logging/dir> --submit-bins --submit-mags
 
 STUDY: "PRJEB71644"                                                           # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"
 METAGENOME_SCIENTIFIC_NAME: "biogas fermenter metagenome"                     # Taxonomic identifier of the metagenome. Check the ENA metagenome taxonomy tree to find a taxonomy ID and species name fitting your sample >>EXAMPLE: "biogas fermenter metagenome"

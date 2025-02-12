@@ -43,7 +43,9 @@ def full_timestamp():
     """
     Creates and returns a full timestamp (year, month, day, hour, minute, second).
     """
-    return time.strftime("%Y%m%d%H%M%S")
+    timestamp = time.strftime("%Y%m%d%H%M%S")
+    print("Creating timestamp: " + timestamp)
+    return timestamp
 
 
 def set_up_timestamps(arguments: dict):
@@ -62,7 +64,7 @@ def set_up_timestamps(arguments: dict):
     ]
     if arguments['submit_assembly']:
         keys_to_stamp.append("ASSEMBLY_NAME")
-    timestamp = time.strftime("%H%M")
+    timestamp = time.strftime("%H%M%S")
 
 
 def construct_depth_files(staging_dir: str,
@@ -768,7 +770,7 @@ def validate_parameter_combination(submit_samples: bool,
 
     Args:
         submit_samples (bool): Submit samples.
-        submit_single_reads (bool): Submit single reads.
+        submit_unpaired_reads (bool): Submit single reads.
         submit_paired_end_reads (bool): Submit paired-end reads.
         submit_assembly (bool): Submit assembly.
         submit_bins (bool): Submit bins.
@@ -816,7 +818,7 @@ def print_submission_schedule(submit_samples: bool,
 
     Args:
         submit_samples (bool): Submit samples.
-        submit_single_reads (bool): Submit single reads.
+        submit_unpaired_reads (bool): Submit single reads.
         submit_paired_end_reads (bool): Submit paired-end reads.
         submit_assembly (bool): Submit assembly.
         submit_bins (bool): Submit bins.

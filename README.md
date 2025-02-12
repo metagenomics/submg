@@ -85,9 +85,9 @@ If you only intend on using the graphic user interface (GUI), you can download a
   - If you cloned the repository:
     - Switch into the directory that you just cloned
 - Run `python -m pip install .`
-- Run `submg-cli download_webin` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli).
+- Run `submg-cli download-webin` which will download a compatible version of the `.jar` file for [ENA's Webin-CLI tool](https://github.com/enasequence/webin-cli).
 - Use `submg-cli` to run the command line interface or `submg-gui` to run the graphic user interface (not recommended for submitting large datasets)
-  - Make sure to download ENA's webin-CLI, either through the gui or by running `submg-cli download_webin`
+  - Make sure to download ENA's webin-CLI, either through the gui or by running `submg-cli download-webin`
 
 ## Local Installation - Windows (GUI Standalone)
 If you only intend on using the graphic user interface (GUI), you can download an executable from the [releases page](https://github.com/metagenomics/submg/releases) (`submg_win_gui.exe`).
@@ -111,7 +111,7 @@ If you only intend on using the graphic user interface (GUI), you can download a
   - [wheel](https://pypi.org/project/wheel/) for Python (install via `python -m pip install wheel`)
 - Download a [release](https://github.com/metagenomics/submg/releases) or clone the repository via: `git clone https://github.com/metagenomics/submg/` (you will need [git for windows](https://git-scm.com/downloads/win) to do the latter)
 - Open a command prompt and run `python -m pip install .`
-  - Make sure to download ENA's webin-CLI, either through the gui or by running `submg-cli download_webin`
+  - Make sure to download ENA's webin-CLI, either through the gui or by running `submg-cli download-webin`
 
 # Usage
 subMG is intended to submit data related to a *single* (co-)assembly. All samples, sequncing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run subMG once for each assembly.
@@ -128,23 +128,23 @@ export ENA_PASSWORD=your_ena_password
 
 3 - Create a template config file using:
 ```
-submg-cli makecfg --outfile /path/to/your/config.yaml --submit_samples 2 --submit_paired_end_reads 2 --submit_assembly --submit_bins --coverage_from_bam
+submg-cli makecfg --outfile /path/to/your/config.yaml --submit-samples 2 --submit-paired-end-reads 2 --submit-assembly --submit-bins --coverage-from-bam
 ```
 4 - Fill out the config file (it contains explanations and examples for each line)
 
 5 - Do a test submission of to the [ENA Development Service](#ena-development-service):
 ```
-submg-cli submit --config /path/to/your/config.yaml --staging_dir /path/to/empty/directory1 --logging_dir /path/to/empty/directory2 --submit_samples --submit_reads --submit_assembly --submit_bins
+submg-cli submit --config /path/to/your/config.yaml --staging-dir /path/to/empty/directory1 --logging_dir /path/to/empty/directory2 --submit-samples --submit-reads --submit-assembly --submit-bins
 ```
 6 - If there are no errors, create a study object through the web interface of the [ENA production service](https://www.ebi.ac.uk/ena/submit/webin/login)
 
 7 - Submit your data to the production server using
 ```
-submg-cli submit --config /path/to/your/config.yaml --staging_dir /path/to/empty/directory3 --logging_dir /path/to/empty/directory4 --submit_samples --submit_reads --submit_assembly --submit_bins --development_service 0
+submg-cli submit --config /path/to/your/config.yaml --staging-dir /path/to/empty/directory3 --logging_dir /path/to/empty/directory4 --submit-samples --submit-reads --submit-assembly --submit-bins --development-service 0
 ```
 
 ## ENA Development Service
-ENA provides a [development service](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/interactive.html) to trial your submission before uploading your data to the production server. We strongly suggest submitting to the production server only after a test submission with identical parameters was successful. Otherwise, you might end up with incomplete or incorrect submissions, with no ability to correct or remove them. Unless `--development_service 0` is specified, subMG will always submit to the test server.
+ENA provides a [development service](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/interactive.html) to trial your submission before uploading your data to the production server. We strongly suggest submitting to the production server only after a test submission with identical parameters was successful. Otherwise, you might end up with incomplete or incorrect submissions, with no ability to correct or remove them. Unless `--development-service 0` is specified, subMG will always submit to the test server.
 
 ## Study Object
 `Study` is used synonymously with `project` here. Before you can submit data using subMG, you need to have a `Study` object (= a project) in your ENA account. If you intend to submit annotation data, you will also need a [locus tag prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html). You can create both through the ENA webin portal on the [production server](https://www.ebi.ac.uk/ena/submit/webin/login) or the [development server](https://wwwdev.ebi.ac.uk/ena/submit/webin/login). Be aware that if you create the `Study` object on the production server, it can take up to 24h hours until it is available on the development server. This can cause test submissions to fail.

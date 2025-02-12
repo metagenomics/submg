@@ -15,13 +15,13 @@ echo "##################################################################"
 echo "Running CFG: $CFG in --minitest mode"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_samples \
---submit_reads \
---submit_assembly \
---submit_bins \
---submit_mags \
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-samples \
+--submit-reads \
+--submit-assembly \
+--submit-bins \
+--submit-mags \
 --minitest
 rm -rf $STAGING_DIR $LOGGING_DIR
 
@@ -35,13 +35,13 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_samples \
---submit_reads \
---submit_assembly \
---submit_bins \
---submit_mags
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-samples \
+--submit-reads \
+--submit-assembly \
+--submit-bins \
+--submit-mags
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=02_samples_reads_assembly_bins.yaml
@@ -54,12 +54,12 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_samples \
---submit_reads \
---submit_assembly \
---submit_bins
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-samples \
+--submit-reads \
+--submit-assembly \
+--submit-bins
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=03_samples_reads_assembly.yaml
@@ -72,11 +72,11 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_samples \
---submit_reads \
---submit_assembly
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-samples \
+--submit-reads \
+--submit-assembly
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=04_reads_assembly_bins_mags.yaml
@@ -89,12 +89,12 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_reads \
---submit_assembly \
---submit_bins \
---submit_mags
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-reads \
+--submit-assembly \
+--submit-bins \
+--submit-mags
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=05_reads_assembly_bins.yaml
@@ -107,11 +107,11 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_reads \
---submit_assembly \
---submit_bins
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-reads \
+--submit-assembly \
+--submit-bins
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=06_reads_assembly.yaml
@@ -124,10 +124,10 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_reads \
---submit_assembly
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-reads \
+--submit-assembly
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=07_assembly_bins_mags.yaml
@@ -140,11 +140,11 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_assembly \
---submit_bins \
---submit_mags
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-assembly \
+--submit-bins \
+--submit-mags
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=08_assembly_bins.yaml
@@ -157,10 +157,10 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_assembly \
---submit_bins
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-assembly \
+--submit-bins
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=09_assembly.yaml
@@ -173,9 +173,9 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_assembly
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-assembly
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=10_bins_mags.yaml
@@ -188,10 +188,10 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_bins \
---submit_mags
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-bins \
+--submit-mags
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=11_bins.yaml
@@ -204,9 +204,9 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_bins
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-bins
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=12_mags.yaml
@@ -219,9 +219,9 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_mags
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-mags
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 echo ""
@@ -241,9 +241,9 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_samples
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-samples
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=14_reads.yaml
@@ -256,9 +256,9 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_reads
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-reads
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 CFG=15_samples_reads.yaml
@@ -271,10 +271,10 @@ echo "##################################################################"
 echo "Running CFG: $CFG"
 submg-cli submit \
 --config $LOCAL \
---staging_dir $STAGING_DIR \
---logging_dir $LOGGING_DIR \
---submit_samples \
---submit_reads
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--submit-samples \
+--submit-reads
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 echo ""

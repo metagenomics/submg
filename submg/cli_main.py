@@ -8,7 +8,7 @@ from submg.core import (
 def main():
     parser = init_argparse()
     args = parser.parse_args()
-    if args.mode == 'download_webin':
+    if args.mode == 'download-webin':
         download_webin()
     elif args.mode == 'makecfg':
         makecfg(args)

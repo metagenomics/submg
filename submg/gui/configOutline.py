@@ -265,7 +265,7 @@ class ConfigOutlinePage(BasePage):
 
         makecfg_through_gui(self.output_file_path,
                             submit_samples=sample_count,
-                            submit_single_reads=unpaired_reads_count,
+                            submit_unpaired_reads=unpaired_reads_count,
                             submit_paired_end_reads=paired_reads_count,
                             coverage_from_bam=(self.coverage_option.get() == 1),
                             known_coverage=(self.coverage_option.get() == 0),
