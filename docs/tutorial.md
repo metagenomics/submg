@@ -207,12 +207,12 @@ You should have completely filled out your configuration form during the previou
 
 For the submission, you will need two directories: One where subMG will stage all files prior to upload, and one where the tool will write logs. You can start the submission to the test server using the `submit` command. You will have to specify the aforementioned directories, the location of you configuration form and the types of items you'd like to submit.
 ```
-submg-cli submit --config <path_to_your_config_form> --staging-dir <path_to_your_staging_directory> --logging_dir <path_to_your_logging_directory> --submit-samples --submit-reads --submit-assembly --submit-bins
+submg-cli submit --config <path_to_your_config_form> --staging-dir <path_to_your_staging_directory> --logging-dir <path_to_your_logging_directory> --submit-samples --submit-reads --submit-assembly --submit-bins
 ```
 
 Most likely you will receive an error because the accession of your study only exists on the development server. Add the `--skip-checks` flag to your command to circumvent this.
 ```
-submg-cli submit --config <path_to_your_config_form> --staging-dir <path_to_your_staging_directory> --logging_dir <path_to_your_logging_directory> --submit-samples --submit-reads --submit-assembly --submit-bins --skip-checks
+submg-cli submit --config <path_to_your_config_form> --staging-dir <path_to_your_staging_directory> --logging-dir <path_to_your_logging_directory> --submit-samples --submit-reads --submit-assembly --submit-bins --skip-checks
 ```
 
 It is recommended to always submit to the test server before starting an actual submission. As such, submitting to the test server is the default behaviour in subMG. If you want to submit to the production service, add `--development-service 0` to your command.

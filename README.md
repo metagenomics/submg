@@ -137,13 +137,13 @@ submg-cli makecfg --outfile /path/to/your/config.yaml --submit-samples 2 --submi
 
 5 - Do a test submission of to the [ENA Development Service](#ena-development-service):
 ```
-submg-cli submit --config /path/to/your/config.yaml --staging-dir /path/to/empty/directory1 --logging_dir /path/to/empty/directory2 --submit-samples --submit-reads --submit-assembly --submit-bins
+submg-cli submit --config /path/to/your/config.yaml --staging-dir /path/to/empty/directory1 --logging-dir /path/to/empty/directory2 --submit-samples --submit-reads --submit-assembly --submit-bins
 ```
 6 - If there are no errors, create a study object through the web interface of the [ENA production service](https://www.ebi.ac.uk/ena/submit/webin/login)
 
 7 - Submit your data to the production server using
 ```
-submg-cli submit --config /path/to/your/config.yaml --staging-dir /path/to/empty/directory3 --logging_dir /path/to/empty/directory4 --submit-samples --submit-reads --submit-assembly --submit-bins --development-service 0
+submg-cli submit --config /path/to/your/config.yaml --staging-dir /path/to/empty/directory3 --logging-dir /path/to/empty/directory4 --submit-samples --submit-reads --submit-assembly --submit-bins --development-service 0
 ```
 
 ## ENA Development Service

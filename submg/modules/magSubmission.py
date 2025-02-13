@@ -62,13 +62,6 @@ def __read_mag_metadata(mag_metadata_file: str) -> dict:
                         if not os.path.isabs(value) else value
                     )
 
-            print("old paths")
-            for key, value in paths.items():
-                print(key, value)
-            print("new paths")
-            for key, value in resolved_paths.items():
-                print(key, value)
-
             # Add results
             metadata[bin_id] = {
                 'Quality_category': quality_category,
@@ -310,10 +303,6 @@ def __stage_mag_submission(metadata,
         ['MOLECULETYPE', staticConfig.assembly_molecule_type],
         ['RUN_REF', run_accessions],
     ]
-
-    print("I received metadata for staging:")
-    for k,v in metadata.items():
-        print(k, v)
 
     # Add chromosome info & stage chromosome files
     if not metadata['Chromosomes_path'] is None:
