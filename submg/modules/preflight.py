@@ -874,16 +874,6 @@ def preflight_checks(arguments: dict) -> None:
     # Check for login data
     utility.get_login()
 
-   # Create staging dir if it doesn't exist
-    if not os.path.exists(arguments['staging_dir']):
-        os.makedirs(arguments['staging_dir'])
-
-    # Check if staging dir is empty
-    if os.listdir(arguments['staging_dir']):
-        err = f"\nERROR: Staging directory is not empty: {arguments['staging_dir']}"
-        loggingC.message(err, threshold=-1)
-        exit(1)
-
     # Skip checks if requested
     if arguments['skip_checks'] == True:
         message = f"WARNING: Skipping ALL preflight checks."

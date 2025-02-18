@@ -10,6 +10,7 @@ listeners = []
 
 def set_up_logging(logging_dir: str,
                    verbose: int,
+                   timestamp: str,
                    listener=None):
     """
     Set up logging.
@@ -18,10 +19,11 @@ def set_up_logging(logging_dir: str,
         logfile: The path to the logfile.
         verbose: The verbosity level.
     """
+    print("logging setup starts")
     # Set up global variables
     global logfile_path
     global verbosity_level
-    logfile_path = os.path.join(logging_dir, 'submg.log')
+    
     verbosity_level = verbose
 
     # Handle listeners
@@ -32,14 +34,27 @@ def set_up_logging(logging_dir: str,
     if not os.path.exists(logging_dir):
         os.makedirs(logging_dir)
 
-    # Check if logging dir is empty
-    if os.listdir(logging_dir):
-        print(f"\nERROR: Logging directory is not empty: {logging_dir}")
+    # Create a subdirectory for the current timestamp
+    stamped_logging_dir = os.path.join(logging_dir, timestamp)
+
+    # Check if the stamped logging dir already exists. Throw an error if it does
+    if os.path.exists(stamped_logging_dir):
+        print(f"\nERROR: Logging directory already exists: {stamped_logging_dir}")
         exit(1)
+    else:
+        os.makedirs(stamped_logging_dir)
+        # check if the directory was actually created
+        if not os.path.exists(stamped_logging_dir):
+            print(f"\nERROR: Could not create logging directory: {stamped_logging_dir}")
+            exit(1)
+
+    logfile_path = os.path.join(stamped_logging_dir, 'submg.log')
 
     # Create empty logfile
     with open(logfile_path, 'w') as f:
         f.write('')
+
+    return stamped_logging_dir
 
 
 def __add_listener(listener):

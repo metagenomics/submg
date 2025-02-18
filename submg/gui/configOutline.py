@@ -4,7 +4,7 @@ import sys
 import customtkinter as ctk
 from tkinter import filedialog
 from tkinter import messagebox, IntVar
-from tkinter.messagebox import showinfo
+from tkinter.messagebox import showinfo, askyesno
 from submg.gui.base import BasePage
 from submg.modules.utility import validate_parameter_combination
 from submg.core import makecfg_through_gui
@@ -209,6 +209,25 @@ class ConfigOutlinePage(BasePage):
                 messagebox.showinfo("Invalid Input", "Please enter a positive integer for the number of items.")
                 return
 
+        # Calculate the total number samples, paired-end read sets and unpaired read sets
+        total_samples = int(self.entry_samples.get()) if self.checkbox_samples.get() else 0
+        total_paired_reads = int(self.entry_paired_reads.get()) if self.checkbox_paired_reads.get() else 0
+        total_unpaired_reads = int(self.entry_unpaired_reads.get()) if self.checkbox_unpaired_reads.get() else 0
+        total_items = total_samples + total_paired_reads + total_unpaired_reads
+        # Calculate the total number of items
+        total_items += self.checkbox_assembly.get() + self.checkbox_bins.get() + self.checkbox_mags.get()
+        # If the total number of items is > 19, show a warning
+        if total_items > 20:
+            continue_submission = askyesno(
+                "Many Items",
+                f"You are submitting a large number of items ({total_items}). "
+                "Please consider using the subMG CLI for your submission, as submitting large datasets through the GUI can get cumbersome. "
+                "Do you want to continue?"
+            )
+            if not continue_submission:
+                return
+            
+
         # Check if the combination of submission items is valid
         if not validate_parameter_combination(
             submit_samples=self.checkbox_samples.get(),
@@ -286,3 +305,6 @@ class ConfigOutlinePage(BasePage):
     def initialize(self):
         self.initialize_vars()
         self.global_disable()
+
+        for _, entry in self.checkboxes_with_entries:
+            entry.delete(0, 'end')

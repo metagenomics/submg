@@ -1511,6 +1511,8 @@ class ConfigFormPage(BasePage):
     def initialize(self):
         """Called whenever controller renders the page"""
         self.config_saved = False
+        self.pagination_list = []
+        self.pagination_index = 0
 
         # Hide the main frame
         self.main_frame.grid_remove()

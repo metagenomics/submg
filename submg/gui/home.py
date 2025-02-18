@@ -47,6 +47,10 @@ class HomePage(BasePage):
             "\n\n"
             "If you don't have a configuration form ready, start with the "
             "'Prepare Submission' option. Otherwise, proceed to 'Submit Data'."
+            "\n\n"
+            "This interface is designed for submitting small datasets. If you "
+            "intend to submit a large dataset (e.g. 20 samples, 40 sets of reads) "
+            "consider using the Command Line Interface (submg-cli) instead."
             )
         text_label = ctk.CTkLabel(
             main_frame,

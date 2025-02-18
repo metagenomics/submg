@@ -8,7 +8,7 @@ In this tutorial, you will
 - fill the form with all the (meta)data needed for submission
 - use subMG to upload the toy dataset to the ENA development service.
 
-**Important**: You will need an ENA account fort his tutorial. Newly created accounts cannot perform test submissions right away. Submission to the development service only works the after ENA development server's database has been synced, which occurs sometime after midnight GMT. If you plan on doing this tutorial and do not have an ENA account, you will need to create one and wait for the synchronization to happen before proceeding with the tutorial.
+**Important**: You will need an ENA account fort his tutorial. Newly created accounts cannot perform test submissions (submissions to the development service) right away. Submitting to the development service only works the after ENA development server's database has been synced, which occurs sometime after midnight GMT. If you plan on doing this tutorial and do not have an ENA account yet, you will need to create one and wait for the synchronization to happen before proceeding.
 
 ## Installation
 Please refer to the [Installation](https://github.com/metagenomics/submg/#installation) section of the subMG README for instructions on how to install subMG on your operating system. For this tutorial, you need to install the CLI version of the tool. Make sure to activate your python virtual environment if you installed the tool in a venv.

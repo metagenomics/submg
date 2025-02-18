@@ -297,9 +297,8 @@ def submit_through_gui(config_path,
                        username,
                        password):
     # Create timestamped logging and staging directories
-    timestamp = utility.full_timestamp()
-    logging_dir = os.path.join(output_dir, f"submg_logging_{timestamp}")
-    staging_dir = os.path.join(output_dir, f"submg_staging_{timestamp}")
+    logging_dir = os.path.join(output_dir, f"submg_logging")
+    staging_dir = os.path.join(output_dir, f"submg_staging")
 
     # Create an args object to use with the submit() function
     args = argparse.Namespace()
@@ -323,17 +322,25 @@ def submit_through_gui(config_path,
     utility.set_gui_credentials(username, password)
 
     # Initialize submission
-    submit(args, listener)
+    submit(args, listener, gui=True)
 
 
-def submit(args, listener=None):
+def submit(args, listener=None, gui=False):
     """
     Submit data to the ENA.
 
     Args:
         args (argparse.Namespace): The arguments object.
+        listener (function): A function that can receive log messages.
+        gui (bool): Whether the function was called from the GUI.
     """
-    loggingC.set_up_logging(args.logging_dir, args.verbosity, listener)
+    timestamp = utility.full_timestamp()
+    logging_subdir = loggingC.set_up_logging(args.logging_dir,
+                                             args.verbosity,
+                                             timestamp,
+                                             listener)
+    staging_subdir = utility.set_up_staging(args.staging_dir,
+                                            timestamp)
     
     if args.timestamps or (args.timestamps is None and args.development_service):
         utility.set_up_timestamps(vars(args))
@@ -417,7 +424,7 @@ def submit(args, listener=None):
                 msg = f">Minitest: Ignoring bam files except for {bam_files[0]}"
                 loggingC.message(msg, threshold=0)
                 bam_files = bam_files[0:1]
-            depth_files = utility.construct_depth_files(args.staging_dir,
+            depth_files = utility.construct_depth_files(staging_subdir,
                                                         args.threads,
                                                         bam_files)
             bin_coverage_file = None
@@ -430,8 +437,8 @@ def submit(args, listener=None):
 
         if args.submit_samples:
             sample_accession_data = submit_samples(config,
-                                                   args.staging_dir,
-                                                   args.logging_dir,
+                                                   staging_subdir,
+                                                   logging_subdir,
                                                    test=args.development_service)
         else:
             if args.submit_assembly or args.submit_bins or args.submit_mags:
@@ -455,8 +462,8 @@ def submit(args, listener=None):
         if args.submit_reads:
             run_accessions = submit_reads(config,
                                           sample_accession_data,
-                                          prepdir(args.staging_dir, 'reads'),
-                                          prepdir(args.logging_dir, 'reads'),
+                                          prepdir(staging_subdir, 'reads'),
+                                          prepdir(logging_subdir, 'reads'),
                                           test=args.development_service,
                                           minitest=args.minitest)
         else:
@@ -467,8 +474,8 @@ def submit(args, listener=None):
 
         if args.submit_assembly:
             assembly_sample_accession, assembly_fasta_accession = submit_assembly(config,
-                                                                                  args.staging_dir,
-                                                                                  args.logging_dir,
+                                                                                  staging_subdir,
+                                                                                  logging_subdir,
                                                                                   depth_files,
                                                                                   sample_accession_data,
                                                                                   run_accessions,
@@ -500,8 +507,8 @@ def submit(args, listener=None):
                         bin_taxonomy,
                         sample_accession_data,
                         run_accessions,
-                        prepdir(args.staging_dir, 'bins'),
-                        prepdir(args.logging_dir, 'bins'),
+                        prepdir(staging_subdir, 'bins'),
+                        prepdir(logging_subdir, 'bins'),
                         depth_files,
                         bin_coverage_file,
                         threads=args.threads,
@@ -529,8 +536,8 @@ def submit(args, listener=None):
                         sample_accession_data,
                         run_accessions,
                         bin_taxonomy,
-                        prepdir(args.staging_dir, 'mags'),
-                        prepdir(args.logging_dir, 'mags'),
+                        prepdir(staging_subdir, 'mags'),
+                        prepdir(logging_subdir, 'mags'),
                         depth_files,
                         bin_coverage_file,
                         threads=args.threads,

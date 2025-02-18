@@ -28,7 +28,7 @@ class CustomInstall(install):
 
 setup(
     name='submg',
-    version='1.0.0',
+    version='1.0.1',
     packages=find_packages(),
     install_requires=[
         'pysam>=0.19.1; sys_platform != "win32"',

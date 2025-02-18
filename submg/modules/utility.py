@@ -43,7 +43,7 @@ def full_timestamp():
     """
     Creates and returns a full timestamp (year, month, day, hour, minute, second).
     """
-    timestamp = time.strftime("%Y%m%d%H%M%S")
+    timestamp = time.strftime("%Y_%m_%d_%H%M%S")
     print("Creating timestamp: " + timestamp)
     return timestamp
 
@@ -51,7 +51,7 @@ def full_timestamp():
 def set_up_timestamps(arguments: dict):
     """
     Set up the timestamp for the submission. Data is only timestamped with
-    the hour and minute. Because of daily resets, this is sufficient to
+    the hour, minute and second. Because of daily resets, this is sufficient to
     prevent name clashes on the development server.
     """
     global timestamp
@@ -66,6 +66,34 @@ def set_up_timestamps(arguments: dict):
         keys_to_stamp.append("ASSEMBLY_NAME")
     timestamp = time.strftime("%H%M%S")
 
+
+def set_up_staging(staging_dir: str,
+                   timestamp: str):
+    """
+    Set up the staging subdirectory for the submission. Make sure it is empty.
+
+    Args:
+        staging_dir: The path to the parent staging directory.
+        timestamp: The timestamp for the submission.
+    """
+    if not os.path.exists(staging_dir):
+        os.makedirs(staging_dir)
+
+    stamped_staging_dir = os.path.join(staging_dir, timestamp)
+
+    if os.path.exists(stamped_staging_dir):
+        err = f"\nERROR: Staging directory already exists: {stamped_staging_dir}"
+        loggingC.message(err, threshold=-1)
+        exit(1)
+
+    os.makedirs(stamped_staging_dir)
+
+    if not os.path.exists(stamped_staging_dir):
+        err = f"\nERROR: Could not create staging directory at {stamped_staging_dir}"
+        loggingC.message(err, threshold=-1)
+        exit(1)
+
+    return stamped_staging_dir
 
 def construct_depth_files(staging_dir: str,
                           threads: int,
