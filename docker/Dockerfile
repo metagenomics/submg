@@ -1,5 +1,5 @@
 # Base Image
-FROM openjdk:slim
+FROM eclipse-temurin:23.0.2_7-jre-alpine-3.21
 
 # Set up environment
 RUN apt-get update && \
