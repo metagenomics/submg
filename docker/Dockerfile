@@ -1,5 +1,5 @@
 # Base Image
-FROM eclipse-temurin:23.0.2_7-jre-alpine-3.21
+FROM eclipse-temurin:23.0.2_7-jre
 
 # Set up environment
 RUN apt-get update && \
