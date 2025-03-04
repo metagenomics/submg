@@ -10,7 +10,6 @@ examples/data/mapping/*tmp.sorted.bam
 examples/data/mapping/*tmp.sorted.bam.bai
 examples/data/mapping/*unindexed.bam.bai
 venv_*
-dist/*
 old*
 
 # Byte-compiled / optimized / DLL files
@@ -45,7 +44,6 @@ MANIFEST
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
-*.spec
 
 # Installer logs
 pip-log.txt

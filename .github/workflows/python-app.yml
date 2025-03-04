@@ -30,7 +30,7 @@ jobs:
         python -m pip install .
     - name: Download webin-cli
       run: |
-        submg-cli download_webin
+        submg-cli download-webin
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -48,13 +48,13 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example01/staging \
-          --logging_dir example01/logging \
-          --submit_samples \
-          --submit_reads \
-          --submit_assembly \
-          --submit_bins \
-          --submit_mags
+          --staging-dir example01/staging \
+          --logging-dir example01/logging \
+          --submit-samples \
+          --submit-reads \
+          --submit-assembly \
+          --submit-bins \
+          --submit-mags
     - name: Example 02
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
@@ -66,12 +66,12 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example02/staging \
-          --logging_dir example02/logging \
-          --submit_samples \
-          --submit_reads \
-          --submit_assembly \
-          --submit_bins
+          --staging-dir example02/staging \
+          --logging-dir example02/logging \
+          --submit-samples \
+          --submit-reads \
+          --submit-assembly \
+          --submit-bins
     - name: Example 03
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
@@ -83,11 +83,11 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example03/staging \
-          --logging_dir example03/logging \
-          --submit_samples \
-          --submit_reads \
-          --submit_assembly
+          --staging-dir example03/staging \
+          --logging-dir example03/logging \
+          --submit-samples \
+          --submit-reads \
+          --submit-assembly
     - name: Example 04
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
@@ -99,12 +99,12 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example04/staging \
-          --logging_dir example04/logging \
-          --submit_reads \
-          --submit_assembly \
-          --submit_bins \
-          --submit_mags
+          --staging-dir example04/staging \
+          --logging-dir example04/logging \
+          --submit-reads \
+          --submit-assembly \
+          --submit-bins \
+          --submit-mags
     - name: Example 05
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
@@ -116,11 +116,11 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example05/staging \
-          --logging_dir example05/logging \
-          --submit_reads \
-          --submit_assembly \
-          --submit_bins
+          --staging-dir example05/staging \
+          --logging-dir example05/logging \
+          --submit-reads \
+          --submit-assembly \
+          --submit-bins
     - name: Example 06
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
@@ -132,10 +132,10 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example06/staging \
-          --logging_dir example06/logging \
-          --submit_reads \
-          --submit_assembly
+          --staging-dir example06/staging \
+          --logging-dir example06/logging \
+          --submit-reads \
+          --submit-assembly
     - name: Example 07
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
@@ -147,11 +147,11 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example07/staging \
-          --logging_dir example07/logging \
-          --submit_assembly \
-          --submit_bins \
-          --submit_mags
+          --staging-dir example07/staging \
+          --logging-dir example07/logging \
+          --submit-assembly \
+          --submit-bins \
+          --submit-mags
     - name: Example 08
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
@@ -163,10 +163,10 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example08/staging \
-          --logging_dir example08/logging \
-          --submit_assembly \
-          --submit_bins
+          --staging-dir example08/staging \
+          --logging-dir example08/logging \
+          --submit-assembly \
+          --submit-bins
     - name: Example 09
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
@@ -178,9 +178,9 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example09/staging \
-          --logging_dir example09/logging \
-          --submit_assembly
+          --staging-dir example09/staging \
+          --logging-dir example09/logging \
+          --submit-assembly
     - name: Example 10
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
@@ -192,10 +192,10 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example10/staging \
-          --logging_dir example10/logging \
-          --submit_bins \
-          --submit_mags
+          --staging-dir example10/staging \
+          --logging-dir example10/logging \
+          --submit-bins \
+          --submit-mags
     - name: Example 11
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
@@ -207,9 +207,9 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example11/staging \
-          --logging_dir example11/logging \
-          --submit_bins
+          --staging-dir example11/staging \
+          --logging-dir example11/logging \
+          --submit-bins
     - name: Example 12
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
@@ -221,6 +221,6 @@ jobs:
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         submg-cli submit \
           --config $CFG \
-          --staging_dir example12/staging \
-          --logging_dir example12/logging \
-          --submit_mags
+          --staging-dir example12/staging \
+          --logging-dir example12/logging \
+          --submit-mags
