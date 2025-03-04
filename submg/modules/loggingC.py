@@ -19,7 +19,6 @@ def set_up_logging(logging_dir: str,
         logfile: The path to the logfile.
         verbose: The verbosity level.
     """
-    print("logging setup starts")
     # Set up global variables
     global logfile_path
     global verbosity_level

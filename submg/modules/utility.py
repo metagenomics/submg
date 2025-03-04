@@ -44,7 +44,6 @@ def full_timestamp():
     Creates and returns a full timestamp (year, month, day, hour, minute, second).
     """
     timestamp = time.strftime("%Y_%m_%d_%H%M%S")
-    print("Creating timestamp: " + timestamp)
     return timestamp
 
 
