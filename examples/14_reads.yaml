@@ -1,0 +1,16 @@
+# ABOUT: This is a config for submitting 1 sets of paired-end reads
+# USAGE: navigate to the <examples> directory
+# USAGE: submg-cli submit --config 14_reads.yaml --staging-dir <path/to/staging/dir> --logging-dir <path/to/logging/dir> --submit-reads
+
+
+STUDY: "PRJEB71644"                                                           # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"
+PAIRED_END_READS:                                 
+- NAME: "idx00_s01_pe_reads"                                                                      # Choose a unique name >>EXAMPLE: "Bioreactor_2_replicate_1"
+  SEQUENCING_INSTRUMENT: 'Illumina MiSeq'                                                   # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument >>EXAMPLE: ["Illumina HiSeq 1500", "GridION"]
+  LIBRARY_SOURCE: 'METAGENOMIC'                                                             # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "GENOMIC"
+  LIBRARY_SELECTION: 'RANDOM'                                                               # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "RANDOM"
+  LIBRARY_STRATEGY: 'WGS'                                                                   # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy >>EXAMPLE: "WGS"
+  INSERT_SIZE: "200"                                                                             # Insert size of the paired-end reads (https://www.ebi.ac.uk/fg/annotare/help/seq_lib_spec.html) >>EXAMPLE: "300"
+  FASTQ1_FILE: "data/reads/fwd2.fastq"                                                      # Path to the fastq file with forward reads >>EXAMPLE: "/mnt/data/reads_R1.fastq.gz"
+  FASTQ2_FILE: "data/reads/rev2.fastq"                                                      # Path to the fastq file with reverse reads >>EXAMPLE: "/mnt/data/reads_R2.fastq.gz"
+  RELATED_SAMPLE_ACCESSION: 'SAMEA113417017'                                                # The accession of the sample that these reads originate from >>EXAMPLE: "ERS15898933"

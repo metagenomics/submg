@@ -1,0 +1,17 @@
+# ABOUT: This is a config for submitting 2 samples
+# USAGE: navigate to the <examples> directory
+# USAGE: submg-cli submit --config 13_samples.yaml --staging-dir <path/to/staging/dir> --logging-dir <path/to/logging/dir> --submit-samples
+
+
+STUDY: "PRJEB71644"                                                           # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"
+METAGENOME_SCIENTIFIC_NAME: "biogas fermenter metagenome"                     # Taxonomic identifier of the metagenome. Check the ENA metagenome taxonomy tree to find a taxonomy ID and species name fitting your sample >>EXAMPLE: "biogas fermenter metagenome"
+METAGENOME_TAXID: "718289"                                                    # Taxonomic identifier of the assembly. Must match SPECIES_SCIENTIFIC_NAME >>EXAMPLE: "718289"
+NEW_SAMPLES:                                                                  # These samples will be created in ENA according to the data entered below. Your assembly MUST BE BASED ON ALL OF THESE.
+- TITLE: "idx00_hydrolysis digester sample"                                   # A unique title for your sample >>EXAMPLE: "Bioreactor_2_sample"
+  collection date: "2022-07-12"                                               # Any ISO compliant time. Can be truncated from the right (e.g. '2023-12-27T16:07' or '2023-12') >>EXAMPLE: "2023-03"
+  geographic location (country and/or sea): "Germany"                         # See ENA checklists (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000011) for valid values >>EXAMPLE: "Germany"
+  ADDITIONAL_SAMPLESHEET_FIELDS:                                              # You can add more fields from the ENA samplesheet that most closely matches your experiment
+- TITLE: "idx00_main digester sample"                                         # A unique title for your sample >>EXAMPLE: "Bioreactor_2_sample"
+  collection date: "2022-07-12"                                               # Any ISO compliant time. Can be truncated from the right (e.g. '2023-12-27T16:07' or '2023-12') >>EXAMPLE: "2023-03"
+  geographic location (country and/or sea): "Germany"                         # See ENA checklists (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000011) for valid values >>EXAMPLE: "Germany"
+  ADDITIONAL_SAMPLESHEET_FIELDS:                                              # You can add more fields from the ENA samplesheet that most closely matches your experiment

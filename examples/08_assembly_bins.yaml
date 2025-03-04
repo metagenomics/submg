@@ -2,7 +2,7 @@
 # ABOUT: Coverage is derived from .bam files
 # ABOUT: Taxonomy is specified only in the MANUAL_TAXONOMY_FILE
 # USAGE: navigate to the <examples> directory
-# USAGE: submg submit --config 08_assembly_bins.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_assembly --submit_bins
+# USAGE: submg-cli submit --config 08_assembly_bins.yaml --staging-dir <path/to/staging/dir> --logging-dir <path/to/logging/dir> --submit-assembly --submit-bins
 
 
 STUDY: "PRJEB71644"                                                           # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"

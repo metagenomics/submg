@@ -1,4 +1,4 @@
 Bin_id	Quality_category	Flatfile_path	Chromosomes_path	Unlocalised_path
 bin1	medium
-bin2	medium		data/mag_chromosome_with_unlocalized/bin2_chromosomes.tsv
-bin3	high		data/mag_chromosome_with_unlocalized/bin3_chromosomes.tsv	data/mag_chromosome_with_unlocalized/bin3_unlocalized.tsv
+bin2	medium		../mag_chromosome_with_unlocalized/bin2_chromosomes.tsv
+bin3	high		../mag_chromosome_with_unlocalized/bin3_chromosomes.tsv	../mag_chromosome_with_unlocalized/bin3_unlocalized.tsv

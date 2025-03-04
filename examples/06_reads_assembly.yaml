@@ -1,7 +1,7 @@
 # ABOUT: This is a config for submitting 1 set of single reads, 1 set of paired and reads and an assembly.
 # ABOUT: Coverage is derived from .bam files
 # USAGE: navigate to the <examples> directory
-# USAGE: submg submit --config 06_reads_assembly.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_reads --submit_assembly
+# USAGE: submg-cli submit --config 06_reads_assembly.yaml --staging-dir <path/to/staging/dir> --logging-dir <path/to/logging/dir> --submit-reads --submit-assembly
 
 
 STUDY: "PRJEB71644"                                                                         # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"

@@ -2,7 +2,7 @@
 # ABOUT: Coverage is known.
 # ABOUT: Taxonomy is derived from `gtdb_to_ncbi_majority_vote.py` output and a MANUAL_TAXONOMY_FILE
 # USAGE: navigate to the <examples> directory
-# USAGE: submg submit --config 05_reads_assembly_bins.yaml --staging_dir <path/to/staging/dir> --logging_dir <path/to/logging/dir> --submit_reads --submit_assembly --submit_bins
+# USAGE: submg-cli submit --config 05_reads_assembly_bins.yaml --staging-dir <path/to/staging/dir> --logging-dir <path/to/logging/dir> --submit-reads --submit-assembly --submit-bins
 
 
 STUDY: "PRJEB71644"                                                           # The accession of your study (which has to already exist in ENA) >>EXAMPLE: "PRJEB71644"
