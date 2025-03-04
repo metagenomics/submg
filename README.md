@@ -14,7 +14,13 @@
 
 subMG aids in the submission of metagenomic study data to the European Nucleotide Archive (ENA). The tool can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in a configuration form, subMG derives additional information where required, creates samplesheets and manifests and finally uploads everything to your ENA account. You can use a combination of manual and subMG steps to submit your data (e.g. submitting samples and reads through the ENA web interface, then using subMG to submit the assembly and bins). A test mode is available for doing trial submissions to the ENA development server.
 subMG comes with an optional graphic user interface (GUI) which provides the same functionality as the command line interface (CLI).
-TODO: ADD GUI SCREENSHOT
+
+
+<p align="center">
+  <source media="(prefers-color-scheme: dark)" srcset="submg/resources/gui_screenshot.png">
+  <source media="(prefers-color-scheme: light)" srcset="submg/resources/gui_screenshot.png">
+  <img alt="subMG gui screenshot" src="submg/resources/gui_screenshot.png" height=400>
+</p>
 
 
 
