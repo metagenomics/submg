@@ -90,17 +90,6 @@ If you only intend on using the graphic user interface (GUI), you can download a
 - Use `submg-cli` to run the command line interface or `submg-gui` to run the graphic user interface (not recommended for submitting large datasets)
   - Make sure to download ENA's webin-CLI, either through the gui or by running `submg-cli download-webin`
 
-## Local Installation - Windows (GUI Standalone)
-If you only intend on using the graphic user interface (GUI), you can download an executable from the [releases page](https://github.com/metagenomics/submg/releases) (`submg_win_gui.exe`).
-
-- Make sure the following software is installed
-  - Java 17 or higher. You can download OpenJDK installers from different sources, e.g.:
-    - [Eclipse/Adoptium](https://adoptopenjdk.net/)
-    - [Amazon/Corretto](https://aws.amazon.com/de/corretto/)
-    - [Oracle](https://jdk.java.net/)
-  - [Python 3.8 or higher](https://www.python.org/downloads/windows/)
-    - Make sure to check the `tcl/tk` box during installation
-
 ## Local Installation - Windows (Command Line Interface)
 - Make sure the following software is installed
   - Java 17 or higher. You can download OpenJDK installers from different sources, e.g.:
