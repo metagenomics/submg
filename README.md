@@ -1,8 +1,8 @@
 # About  <img align="right" style="float: right; margin-left: 10px; margin-top: 15px;" src="https://img.shields.io/github/v/release/metagenomics/submg" alt="GitHub release (latest)">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/logo_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="submg/resources/logo_light.png">
-  <img align="left" alt="submg Logo" src="submg/resources/logo_light.png" height=88>
+  <source media="(prefers-color-scheme: light)" srcset="submg/resources/gui_logo.png">
+  <img align="left" alt="submg Logo" src="submg/resources/gui_logo.png" height=88>
 </picture>
 
 <picture>
