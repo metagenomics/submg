@@ -1,3 +1,14 @@
+---
+title: subMG Tutorial
+---
+
+<style>
+  /* Hide the big header link that appears at the top */
+  h1:first-of-type {
+    display: none;
+  }
+</style>
+
 # subMG Tutorial
 This short tutorial will show you how to submit a toy metagenomics dataset using the command line interface of subMG.
 A graphical user interface for subMG is available, but will not be covered in this tutorial.

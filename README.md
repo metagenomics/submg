@@ -49,6 +49,7 @@ Please Note
 # Content
 - [Installation](#installation)
 - [Usage](#usage)
+  - [Tutorial](#tutorial)
   - [Example](#example)
   - [ENA Development Service](#ena-development-service)
   - [Study Object](#study-object)
@@ -71,7 +72,7 @@ Please Note
 A docker container based on the main branch is available [through DockerHub](https://hub.docker.com/r/metagenomics/submg): `docker pull ttubb/submg`
 
 ## Local Installation - Linux (GUI Standalone)
-If you only intend on using the graphic user interface (GUI), you can download an executable from the [releases page](https://github.com/metagenomics/submg/releases) (`submg_linux_gui`).
+If you only intend on using the graphic user interface (GUI), you can download an executable from the [releases page](https://github.com/metagenomics/submg/releases) (`submg_gui`) or at `dist/submg-gui`.
 
 - Make sure the following software is installed
   - Java 17 or higher (e.g. via `sudo apt install openjdk-21-jre-headless`)
@@ -113,6 +114,9 @@ If you only intend on using the graphic user interface (GUI), you can download a
 
 # Usage
 subMG is intended to submit data related to a *single* (co-)assembly. All samples, sequncing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run subMG once for each assembly.
+
+## Tutorial
+If you'd like to use the the subMG CLI, consider following [the tutorial](https://metagenomics.github.io/submg/)
 
 ## Example
 Assuming you want to upload 2 samples, 2 paired-end read files, a co-assembly and bins. We will collect the necessary data, do a test submission, then upload everything to the ENA.
