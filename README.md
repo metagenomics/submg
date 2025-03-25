@@ -2,19 +2,21 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/logo_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/logo_light.png">
-  <img align="left" alt="submg Logo" src="submg/resources/logo_light.png" height=88>
+  <img align="left" alt="submg Logo" src="submg/resources/logo_light.png" height=65>
 </picture>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/nfdi4microbiota_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/nfdi4microbiota_light.png">
-  <img align="right" alt="submg Logo" src="submg/resources/nfdi4microbiota_light.png" height=88>
+  <img align="right" alt="submg Logo" src="submg/resources/nfdi4microbiota_light.png" height=108>
 </picture>
 
 
-subMG aids in the submission of metagenomic study data to the European Nucleotide Archive (ENA). The tool can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. After you enter your (meta)data in a configuration form, subMG derives additional information where required, creates samplesheets and manifests and finally uploads everything to your ENA account. You can use a combination of manual and subMG steps to submit your data (e.g. submitting samples and reads through the ENA web interface, then using subMG to submit the assembly and bins). A test mode is available for doing trial submissions to the ENA development server.
-subMG comes with an optional graphic user interface (GUI) which provides the same functionality as the command line interface (CLI).
+subMG aids in the submission of metagenomic study data to the European Nucleotide Archive (ENA). The tool can be used to submit various combinations of samples, reads, (co-)assemblies, bins and MAGs. All files and metadata are entered in a single location, redundant data entry is eliminated. subMG derives additional information where required, creates samplesheets and manifests and uploads everything to the ENA.
+A command line interface is available as well as a graphical user interface, with both offering the same functionality.
+You can use subMG to continue a submission process if some levels of data already exist in ENA (e.g. submitting samples and reads through the ENA web interface, then using subMG to submit the assembly and bins).
 
+subMG was developed in the german [NFDI4Microbiota consortium](https://nfdi4microbiota.de/) with the objective of simplifying [FAIR](https://www.go-fair.org/fair-principles/) data sharing in metagenomics and offering support to microbiology researchers struggling with the submission process.
 
 <p align="center">
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/gui_screenshot.png">
@@ -113,7 +115,7 @@ If you only intend on using the graphic user interface (GUI), you can download a
 
 
 # Usage
-subMG is intended to submit data related to a *single* (co-)assembly. All samples, sequncing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run subMG once for each assembly.
+subMG is intended to submit data related to a *single* (co-)assembly. All samples, sequencing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run subMG once for each assembly.
 
 ## Tutorial
 If you'd like to use the the subMG CLI, consider following [the tutorial](https://metagenomics.github.io/submg/)
@@ -155,7 +157,7 @@ ENA provides a [development service](https://ena-docs.readthedocs.io/en/latest/s
 A lot of (meta)data is required for a submission. To use subMG, you need to provide metadata and the locations of your files in a YAML document. Which information is required depends on the type of your submission. You can use `submg-cli makecfg` command to create a template for your config file. It will contain only the fields necessary for your specific submission, along with explanations and examples. Additionally, the `examples` directory contains examples of config files and the associated data. If you are unsure of how to fill out certain fields, please feel free to ask on the [github discussions page](https://github.com/metagenomics/submg/discussions) of this project.
 
 ## Submission Modes
-Not all combinations of items can be submitted. For example, it is not not possible to submit only samples and a co-assembly without also submitting the corresponding reads. The figure below illustrates all possible combinations of items that can be submitted.
+Not all combinations of items can be submitted. For example, it is not possible to submit only samples and a co-assembly without also submitting the corresponding reads. The figure below illustrates all possible combinations of items that can be submitted.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/submission_modes_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/submission_modes_light.png">
@@ -220,7 +222,7 @@ In some cases subMG will be unable to assign a valid taxonomy to a bin. The subm
 A possible reason for a failed taxonomic assignment is that no proper taxid exists yet. This happens more often than one might expect. You can [create a taxon request](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy_requests.html) in the ENA Webin Portal to register the taxon.
 
 ## Manual Taxonomy File
-In cases where subMG is unable to assign a valid taxonomy based on the NCBI taxonomy file, you can provide taxonomies for some of your bins here. The table has to be referenced under the keyword `MANUAL_TAXONOMY` in the configuration file. The table matches each `Bin_id` to a `Scientific_name` and a `Tax_id`. If a bin is present in this document, the taxonomic data from outher sources will be ignored.
+In cases where subMG is unable to assign a valid taxonomy based on the NCBI taxonomy file, you can provide taxonomies for some of your bins here. The table has to be referenced under the keyword `MANUAL_TAXONOMY` in the configuration file. The table matches each `Bin_id` to a `Scientific_name` and a `Tax_id`. If a bin is present in this document, the taxonomic data from other sources will be ignored.
 |Bin_id|Scientific_name|Tax_id|
 |---|---|---|
 |bin3|uncultured Paracoccus sp.|189685|
@@ -233,7 +235,7 @@ ENA provides a [guideline for choosing taxonomy](https://ena-docs.readthedocs.io
 # Edge Cases
 
 ## Dereplication
-If your bins are the result of dereplicating data from a single assembly you can use subMG as described above. If your bins are the result of dereplicating data from multiple different assemblies, you need to split them based on which assembly they belong to. You then run subMG seperately for each assembly (together with the corresponding set of bins).
+If your bins are the result of dereplicating data from a single assembly you can use subMG as described above. If your bins are the result of dereplicating data from multiple different assemblies, you need to split them based on which assembly they belong to. You then run subMG separately for each assembly (together with the corresponding set of bins).
 
 ## Bin Contamination above 100 percent
 When calculating completeness and contamination of a bin with tools like [CheckM](https://github.com/Ecogenomics/CheckM), contamination values above 100% can occur. [Usually, this is not an error](https://github.com/Ecogenomics/CheckM/issues/107). However, the ENA API will refuse to accept bins with contamination values above 100%. subMG will automatically exclude bins with contamination values above 100% from the submission.
