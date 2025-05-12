@@ -104,7 +104,7 @@ class ConfigOutlinePage(BasePage):
 
         self.coverage_from_tsv = ctk.CTkRadioButton(
             coverage_frame,
-            text="Kown coverage (TSV/manual input)",
+            text="Known coverage (TSV/manual input)",
             variable=self.coverage_option,
             value=0  # Set this as value 0
         )
@@ -299,6 +299,8 @@ class ConfigOutlinePage(BasePage):
         for checkbox, entry in self.checkboxes_with_entries:
             if checkbox.get():
                 entry.grid()
+                entry.event_generate("<FocusOut>")
+                entry.configure(placeholder_text="how many")
             else:
                 entry.grid_remove()
 
