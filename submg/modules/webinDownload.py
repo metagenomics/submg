@@ -59,6 +59,7 @@ def check_java(soft=False):
 
 
 def download_webin_cli(version):
+    return None
     """Downloads the Webin-CLI JAR file if it's missing."""
     storage_dir = webinWrapper.get_persistent_storage_path()
     os.makedirs(storage_dir, exist_ok=True)  # Ensure the directory exists

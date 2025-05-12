@@ -4,7 +4,7 @@ os.environ['XMODIFIERS'] = "@im=none"
 import threading
 import customtkinter as ctk
 from submg.gui.base import BasePage
-from submg.modules.webinWrapper import webin_cli_jar_available
+from submg.modules.webinWrapper import webin_cli_jar_available, get_persistent_storage_path
 from submg.modules.webinDownload import check_java, download_webin_cli
 from submg.modules.statConf import staticConfig
 
@@ -166,13 +166,13 @@ class HomePage(BasePage):
                         dlg.destroy()
 
                         if not webin_cli_jar_available():
-                            version = staticConfig.webin_cli_version
-                            storage = webinWrapper.get_persistent_storage_path()
-                            showwarning(
-                                "Download failed",
-                                f"webin-cli-{version}.jar still not found.\n"
-                                f"Please download it manually from the ENA website and place it in:\n{storage}"
-                            )
+                            storage = get_persistent_storage_path()
+                            showwarning(f"webin-cli not found", 
+                                        f"Something went wrong and "
+                                        f"webin-cli-{webin_cli_version}.jar stil cannot be "
+                                        f"found. Please download webin-cli manually from "
+                                        f"the ENA website and place it in the the following directory:\n"
+                                        f"{storage}")
 
                     self.after(0, _on_done)
 
