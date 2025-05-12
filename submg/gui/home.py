@@ -1,6 +1,7 @@
 # home.py
 import os
 os.environ['XMODIFIERS'] = "@im=none"
+import threading
 import customtkinter as ctk
 from submg.gui.base import BasePage
 from submg.modules.webinWrapper import webin_cli_jar_available
@@ -139,19 +140,43 @@ class HomePage(BasePage):
                         "Would you like to download webin-cli now?"):
                 download_webin = True
         if download_webin:
-            # show a message
-            showwarning("Downloading webin-cli",
-                        "Webin-cli is being downloaded.")
-            download_webin_cli(staticConfig.webin_cli_version)
-        if not webin_cli_jar_available():
-            showwarning("webin-cli not found", 
-                        "Something went wrong and "
-                        "webin-cli-{version_string}.jar stil cannot be "
-                        "found. Please download webin-cli manually from "
-                        "the ENA website and place it in the same directory "
-                        "Please download webin-cli {version_string} "
-                        "manually from the ENA website and place it in the "
-                        "submg/modules directory.")
+                # Create a non-blocking dialog
+                dlg = ctk.CTkToplevel(self)
+                dlg.title("Downloading webin-cli")
+                dlg.geometry("400x100")
+                dlg.resizable(False, False)
+
+                ctk.CTkLabel(
+                    dlg,
+                    text="Downloading webin-cli, please wait…",
+                    font=('Arial', self.controller.fontsize)
+                ).pack(pady=(20, 5))
+
+                pb = ctk.CTkProgressBar(dlg, mode='indeterminate')
+                pb.pack(fill='x', padx=20, pady=(0, 20))
+                pb.start()
+
+                def _worker():
+                    # Perform the download
+                    download_webin_cli(staticConfig.webin_cli_version)
+
+                    # Once done, close the dialog and check success on the main thread
+                    def _on_done():
+                        pb.stop()
+                        dlg.destroy()
+
+                        if not webin_cli_jar_available():
+                            version = staticConfig.webin_cli_version
+                            storage = webinWrapper.get_persistent_storage_path()
+                            showwarning(
+                                "Download failed",
+                                f"webin-cli-{version}.jar still not found.\n"
+                                f"Please download it manually from the ENA website and place it in:\n{storage}"
+                            )
+
+                    self.after(0, _on_done)
+
+                threading.Thread(target=_worker, daemon=True).start()
 
     def register_study(self):
         """ Triggered when the user presses the 'Register Study' button. Opens
