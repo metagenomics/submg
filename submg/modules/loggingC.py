@@ -63,8 +63,6 @@ def __add_listener(listener):
     Args:
         listener: A function that takes a log message as an argument.
     """
-    global listeners
-
     listeners.append(listener)
 
 
@@ -77,9 +75,6 @@ def message(message: str,
         message:   The message to log.
         threshold: The verbosity level threshold.
     """
-    global logfile_path
-    global verbosity_level
-
     # Make sure the log file exists
     if not os.path.isfile(logfile_path):
         print(f"\nERROR: There should be a logfile at {logfile_path} but it seems to have been deleted.")
