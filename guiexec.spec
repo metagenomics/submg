@@ -42,7 +42,7 @@ a = Analysis(
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=None,
-    noarchive=True,  # Ensure unpacked resources
+    noarchive=False,
 )
 
 # Create the PyInstaller archive step
