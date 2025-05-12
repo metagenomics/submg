@@ -33,7 +33,7 @@ def set_gui_credentials(username, password):
         username (str): ENA username.
         password (str): ENA password.
     """
-    global USE_GUI, gui_credentials
+    global USE_GUI
     USE_GUI = True
     gui_credentials["username"] = username
     gui_credentials["password"] = password
@@ -209,8 +209,6 @@ def get_login():
     Returns:
         (str, str): Username and Password.
     """
-    global USE_GUI, gui_credentials
-
     if USE_GUI:
         if gui_credentials["username"] is None or gui_credentials["password"] is None:
             err = "\nERROR: GUI credentials not set."
@@ -439,8 +437,6 @@ def stamped_from_config(config, key, subkey=None, subsubkey=None):
         subkey (str): The nested key to extract from the key.
         subsubkey (str): The nested key to extract from the subkey.
     """
-    global timestamp
-    global keys_to_stamp
     lowest_key = subsubkey or subkey or key
 
     value = from_config(config, key, subkey, subsubkey)
