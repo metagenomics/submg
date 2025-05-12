@@ -4,6 +4,20 @@ from submg.modules import loggingC
 from submg.modules.statConf import staticConfig
 
 
+def ensure_server_online(url: str, timeout: float = 5.0):
+    try:
+        resp = requests.head(url, timeout=timeout)
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        loggingC.message(
+            f"ERROR: Cannot reach ena server at {url}\n\t[{e}]\n"
+            "Please navigate to the url in a web browser to make sure the service is online. "
+            "If it is online and the error persists, please open an issue on the subMG GitHub.",
+            threshold=-1
+        )
+        exit(1)
+
+
 def study_exists(study_accession: str,
                  devserver: bool = False) -> bool:
     """
@@ -20,6 +34,8 @@ def study_exists(study_accession: str,
         url = staticConfig.ena_test_search_url
     else:
         url = staticConfig.ena_search_url
+    ensure_server_online(url)
+    
     params = {
         "query": f"study_accession={study_accession}",
         "result": "study",
@@ -58,6 +74,8 @@ def sample_accession_exists(sample_accession: str,
         url = staticConfig.ena_test_search_url
     else:
         url = staticConfig.ena_search_url
+    ensure_server_online(url)
+
     params = {
         "query": f"sample_accession={sample_accession}",
         "result": "sample",
@@ -90,6 +108,8 @@ def sample_alias_accession(sample_alias: str,
         url = staticConfig.ena_test_search_url
     else:
         url = staticConfig.ena_search_url
+    ensure_server_online(url)
+
     params = {
         "query": f"sample_alias={sample_alias} AND study_accession={study_accession}",
         "result": "sample",
@@ -121,6 +141,8 @@ def sample_title_accession(sample_title: str,
         url = staticConfig.ena_test_search_url
     else:
         url = staticConfig.ena_search_url
+    ensure_server_online(url)
+
     params = {
         "query": f"sample_title={sample_title} AND study_accession={study_accession}",
         "result": "sample",
@@ -153,6 +175,8 @@ def run_alias_accession(run_alias: str,
         url = staticConfig.ena_test_search_url
     else:
         url = staticConfig.ena_search_url
+    ensure_server_online(url)
+
     params = {
         "query": f"run_alias={run_alias} AND study_accession={study_accession}",
         "result": "read_run",
@@ -183,6 +207,8 @@ def search_samples_by_assembly_analysis(assembly_analysis_accession: str,
         url = staticConfig.ena_test_search_url
     else:
         url = staticConfig.ena_search_url
+    ensure_server_online(url)
+
     params = {
         "query": f"analysis_accession={assembly_analysis_accession}",
         "result": "analysis",
@@ -218,6 +244,8 @@ def search_scientific_name_by_sample(sample_accession: str,
         url = staticConfig.ena_test_search_url
     else:
         url = staticConfig.ena_search_url
+    ensure_server_online(url)
+
     params = {
         "query": f"sample_accession={sample_accession}",
         "result": "sample",
