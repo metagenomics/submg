@@ -75,6 +75,7 @@ Please Note
   - [Dereplication](#dereplication)
   - [Bin Contamination above 100 percent](#bin-contamination-above-100-percent)
 - [Support](#support)
+- [Citation](#citation)
 
 
 
@@ -232,3 +233,6 @@ If you absolutely need to submit such (presumably low-quality) bins, you need to
 
 # Support
 subMG is being actively developed. Please use the GitHub [issue tracker](https://github.com/metagenomics/submg/issues) to report problems. A [discussions page](https://github.com/metagenomics/submg/discussions) is available for questions, comments and suggestions. 
+
+# Citation
+When using subMG in your work, please cite https://doi.org/10.1186/s13040-025-00453-w
