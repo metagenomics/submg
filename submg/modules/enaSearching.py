@@ -1,21 +1,49 @@
 import requests
+from requests.exceptions import ConnectionError, ConnectTimeout, HTTPError, RequestException
+
 
 from submg.modules import loggingC
 from submg.modules.statConf import staticConfig
 
 
+
 def ensure_server_online(url: str, timeout: float = 5.0):
+    """
+    Check that the server at `url` is reachable and free of server-side failures.
+
+    Attempts an HTTP OPTIONS request to determine reachability. Handles:
+      - ConnectTimeout: no response in time (client-side timeout).
+      - ConnectionError: unable to establish a TCP connection (server offline).
+      - HTTPError with status >= 500: server-side errors.
+    Treats 4xx responses as “reachable but client-side issues” and does not exit.
+    """
     try:
-        resp = requests.head(url, timeout=timeout)
+        # Use OPTIONS since some APIs reject HEAD without params
+        resp = requests.options(url, timeout=timeout)
         resp.raise_for_status()
-    except requests.RequestException as e:
+    except ConnectTimeout as e:
         loggingC.message(
-            f"ERROR: Cannot reach ena server at {url}\n\t[{e}]\n"
-            "Please navigate to the url in a web browser to make sure the service is online. "
-            "If it is online and the error persists, please open an issue on the subMG GitHub.",
+            f"ERROR: Connection to {url} timed out.\n\t[{e}]",
             threshold=-1
         )
         exit(1)
+    except ConnectionError as e:
+        loggingC.message(
+            f"ERROR: Cannot connect to {url} (server offline?).\n\t[{e}]",
+            threshold=-1
+        )
+        exit(1)
+    except HTTPError as e:
+        status = e.response.status_code if e.response is not None else None
+        if status and status >= 500:
+            loggingC.message(
+                f"ERROR: Server error at {url} (status code {status}).\n\t[{e}]",
+                threshold=-1
+            )
+            exit(1)
+    except RequestException:
+        # Other errors (e.g., TooManyRedirects); propagate or handle as needed
+        raise
 
 
 def study_exists(study_accession: str,
