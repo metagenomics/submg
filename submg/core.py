@@ -556,12 +556,20 @@ def submit(args, listener=None, gui=False):
                 "\n>Your data will be removed from the development "
                 "server during the next 24 hours."
             )
+            msg += (
+                "\n>When using subMG in your work, please cite "
+                "https://doi.org/10.1186/s13040-025-00453-w"
+            )
         else:
             msg += (
                 "\n>You will receive final accessions once your "
                 "submission has been processed by ENA."
                 "\n>ENA will send those final accession by email to "
                 "the contact adress of your ENA account."
+            )
+            msg += (
+                "\n>When using subMG in your work, please cite "
+                "https://doi.org/10.1186/s13040-025-00453-w"
             )
         loggingC.message(msg, threshold=0)
 
