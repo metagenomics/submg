@@ -421,7 +421,7 @@ def __ena_taxonomy_suggestion(level: str,
                 "displayName": s.get("displayName", "N/A"),
             })
         if filtered:
-            suggestions = __filter_ena_suggestions(level, domain, classification, suggestions)
+            suggestions = __filter_ena_suggestions(level, classification, suggestions)
 
         return suggestions
     else:
