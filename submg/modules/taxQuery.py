@@ -294,10 +294,12 @@ def __best_classification(ncbi_classifications: dict) -> dict:
 # --------------------changed below-----------------------
 def __is_whole_word(term: str, text: str) -> bool:
     """Return True if *term* appears as a whole word in *text* (case‑insensitive)."""
-    return bool(re.search(rf'\b{re.escape(term)}\b', text, re.IGNORECASE))
+    _RE_WHOLE_WORD = lambda term: re.compile(rf"\b{re.escape(term)}\b", re.IGNORECASE)
+    return bool(_RE_WHOLE_WORD(term).search(text))
 
 
 def __filter_ena_suggestions(level: str,
+                             domain: str,
                              classification: str,
                              suggestions: list[dict]) -> list[dict]:
     """
@@ -311,40 +313,74 @@ def __filter_ena_suggestions(level: str,
         • Intermediate ranks →  optional “Candidatus ” +  <Taxon> bacterium/archaeon/eukaryote
                                 (nothing after the rank word)
     """
+    DOMAIN_ALLOWED = {
+    "Bacteria":  "uncultured bacterium",
+    "Archaea":   "uncultured archaeon",
+    "Eukaryota": "uncultured eukaryote",
+    }
     classification_lc = classification.lower()
-    filtered = []
+    filtered: list[dict] = []
+
+    # Pre‑compute regexes
+    if level == "genus":
+        genus_pat = re.compile(
+            rf"^(candidatus\s+)?{re.escape(classification_lc)}\s+sp\.$",
+            re.IGNORECASE,
+        )
+
+    elif level == "species":
+        species_pat = re.compile(
+            # "Candidatus" species are okay
+            rf"^(candidatus\s+)?{re.escape(classification_lc)}$",
+            re.IGNORECASE,
+        )
+        # Species level, but we want to exclude subspecies, strains, etc.
+        bad_tokens_pat = re.compile(r"\b(subsp\.|sv\.|serovar|strain)\b", re.IGNORECASE)
+
+    elif level not in ("domain", "metagenome"):
+        # intermediate ranks (phylum, class, …)
+        inter_pat = re.compile(
+            rf"^(candidatus\s+)?{re.escape(classification_lc)}\s+"
+            r"(bacterium|archaeon|eukaryote)$",
+            re.IGNORECASE,
+        )
+
     for s in suggestions:
-        sci = s.get("scientificName", "").strip()
+        sci: str = s.get("scientificName", "").strip()
         sci_lc = sci.lower()
 
-        # skip "uncultured …" unless domain level
-        if sci_lc.startswith("uncultured ") and level != "domain":
-            continue
+        if level == "domain":
+            want = DOMAIN_ALLOWED.get(domain)
+            if want and sci_lc == want:
+                filtered.append(s)
+            continue   # domain handled; skip rest of loop
 
-        # off‑target guard:  classification must occur as whole word
+        # 2. off‑target guard because sometimes ENA returns wildly off-target suggestions
         if not __is_whole_word(classification, sci):
-            continue
+            continue   # “Poropuntius sp.” when looking for Paucilactobacillus, etc.
 
-        # rank‑specific patterns
+        # rank‑specific checks
         if level == "genus":
-            if not re.fullmatch(rf"(candidatus\s+)?{re.escape(classification_lc)}\s+sp\.", sci_lc):
-                continue
+            if genus_pat.fullmatch(sci_lc):
+                filtered.append(s)
 
         elif level == "species":
-            # exact start with optional "Candidatus " + species epithet
-            base = rf"(candidatus\s+)?{re.escape(classification_lc)}"
-            if not re.match(base, sci_lc):
-                continue
-            # reject subspecies, strain, serovar, etc.
-            if re.search(r"\b(subsp\.|sv\.|serovar|strain)\b", sci_lc):
-                continue
+            if species_pat.fullmatch(sci_lc) and not bad_tokens_pat.search(sci_lc):
+                filtered.append(s)
 
-        elif level not in ("domain", "genus", "species", "metagenome"):
-            if not re.fullmatch(rf"(candidatus\s+)?{re.escape(classification_lc)}\s+(bacterium|archaeon|eukaryote)", sci_lc):
-                continue
+        elif level not in ("metagenome",):   # intermediate ranks
+            if inter_pat.fullmatch(sci_lc):
+                filtered.append(s)
 
-        # Passed all gates → keep it
-        filtered.append(s)
+        elif level == "metagenome":   # for “metagenome”, keep ENA default behaviour
+            filtered.append(s)
+
+        else:
+            # Log an error: This is an unexpected taxonomic level
+            err = (f"\nERROR: Encountered unexpected taxonomic level {level} for a "
+            "mag bin. Please check your NCBI taxonomy files.")
+            loggingC.message(err, threshold=-1)
+            exit(1)
 
     return filtered
 
@@ -421,7 +457,7 @@ def __ena_taxonomy_suggestion(level: str,
                 "displayName": s.get("displayName", "N/A"),
             })
         if filtered:
-            suggestions = __filter_ena_suggestions(level, classification, suggestions)
+            suggestions = __filter_ena_suggestions(level, domain, classification, suggestions)
 
         return suggestions
     else:
