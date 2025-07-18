@@ -93,6 +93,8 @@ def get_bin_quality(config, silent=False) -> dict:
         loggingC.message(msg, threshold=-1)
         msg = f"Bins directory: {os.path.abspath(bins_directory)}"
         loggingC.message(msg, threshold=-1)
+        msg = f"Do the bin names in the quality file have file extensions like .fa, .fasta etc.? If so, please remove them. The quality file should only contain basenames."
+        loggingC.message(msg, threshold=-1)
         exit(1)
     only_in_directory = bin_basenames - set(result.keys())
     if len(only_in_directory) > 0:
