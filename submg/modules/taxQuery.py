@@ -298,13 +298,12 @@ def __is_whole_word(term: str, text: str) -> bool:
 
 
 def __filter_ena_suggestions(level: str,
-                             domain: str,
                              classification: str,
                              suggestions: list[dict]) -> list[dict]:
     """
     Apply rank‑specific rules to the raw ENA suggestion list.
 
-    Rules (agreed with the user):
+    Rules:
         • “uncultured …” names are allowed only for domain‑level bins.
         • scientificName must contain *classification* as a whole word.
         • Genus‑level →  optional “Candidatus ” +  <Genus> sp.       (nothing after sp.)
@@ -318,15 +317,15 @@ def __filter_ena_suggestions(level: str,
         sci = s.get("scientificName", "").strip()
         sci_lc = sci.lower()
 
-        # (1)  skip "uncultured …" unless domain level
+        # skip "uncultured …" unless domain level
         if sci_lc.startswith("uncultured ") and level != "domain":
             continue
 
-        # (2)  off‑target guard:  classification must occur as whole word
+        # off‑target guard:  classification must occur as whole word
         if not __is_whole_word(classification, sci):
             continue
 
-        # (3)  rank‑specific patterns
+        # rank‑specific patterns
         if level == "genus":
             if not re.fullmatch(rf"(candidatus\s+)?{re.escape(classification_lc)}\s+sp\.", sci_lc):
                 continue
