@@ -2,10 +2,16 @@ import os
 import csv
 import requests
 import time
+import re
 
 from tqdm import tqdm
 from submg.modules import utility, loggingC, binSubmission
 from submg.modules.statConf import staticConfig
+
+
+def __is_whole_word(term, text):
+    """Return True if *term* appears as a whole word in *text* (case‑insensitive)."""
+    return bool(re.search(rf'\b{re.escape(term)}\b', text, re.IGNORECASE))
 
 
 def __report_tax_issues(issues):
@@ -285,6 +291,66 @@ def __best_classification(ncbi_classifications: dict) -> dict:
     return result
 
 
+# --------------------changed below-----------------------
+def __is_whole_word(term: str, text: str) -> bool:
+    """Return True if *term* appears as a whole word in *text* (case‑insensitive)."""
+    return bool(re.search(rf'\b{re.escape(term)}\b', text, re.IGNORECASE))
+
+
+def __filter_ena_suggestions(level: str,
+                             domain: str,
+                             classification: str,
+                             suggestions: list[dict]) -> list[dict]:
+    """
+    Apply rank‑specific rules to the raw ENA suggestion list.
+
+    Rules (agreed with the user):
+        • “uncultured …” names are allowed only for domain‑level bins.
+        • scientificName must contain *classification* as a whole word.
+        • Genus‑level →  optional “Candidatus ” +  <Genus> sp.       (nothing after sp.)
+        • Species‑level → optional “Candidatus ” +  <Genus> species  (no subsp./strain…)
+        • Intermediate ranks →  optional “Candidatus ” +  <Taxon> bacterium/archaeon/eukaryote
+                                (nothing after the rank word)
+    """
+    classification_lc = classification.lower()
+    filtered = []
+    for s in suggestions:
+        sci = s.get("scientificName", "").strip()
+        sci_lc = sci.lower()
+
+        # (1)  skip "uncultured …" unless domain level
+        if sci_lc.startswith("uncultured ") and level != "domain":
+            continue
+
+        # (2)  off‑target guard:  classification must occur as whole word
+        if not __is_whole_word(classification, sci):
+            continue
+
+        # (3)  rank‑specific patterns
+        if level == "genus":
+            if not re.fullmatch(rf"(candidatus\s+)?{re.escape(classification_lc)}\s+sp\.", sci_lc):
+                continue
+
+        elif level == "species":
+            # exact start with optional "Candidatus " + species epithet
+            base = rf"(candidatus\s+)?{re.escape(classification_lc)}"
+            if not re.match(base, sci_lc):
+                continue
+            # reject subspecies, strain, serovar, etc.
+            if re.search(r"\b(subsp\.|sv\.|serovar|strain)\b", sci_lc):
+                continue
+
+        elif level not in ("domain", "genus", "species", "metagenome"):
+            if not re.fullmatch(rf"(candidatus\s+)?{re.escape(classification_lc)}\s+(bacterium|archaeon|eukaryote)", sci_lc):
+                continue
+
+        # Passed all gates → keep it
+        filtered.append(s)
+
+    return filtered
+
+
+
 def __ena_taxonomy_suggestion(level: str,
                             domain: str,
                             classification: str,
@@ -345,39 +411,60 @@ def __ena_taxonomy_suggestion(level: str,
     url = f"https://www.ebi.ac.uk/ena/taxonomy/rest/suggest-for-submission/{query}"
     response = requests.get(url)
     if response.status_code == 200:
-        suggestions = response.json()
-        result = []
-        for suggestion in suggestions:
-            tax_id = suggestion.get("taxId", "N/A")
-            scientific_name = suggestion.get("scientificName", "N/A")
-            display_name = suggestion.get("displayName", "N/A")
-            taxdata = {"tax_id": tax_id, "scientificName": scientific_name, "displayName": display_name}
-            # If we don't filter we want all results
-            if not filtered:
-                result.append(taxdata)
-            # For genus level we want the "is species of this genus" result
-            elif level == 'genus':
-                if scientific_name.endswith('sp.'):
-                    result.append(taxdata)
-            # For species, we want the result that is the species name (no subspecies)
-            # It might have something like "Candidatus" in front so we don't exclude that
-            elif level == 'species':
-                if scientific_name.endswith(classification):
-                    result.append(taxdata)
-            # For domain level, we check for a perfect match of the scientific name
-            elif level == 'domain':
-                if scientific_name == query:
-                    result.append(taxdata)
-            # For all other cases we want the "<classification> <domain>" taxon.
-            else:
-                if scientific_name.endswith('archaeon') or scientific_name.endswith('bacterium') or scientific_name.endswith('eukaryote') or level == 'metagenome':
-                    result.append(taxdata)                  
-        return result
+        raw = response.json()
+
+        # always map to the compact dict structure we use downstream
+        suggestions = []
+        for s in raw:
+            suggestions.append({
+                "tax_id": s.get("taxId", "N/A"),
+                "scientificName": s.get("scientificName", "N/A"),
+                "displayName": s.get("displayName", "N/A"),
+            })
+        if filtered:
+            suggestions = __filter_ena_suggestions(level, domain, classification, suggestions)
+
+        return suggestions
     else:
         err = f"\nERROR: Trying to fetch taxonomy suggestion for {level}: {classification} (domain: {domain}) but ENA REST API returned status code {response.status_code}"
         loggingC.message(err, threshold=-1)
         loggingC.message(f"Attempted query was {url}", threshold=0)
         exit(1)
+    
+    # if response.status_code == 200:
+    #     suggestions = response.json()
+    #     result = []
+    #     for suggestion in suggestions:
+    #         tax_id = suggestion.get("taxId", "N/A")
+    #         scientific_name = suggestion.get("scientificName", "N/A")
+    #         display_name = suggestion.get("displayName", "N/A")
+    #         taxdata = {"tax_id": tax_id, "scientificName": scientific_name, "displayName": display_name}
+    #         # If we don't filter we want all results
+    #         if not filtered:
+    #             result.append(taxdata)
+    #         # For genus level we want the "is species of this genus" result
+    #         elif level == 'genus':
+    #             if scientific_name.endswith('sp.'):
+    #                 result.append(taxdata)
+    #         # For species, we want the result that is the species name (no subspecies)
+    #         # It might have something like "Candidatus" in front so we don't exclude that
+    #         elif level == 'species':
+    #             if scientific_name.endswith(classification):
+    #                 result.append(taxdata)
+    #         # For domain level, we check for a perfect match of the scientific name
+    #         elif level == 'domain':
+    #             if scientific_name == query:
+    #                 result.append(taxdata)
+    #         # For all other cases we want the "<classification> <domain>" taxon.
+    #         else:
+    #             if scientific_name.endswith('archaeon') or scientific_name.endswith('bacterium') or scientific_name.endswith('eukaryote') or level == 'metagenome':
+    #                 result.append(taxdata)                  
+    #     return result
+    # else:
+    #     err = f"\nERROR: Trying to fetch taxonomy suggestion for {level}: {classification} (domain: {domain}) but ENA REST API returned status code {response.status_code}"
+    #     loggingC.message(err, threshold=-1)
+    #     loggingC.message(f"Attempted query was {url}", threshold=0)
+    #     exit(1)
 
 
 def __parse_classification_tsvs(ncbi_taxonomy_files: list) -> dict:
