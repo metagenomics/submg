@@ -70,7 +70,7 @@ def __write_yaml(data: dict,
     with open(outpath, 'w') as file:
         file.write(final_output)
     
-    print(f">Config with written to {outpath}")
+    print(f">Config written to {outpath}")
            
 
 def __check_parameters(outpath: str,

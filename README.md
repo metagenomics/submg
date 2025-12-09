@@ -18,7 +18,7 @@ subMG aids in the submission of metagenomic study data to the European Nucleotid
 A command line interface is available as well as a graphical user interface, with both offering the same functionality.
 You can use subMG to continue a submission process if some levels of data already exist in ENA (e.g. submitting samples and reads through the ENA web interface, then using subMG to submit the assembly and bins).
 
-subMG was developed in the German [NFDI4Microbiota consortium](https://nfdi4microbiota.de/) with the objective of simplifying [FAIR](https://www.go-fair.org/fair-principles/) data sharing in metagenomics and offering support to microbiology researchers struggling with the submission process.
+subMG was developed within the German [NFDI4Microbiota consortium](https://nfdi4microbiota.de/) with the objective of simplifying [FAIR](https://www.go-fair.org/fair-principles/) data sharing in metagenomics and assisting microbiologists with the submission process.
 <p align="center">
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/gui_screenshot.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/gui_screenshot.png">
@@ -235,4 +235,4 @@ If you absolutely need to submit such (presumably low-quality) bins, you need to
 subMG is being actively developed. Please use the GitHub [issue tracker](https://github.com/metagenomics/submg/issues) to report problems. A [discussions page](https://github.com/metagenomics/submg/discussions) is available for questions, comments and suggestions. 
 
 # Citation
-When using subMG in your work, please cite https://doi.org/10.1186/s13040-025-00453-w
+When using subMG in your work, please cite https://doi.org/10.1186/s13040-025-00453-wd
