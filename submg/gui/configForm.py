@@ -186,7 +186,6 @@ class ConfigFormPage(BasePage):
     def update_page_indicator(self):
         """ Update the page indicator label """
         newlabel = f"{self.pagination_index + 1} / {len(self.pagination_list)}"
-        print("Setting page indicator to ", newlabel)
         self.page_indicator.configure(
             text=newlabel
         )
@@ -211,53 +210,6 @@ class ConfigFormPage(BasePage):
             self.pagination_index -= 1
             self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
             self.update_page_indicator()
-
-
-    # def show_next_page(self):
-    #     """ Show the next page in the pagination list """
-    #     print("\nle next page ")
-    #     print("our pagination index is ", self.pagination_index)
-    #     for item in self.pagination_list:
-    #         print(f"Frame {item}")
-    #     if self.pagination_index < len(self.pagination_list) - 1:  # Check if we're not at the last page
-    #         print(f"Moving from page {self.pagination_index}")
-    #         # Hide the current frame
-    #         if self.pagination_index > 0:
-    #             print("calling toggle to hide at index ", self.pagination_index)
-    #             self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         else:
-    #             self.core_frame.grid_remove()
-    #         # Move to the next page
-    #         self.pagination_index += 1
-    #         print(f"To page {self.pagination_index} of {len(self.pagination_list)}")
-    #         # Show the next frame
-    #         print("calling toggle at index ", self.pagination_index)
-    #         print("which is ", self.pagination_list[self.pagination_index])
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         for item in self.pagination_list:
-    #             print(f"Frame {item} is visible: {item.winfo_ismapped()}")
-    #         # Update the page indicator
-    #         self.update_page_indicator()
-
-
-
-    # def show_previous_page(self):
-    #     print("\nle prev page")
-    #     """ Show the previous page in the pagination list """
-    #     if self.pagination_index > 0:  # Check if we're not at the first page
-    #         # Hide the current frame
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         # Move to the previous page
-    #         self.pagination_index -= 1
-    #         print(f"To page {self.pagination_index} of {len(self.pagination_list)}")
-    #         # Show the previous frame
-    #         if self.pagination_index > 0:
-    #             self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         else:
-    #             self.core_frame.grid(row=0, column=0, sticky="nsew", padx=self.frame_x_padding, pady=self.frame_y_padding)
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         # Update the page indicator
-    #         self.update_page_indicator()
 
 
     def padding_in_scrollable(self, s_frame: ctk.CTkScrollableFrame):
@@ -403,7 +355,8 @@ class ConfigFormPage(BasePage):
                                  key,
                                  frame,
                                  manifest_or_samplesheet):
-        """ Command to create an additional field """
+        """ Command to create an additional field
+        """
         def command():
             self.create_additional_field(
                 frame,
@@ -413,12 +366,9 @@ class ConfigFormPage(BasePage):
         return command
 
         
-    def toggle_frame_visibility(self, frame):
-        #print("\n")
-        #print(f"toggle_frame_visibility called for: {frame}")
-        #print(f"while the index is at {self.pagination_index}")
-        #print(f"Frame visibility status before toggle: {frame.winfo_ismapped()}")
-        
+    def toggle_frame_visibility(self, frame):   
+        """ Toggle the visibility of a frame
+        """
         if frame.winfo_ismapped():
             #print("REMOVING FRAME")
             frame.grid_remove()
@@ -426,13 +376,6 @@ class ConfigFormPage(BasePage):
             #print("ADDING FRAME")
             frame.grid(row=0, column=0, sticky="nsew", padx=self.frame_x_padding, pady=self.frame_y_padding)
             frame.update_idletasks()  # Force update to apply layout changes
-
-        # Debug visibility status after toggle
-        #print(f"Frame visibility status after toggle: {frame.winfo_ismapped()}")
-        #print(f"Frame viewable status: {frame.winfo_viewable()}")
-        #print(f"Frame width: {frame.winfo_width()}, height: {frame.winfo_height()}")
-
-
 
 
     def make_form_fields(self, title, data, parent_key):

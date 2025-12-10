@@ -112,8 +112,6 @@ def __check_parameters(outpath: str,
 
     # Do we lack coverage data or have redundancy
     if (coverage_from_bam + known_coverage) != 1:
-        print("coverage from bam is", coverage_from_bam)
-        print("known coverage is", known_coverage)
         if (submit_assembly or submit_bins or submit_mags):
             print("\nERROR: You must specify exactly one of --coverage-from-bam or --known-coverage when submitting assemblies, bins or MAGs.")
             exit(1)

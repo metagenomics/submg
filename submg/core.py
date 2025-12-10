@@ -238,9 +238,6 @@ def makecfg_through_gui(outpath,
         loggingC.message(err, threshold=-1)
         exit(1)
         
-    print("input arguments of makecfg_through_gui:")
-    print("coverage from bam", coverage_from_bam)
-    print("known coverage", known_coverage)
     configGen.make_config(outpath=outpath,
                           submit_samples=submit_samples,
                           submit_unpaired_reads=submit_unpaired_reads,
@@ -556,10 +553,6 @@ def submit(args, listener=None, gui=False):
                 "\n>Your data will be removed from the development "
                 "server during the next 24 hours."
             )
-            msg += (
-                "\n>When using subMG in your work, please cite "
-                "https://doi.org/10.1186/s13040-025-00453-w"
-            )
         else:
             msg += (
                 "\n>You will receive final accessions once your "
@@ -567,10 +560,10 @@ def submit(args, listener=None, gui=False):
                 "\n>ENA will send those final accession by email to "
                 "the contact adress of your ENA account."
             )
-            msg += (
-                "\n>When using subMG in your work, please cite "
-                "https://doi.org/10.1186/s13040-025-00453-w"
-            )
+        msg += (
+            "\n>When using subMG in your work, please cite "
+            "https://doi.org/10.1186/s13040-025-00453-w"
+        )
         loggingC.message(msg, threshold=0)
 
         # Cleanup

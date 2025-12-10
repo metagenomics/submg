@@ -14,6 +14,7 @@ class ConfigOutlinePage(BasePage):
         super().__init__(parent, controller, "Configuration Outline")
         self.controller = controller  # Store the controller for path truncation
 
+        self.coverage_option = IntVar(value=1)
         self.initialize_vars()
 
         # Create mainFrame and configure its grid
@@ -166,7 +167,7 @@ class ConfigOutlinePage(BasePage):
     def initialize_vars(self):
         """ Set all variables to default values
         """
-        self.coverage_option = IntVar(value=0)  # Default to 'Coverage from BAM'
+        self.coverage_option.set(1)   # Default to 'Coverage from BAM'
         self.output_file_path = None  # Store the output file path
 
     def global_disable(self):
