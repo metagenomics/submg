@@ -5,8 +5,6 @@ import sys
 import customtkinter as ctk
 from tkinter.messagebox import askyesno
 from PIL import Image
-#import importlib.resources as pkg_resources
-
 
 
 from submg.gui.home import HomePage
@@ -70,6 +68,7 @@ class MyApp(ctk.CTk):
         # Show the home page initially
         self.show_page("HomePage")
 
+
     def initialize_vars(self):
         # Sizing
         self.logoHeight = 50
@@ -100,6 +99,7 @@ class MyApp(ctk.CTk):
             "form_path": None,
         }
     
+
     def go_home(self):
         """ Ask user whether they really want to return. Clear all data. 
             Switch to the HomePage.
@@ -110,6 +110,7 @@ class MyApp(ctk.CTk):
         if askyesno("Return to Home", msg):
             self.initialize_vars()
             self.show_page("HomePage")
+
 
     def show_page(self, page_name):
         """ Switches the user over to the respective page.
@@ -155,6 +156,7 @@ class MyApp(ctk.CTk):
         ctkImage = ctk.CTkImage(light_image=Image.open(path), size=(width, height))
         return ctkImage
 
+
     def load_and_resize_images(self):
         """Loads and resizes images for the application using resource_path."""
 
@@ -171,34 +173,16 @@ class MyApp(ctk.CTk):
         nodes_path = self.resource_path('submg.resources', 'submission_modes_dark.png')
         self.submodes_img = self.resize_image(nodes_path, width=self.imageWidth_submodes)
 
-    #     # Resize the image
-    #     ctkImage = ctk.CTkImage(light_image=Image.open(path), size=(width, height))
-    #     return ctkImage
-
-    # def load_and_resize_images(self):
-    #     """ Loads and resizes images for the application.
-    #         Uses pkg_resources to load images from the resources folder.
-    #     """
-
-    #     with pkg_resources.path('submg.resources', 'gui_logo.png') as logo_path:
-    #         self.logo_img_subMG = self.resize_image(logo_path, height=self.logoHeight - 15)
-
-    #     with pkg_resources.path('submg.resources', 'nfdi4microbiota_light.png') as microbiota_path:
-    #         self.logo_img_microbiota = self.resize_image(microbiota_path, height=self.logoHeight)
-
-    #     with pkg_resources.path('submg.resources', 'gui_flow.png') as flow_path:
-    #         self.flow_img = self.resize_image(flow_path, width=self.imageWidth_flow)
-
-    #     with pkg_resources.path('submg.resources', 'submission_modes_dark.png') as nodes_path:
-    #         self.submodes_img = self.resize_image(nodes_path, width=self.imageWidth_submodes)
 
     def set_submission_data(self, file_path, staging_dir_path, submission_items):
         self.file_path = file_path
         self.staging_dir_path = staging_dir_path
         self.submission_items = submission_items
 
+
     def set_config_data(self, config_items):
         self.config_items = config_items
+
 
     def truncate_display_path(self, path, max_display_len):
         """ Truncates a path from the left if it exceeds a certain length.
@@ -207,6 +191,7 @@ class MyApp(ctk.CTk):
             return "..." + path[-max_display_len:]
         return path
       
+
 # Run the application
 def main():
     app = MyApp()

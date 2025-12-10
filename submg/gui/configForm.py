@@ -9,7 +9,7 @@ from submg.gui.base import BasePage
 from submg.modules.configGen import write_gui_yaml
 from submg.modules.statConf import YAMLCOMMENTS, GUICOMMENTS, GUIEXAMPLES, GUILINKS, YAML_PRETTYNAMES, YAML_MULTI_FILEKEYS, YAML_SINGLE_FILEKEYS, YAML_DIRKEYS, GUI_STATIC_ADDITIONAL_FIELDS
 import webbrowser
-import time
+
 
 class ConfigFormPage(BasePage):
     def __init__(self, parent, controller):
@@ -201,6 +201,7 @@ class ConfigFormPage(BasePage):
             self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
             self.update_page_indicator()
 
+
     def show_previous_page(self):
         """ Hide the currently visible form frame and move to the one that
             is previous in the pagination list.
@@ -218,6 +219,7 @@ class ConfigFormPage(BasePage):
         if scrollbar:=getattr(s_frame, "_scrollbar", None):
             padding = s_frame.cget("border_width") * 2
             ctk.CTkScrollbar.grid_configure(scrollbar, padx=(0, padding))   
+
 
     def show_help(self, key):
         """Fetch the help text from YAMLCOMMENTS and display it in help_frame."""
@@ -252,6 +254,7 @@ class ConfigFormPage(BasePage):
             hyperlink_button.grid(row=row, column=0, padx=5, pady=5, sticky="nsew")
             row += 1
 
+
     def configure_frame_columns(self, frame, weighlist):
         """ Configure the columns of a frame """
         for i, weight in enumerate(weighlist):
@@ -270,6 +273,7 @@ class ConfigFormPage(BasePage):
                    padx=self.item_x_padding,
                    pady=self.item_y_padding)
 
+
     def load_form(self, form_path):
         """ Read a yaml form from the specified path. Translate it into a
             dictionary that will later be rendered. Remove the
@@ -286,6 +290,7 @@ class ConfigFormPage(BasePage):
                 else:
                     self.controller.submission_items[item] = False
             self.original_form_data.pop('submission_outline')
+
 
     def render_form(self):
         """ Render the form based on the loaded yaml data """
@@ -652,6 +657,7 @@ class ConfigFormPage(BasePage):
                          pady=0, 
                          padx=self.item_x_padding)
 
+
     def create_single_filepicker(self, frame, row_count, parent_key, key, value):
         """ Create a single-item filepicker with a label, a button and a
             picked-file-label.
@@ -734,6 +740,7 @@ class ConfigFormPage(BasePage):
                                                         "path": value}
             truncated_path = self.controller.truncate_display_path(value, max_display_len=14)
             pathlabel.configure(text=truncated_path)
+
 
     def create_multi_filepicker(self, frame, row_count, parent_key, key, value):
         """ Create a multi-item filepicker with a label, a button and a
@@ -845,6 +852,7 @@ class ConfigFormPage(BasePage):
                                                         "pathlist": value}
             pathlabel.configure(text=f"picked: {len(value)}")
                 
+
     def create_directory_picker(self, frame, row_count, parent_key, key, value):
         """ Create a directory picker with a label, a button and a
             picked-directory-label.
@@ -926,6 +934,7 @@ class ConfigFormPage(BasePage):
             truncated_path = self.controller.truncate_display_path(value, max_display_len=14)
             pathlabel.configure(text=truncated_path)
 
+
     def create_core_item(self, key, value):
         """ Create a core item in the core_frame
         """
@@ -947,6 +956,7 @@ class ConfigFormPage(BasePage):
                                      key,
                                      value)
         self.core_frame_rowcounter += 1
+
 
     def create_nested_item(self,
                            parent_key,
@@ -1082,8 +1092,6 @@ class ConfigFormPage(BasePage):
             'value': value_entry
         }
 
- 
-
 
     def pick_multifile(self, parent_key, key, pathlabel):
         """ Pick a single field and add it to the list of picked files in a
@@ -1120,6 +1128,7 @@ class ConfigFormPage(BasePage):
         else:
             pathlabel.configure(text="no file selected")
 
+
     def pick_directory(self, parent_key, key, pathlabel):
         directory = filedialog.askdirectory()
 
@@ -1130,12 +1139,14 @@ class ConfigFormPage(BasePage):
         else:
             pathlabel.configure(text="no directory selected")
 
+
     def get_comment(self, key):
         """ Try to get a comment for the key from GUICOMMENTS. Use YAMLCOMMENTS
             as a fallback. If no comment is found, return a default message.
         """
         default = "No help available for this item"
         return GUICOMMENTS.get(key, YAMLCOMMENTS.get(key, default))
+
 
     def clear_files(self, parent_key, key, pathlabel):
         """ Clear the list of picked files """
@@ -1144,6 +1155,7 @@ class ConfigFormPage(BasePage):
         else:
             self.form_data[parent_key]["items"][key]["pathlist"] = []
         pathlabel.configure(text="picked: 0")
+
 
     def extract_data(self, input_dict):
         """
@@ -1363,7 +1375,6 @@ class ConfigFormPage(BasePage):
         return output
 
 
-
     def pretty_print_form_data(self, data, indent=0):
         """
         Pretty print a deeply nested dictionary, replacing CustomTkinter widgets with 'widget'.
@@ -1416,18 +1427,7 @@ class ConfigFormPage(BasePage):
         if not outpath:
             return  # If no file is selected, return without saving
 
-        # # Step 3: Check if the output path exists and confirm overwrite
-        # if os.path.exists(outpath):
-        #     overwrite = askyesno(
-        #         "File Exists",
-        #         f"The file '{outpath}' already exists. Do you want to overwrite it?"
-        #     )
-        #     if not overwrite:
-        #         return  # If the user decides not to overwrite, return without saving
-        #     else:
-        #         os.remove(outpath)     
-
-        # Step 4: Call write_gui_yaml with the extracted data and output path
+        # Step 3: Call write_gui_yaml with the extracted data and output path
         write_gui_yaml(output, outpath)
         self.config_saved = True
         self.controller.config_items["form_path"] = outpath
@@ -1443,13 +1443,6 @@ class ConfigFormPage(BasePage):
         else:
             self.controller.show_page("LoadConfigPage")
 
-
-    #ef initialize(self):
-    #   """Called whenever controller renders the page"""
-    #   self.config_saved = False
-    #   form_path = self.controller.config_items["form_path"]
-    #   self.load_form(form_path)
-    #   self.render_form()
 
     def initialize(self):
         """Called whenever controller renders the page"""
@@ -1470,6 +1463,7 @@ class ConfigFormPage(BasePage):
 
         # Schedule the load_form and render_form to run after a short delay
         self.after(100, self._load_and_render_form)
+
 
     def _load_and_render_form(self):
         """Loads the form and updates the UI."""

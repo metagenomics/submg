@@ -94,6 +94,7 @@ class BasePage(ctk.CTkFrame):
         # Ensure the header frame stays at the top
         header_frame.grid_rowconfigure(0, weight=0)  # Fixed height for the header
     
+    
     def manual(self):
         """ Triggered when the "Manual" button is clicked. Opens the subMG
             documentation in the user's web browser.

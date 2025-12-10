@@ -35,6 +35,7 @@ def submission_wrapper(config_path, output_dir, development_service, verbosity,
     except Exception as e:
         log_queue.put(f"Error: {e}")
 
+
 class MonitorPage(BasePage):
     def __init__(self, parent, controller):
         super().__init__(parent, controller, "Submission Monitor")
@@ -201,6 +202,7 @@ class MonitorPage(BasePage):
         # Start polling the log queue
         self.after(100, self.poll_log_queue)
 
+
     def update_summary(self, max_display_len=30):
         """Update the summary text with submission data from the controller."""
         # Make a string of the submission items
@@ -229,6 +231,7 @@ class MonitorPage(BasePage):
             f"\t{submission_items}"
         )
         self.summary_text.configure(text=submission_data)
+
 
     def start_submission(self):
         """Handle the submission logic here."""
@@ -271,6 +274,7 @@ class MonitorPage(BasePage):
         )
         self.submission_process.start()
 
+
     def poll_log_queue(self):
         """Poll the log queue for new messages and update the log monitor."""
         try:
@@ -285,9 +289,11 @@ class MonitorPage(BasePage):
             # Continue polling after 100 ms
             self.after(100, self.poll_log_queue)
 
+
     def run_submission(self):
         """This method is no longer needed since submission runs in a separate process."""
         pass
+
 
     def stop_submission(self):
         """Stop the submission process."""
@@ -302,6 +308,7 @@ class MonitorPage(BasePage):
         # Enable all the input fields and buttons after stopping
         self.enable_input_fields()
 
+
     def disable_input_fields(self):
         """Disable all input fields and buttons."""
         self.username_entry.configure(state="disabled")
@@ -312,6 +319,7 @@ class MonitorPage(BasePage):
         for widget in self.children_recursive(self, input_button_frame=True):
             if isinstance(widget, ctk.CTkButton) and widget.cget("text") == "Stop Submission":
                 widget.configure(state="disabled")
+
 
     def enable_input_fields(self):
         """Enable all input fields and buttons."""
@@ -324,6 +332,7 @@ class MonitorPage(BasePage):
             if isinstance(widget, ctk.CTkButton) and widget.cget("text") == "Stop Submission":
                 widget.configure(state="normal")
 
+
     def log_message(self, message):
         """Append a message to the log monitor."""
         self.log_text.configure(state="normal")
@@ -331,10 +340,12 @@ class MonitorPage(BasePage):
         self.log_text.configure(state="disabled")
         self.log_text.see("end")
 
+
     def initialize(self):
         """Called whenever monitor renders the page"""
         self.update_summary()
         self.log_message("Ready to submit.\n")
+
 
     def children_recursive(self, widget, input_button_frame=False):
         """Helper method to recursively find children widgets."""
