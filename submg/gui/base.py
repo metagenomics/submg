@@ -65,34 +65,51 @@ class BasePage(ctk.CTkFrame):
                           padx=0,
                           pady=0,
                           sticky="nsew")
+        
         # Home Button
-        home_button = ctk.CTkButton(
+        self.home_button = ctk.CTkButton(
             button_frame,
             text_color="#3a7ebf",
             hover_color="#b6d5de",
             fg_color="transparent",
-            border_color="#3a7ebf", 
+            border_color="#3a7ebf",
             border_width=1,
-            text="Home", 
-            font=('Arial',14),
+            text="Home",
+            font=('Arial', 14),
             command=self.controller.go_home
         )
-        home_button.grid(row=0, column=0, padx=0, pady=2, sticky="n")
-        manual_button = ctk.CTkButton(
+        self.home_button.grid(row=0, column=0, padx=0, pady=2, sticky="n")
+
+        # Manual Button
+        self.manual_button = ctk.CTkButton(
             button_frame,
             text_color="#3a7ebf",
             hover_color="#b6d5de",
             fg_color="transparent",
-            border_color="#3a7ebf", 
+            border_color="#3a7ebf",
             border_width=1,
-            text="Manual", 
-            font=('Arial',14),
+            text="Manual",
+            font=('Arial', 14),
             command=self.manual
         )
-        manual_button.grid(row=1, column=0, padx=0, pady=2, sticky="s")
+        self.manual_button.grid(row=1, column=0, padx=0, pady=2, sticky="s")
 
         # Ensure the header frame stays at the top
         header_frame.grid_rowconfigure(0, weight=0)  # Fixed height for the header
+
+    def disable_header_buttons(self):
+        """Disable navigation buttons in the header (Home, Manual)."""
+        if hasattr(self, "home_button"):
+            self.home_button.configure(state="disabled")
+        if hasattr(self, "manual_button"):
+            self.manual_button.configure(state="disabled")
+
+    def enable_header_buttons(self):
+        """Enable navigation buttons in the header (Home, Manual)."""
+        if hasattr(self, "home_button"):
+            self.home_button.configure(state="normal")
+        if hasattr(self, "manual_button"):
+            self.manual_button.configure(state="normal")
     
     
     def manual(self):

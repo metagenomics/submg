@@ -3,6 +3,7 @@ import os
 os.environ['XMODIFIERS'] = "@im=none"
 import customtkinter as ctk
 from tkinter import scrolledtext
+from tkinter import messagebox
 import multiprocessing
 import queue
 from submg.gui.base import BasePage
@@ -41,8 +42,11 @@ class MonitorPage(BasePage):
         super().__init__(parent, controller, "Submission Monitor")
         self.controller = controller
 
-        # Initialize the process and queue
+        # Track whether a submission is currently running
         self.submission_process = None
+        self.submission_running = False
+
+        # Initialize the process and queue
         self.log_queue = multiprocessing.Queue()
 
         # Create a content frame within the main area defined by BasePage
@@ -87,7 +91,7 @@ class MonitorPage(BasePage):
         summary_button_frame.grid_columnconfigure(0, weight=1)
         summary_button_frame.grid_columnconfigure(1, weight=1)
 
-        edit_config_button = ctk.CTkButton(summary_button_frame,
+        self.edit_config_button = ctk.CTkButton(summary_button_frame,
                                            text="Edit Config",
                                            text_color="#3a7ebf",
                                            hover_color="#b6d5de",
@@ -96,9 +100,9 @@ class MonitorPage(BasePage):
                                            border_width=1,
                                            font=("Arial", 14),
                                            command=lambda: controller.show_page("ConfigFormPage"))
-        edit_config_button.grid(row=0, column=0, sticky="ew", padx=(0, 5), pady=(0,10))
+        self.edit_config_button.grid(row=0, column=0, sticky="ew", padx=(0, 5), pady=(0,10))
 
-        edit_outline_button = ctk.CTkButton(summary_button_frame,
+        self.edit_outline_button = ctk.CTkButton(summary_button_frame,
                                             text="Edit Outline",
                                             font=("Arial", 14),
                                             text_color="#3a7ebf",
@@ -107,7 +111,7 @@ class MonitorPage(BasePage):
                                             border_color="#3a7ebf", 
                                             border_width=1,
                                             command=lambda: controller.show_page("LoadConfigPage"))
-        edit_outline_button.grid(row=0, column=1, sticky="ew", padx=(5, 0), pady=(0,10))
+        self.edit_outline_button.grid(row=0, column=1, sticky="ew", padx=(5, 0), pady=(0,10))
 
         self.summary_text = ctk.CTkLabel(summary_frame,
                                          text="",
@@ -169,6 +173,7 @@ class MonitorPage(BasePage):
             command=self.stop_submission
         )
         cancel_button.grid(row=0, column=0, columnspan=2, padx=(10, 5), pady=10, sticky="nsew")
+        self.stop_button = cancel_button  # NEW: keep a direct reference
 
         # Start Submission Button
         start_button = ctk.CTkButton(
@@ -178,7 +183,11 @@ class MonitorPage(BasePage):
             command=self.start_submission
         )
         start_button.grid(row=0, column=2, columnspan=2, padx=(5, 10), pady=10, sticky="nsew")
-        self.start_button = start_button
+        self.start_button = start_button  # already present
+
+        # Initial state: no submission running
+        self.start_button.configure(state="normal")
+        self.stop_button.configure(state="disabled")
 
         # Logging Monitor Frame (bottom half of the page)
         log_frame = ctk.CTkFrame(content_frame)
@@ -273,6 +282,7 @@ class MonitorPage(BasePage):
             )
         )
         self.submission_process.start()
+        self.submission_running = True
 
 
     def poll_log_queue(self):
@@ -286,52 +296,90 @@ class MonitorPage(BasePage):
         except Exception as e:
             self.log_message(f"Queue Error: {e}")
         finally:
+            # Check if the submission process has finished
+            if self.submission_process is not None and not self.submission_process.is_alive():
+                if self.submission_running:
+                    # Handle completion exactly once
+                    self.handle_submission_completion()
+
             # Continue polling after 100 ms
             self.after(100, self.poll_log_queue)
 
 
-    def run_submission(self):
-        """This method is no longer needed since submission runs in a separate process."""
-        pass
+    def handle_submission_completion(self):
+        """Handle UI updates and popup when the submission process finishes."""
+        self.submission_running = False
+
+        # Capture and clear process object
+        exitcode = self.submission_process.exitcode
+        self.submission_process = None
+
+        # Reset UI
+        self.enable_input_fields()
+
+        # Log completion and message user
+        self.log_message(f"Submission process finished with exit code {exitcode}.")
+        if exitcode == 0:
+            messagebox.showinfo(
+                "Submission completed",
+                "The submission process has completed.\n\n"
+                "Please review the log output in the Submission Monitor."
+            )
+        else:
+            messagebox.showerror(
+                "Submission failed",
+                "The submission process terminated with an error.\n\n"
+                "Please review the log output in the Submission Monitor."
+            )
 
 
     def stop_submission(self):
-        """Stop the submission process."""
+        """Stop the submission process, update UI accordingly, inform the user."""
         if self.submission_process and self.submission_process.is_alive():
             self.log_message("Stopping submission...")
             self.submission_process.terminate()
             self.submission_process.join()
             self.log_message("Submission stopped.")
+            self.submission_running = False
+            self.submission_process = None
+
+            # Reset UI to idle state
+            self.enable_input_fields()
+
+            # Inform user
+            messagebox.showinfo(
+                "Submission stopped",
+                "The submission process was stopped by the user."
+            )
         else:
             self.log_message("No active submission to stop.")
+            # When nothing is running, ensure UI is in idle state
+            self.enable_input_fields()
 
-        # Enable all the input fields and buttons after stopping
-        self.enable_input_fields()
 
 
     def disable_input_fields(self):
-        """Disable all input fields and buttons."""
+        """Disable all input fields and buttons, enable only the Stop button."""
         self.username_entry.configure(state="disabled")
         self.password_entry.configure(state="disabled")
         self.mode_switch.configure(state="disabled")
         self.start_button.configure(state="disabled")
-        # Also disable the stop button to prevent multiple clicks
-        for widget in self.children_recursive(self, input_button_frame=True):
-            if isinstance(widget, ctk.CTkButton) and widget.cget("text") == "Stop Submission":
-                widget.configure(state="disabled")
+        self.stop_button.configure(state="normal")
+        self.edit_config_button.configure(state="disabled")
+        self.edit_outline_button.configure(state="disabled")
+        self.disable_header_buttons()
 
 
     def enable_input_fields(self):
-        """Enable all input fields and buttons."""
+        """Enable all input fields and buttons, disable only the Stop button."""
         self.username_entry.configure(state="normal")
         self.password_entry.configure(state="normal")
         self.mode_switch.configure(state="normal")
         self.start_button.configure(state="normal")
-        # Re-enable the stop button
-        for widget in self.children_recursive(self, input_button_frame=True):
-            if isinstance(widget, ctk.CTkButton) and widget.cget("text") == "Stop Submission":
-                widget.configure(state="normal")
-
+        self.stop_button.configure(state="disabled")
+        self.edit_config_button.configure(state="normal")
+        self.edit_outline_button.configure(state="normal")
+        self.enable_header_buttons()
 
     def log_message(self, message):
         """Append a message to the log monitor."""
@@ -344,7 +392,8 @@ class MonitorPage(BasePage):
     def initialize(self):
         """Called whenever monitor renders the page"""
         self.update_summary()
-        self.log_message("Ready to submit.\n")
+        if not self.submission_running:
+            self.log_message("Ready to submit.\n")
 
 
     def children_recursive(self, widget, input_button_frame=False):

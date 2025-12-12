@@ -65,8 +65,45 @@ class MyApp(ctk.CTk):
             # Place all pages in the same location in the grid
             page.grid(row=0, column=0, sticky="nsew")
 
+        # Handle window close (e.g. clicking the X button)
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
         # Show the home page initially
         self.show_page("HomePage")
+
+
+    def on_close(self):
+        """Handle window close; warn if a submission is running and stop it if exiting."""
+        # Get MonitorPage instance if it exists
+        monitor_page = None
+        if hasattr(self, "pages"):
+            monitor_page = self.pages.get("MonitorPage")
+
+        submission_running = False
+        if monitor_page is not None:
+            submission_running = getattr(monitor_page, "submission_running", False)
+
+        if submission_running:
+            # Ask the user if they really want to exit
+            msg = (
+                "A submission is still in progress.\n\n"
+                "Exiting now will interrupt this submission.\n\n"
+                "Do you want to exit anyway?"
+            )
+            if not askyesno("Exit subMG", msg):
+                return
+
+            if (monitor_page.submission_process is not None and
+                    monitor_page.submission_process.is_alive()):
+                try:
+                    monitor_page.submission_process.terminate()
+                    monitor_page.submission_process.join()
+                except Exception:
+                    # If termination fails for some reason, we still proceed with exit
+                    pass
+
+        # No submission running, or user confirmed to exit and we have tried to stop it
+        self.destroy()
 
 
     def initialize_vars(self):
