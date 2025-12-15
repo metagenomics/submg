@@ -467,41 +467,6 @@ def __ena_taxonomy_suggestion(level: str,
         loggingC.message(f"Attempted query was {url}", threshold=0)
         exit(1)
     
-    # if response.status_code == 200:
-    #     suggestions = response.json()
-    #     result = []
-    #     for suggestion in suggestions:
-    #         tax_id = suggestion.get("taxId", "N/A")
-    #         scientific_name = suggestion.get("scientificName", "N/A")
-    #         display_name = suggestion.get("displayName", "N/A")
-    #         taxdata = {"tax_id": tax_id, "scientificName": scientific_name, "displayName": display_name}
-    #         # If we don't filter we want all results
-    #         if not filtered:
-    #             result.append(taxdata)
-    #         # For genus level we want the "is species of this genus" result
-    #         elif level == 'genus':
-    #             if scientific_name.endswith('sp.'):
-    #                 result.append(taxdata)
-    #         # For species, we want the result that is the species name (no subspecies)
-    #         # It might have something like "Candidatus" in front so we don't exclude that
-    #         elif level == 'species':
-    #             if scientific_name.endswith(classification):
-    #                 result.append(taxdata)
-    #         # For domain level, we check for a perfect match of the scientific name
-    #         elif level == 'domain':
-    #             if scientific_name == query:
-    #                 result.append(taxdata)
-    #         # For all other cases we want the "<classification> <domain>" taxon.
-    #         else:
-    #             if scientific_name.endswith('archaeon') or scientific_name.endswith('bacterium') or scientific_name.endswith('eukaryote') or level == 'metagenome':
-    #                 result.append(taxdata)                  
-    #     return result
-    # else:
-    #     err = f"\nERROR: Trying to fetch taxonomy suggestion for {level}: {classification} (domain: {domain}) but ENA REST API returned status code {response.status_code}"
-    #     loggingC.message(err, threshold=-1)
-    #     loggingC.message(f"Attempted query was {url}", threshold=0)
-    #     exit(1)
-
 
 def __parse_classification_tsvs(ncbi_taxonomy_files: list) -> dict:
     """
