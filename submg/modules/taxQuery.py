@@ -3,6 +3,7 @@ import csv
 import requests
 import time
 import re
+import sys
 
 from tqdm import tqdm
 from submg.modules import utility, loggingC, binSubmission
@@ -590,7 +591,26 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
     min_interval = 1.0 / staticConfig.ena_rest_rate_limit
     last_request_time = time.time() - min_interval
 
-    for bin_name, taxonomy in tqdm(annotated_bin_taxonomies.items(), leave=False):
+    tqdm_file = None
+    if sys.stderr is not None:
+        tqdm_file = sys.stderr
+    elif sys.stdout is not None:
+        tqdm_file = sys.stdout
+    elif getattr(sys, "__stderr__", None) is not None:
+        tqdm_file = sys.__stderr__
+    elif getattr(sys, "__stdout__", None) is not None:
+        tqdm_file = sys.__stdout__
+
+    disable_tqdm = (tqdm_file is None)
+
+    iterator = tqdm(
+        annotated_bin_taxonomies.items(),
+        leave=False,
+        file=tqdm_file,
+        disable=disable_tqdm
+    )
+
+    for bin_name, taxonomy in iterator:
         # Only check the bins that we actually want to submit
         if bin_name not in filtered_bins:
             continue
