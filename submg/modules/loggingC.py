@@ -2,6 +2,7 @@
 # some issue with the python logging module and this was a quick solution...
 
 import os
+import sys
 
 # Global variables for logging
 logfile_path = None
@@ -39,13 +40,13 @@ def set_up_logging(logging_dir: str,
     # Check if the stamped logging dir already exists. Throw an error if it does
     if os.path.exists(stamped_logging_dir):
         print(f"\nERROR: Logging directory already exists: {stamped_logging_dir}")
-        exit(1)
+        sys.exit(1)
     else:
         os.makedirs(stamped_logging_dir)
         # check if the directory was actually created
         if not os.path.exists(stamped_logging_dir):
             print(f"\nERROR: Could not create logging directory: {stamped_logging_dir}")
-            exit(1)
+            sys.exit(1)
 
     logfile_path = os.path.join(stamped_logging_dir, 'submg.log')
 
@@ -78,7 +79,7 @@ def message(message: str,
     # Make sure the log file exists
     if not os.path.isfile(logfile_path):
         print(f"\nERROR: There should be a logfile at {logfile_path} but it seems to have been deleted.")
-        exit(1)
+        sys.exit(1)
 
     # Write a new line to the logfile
     with open(logfile_path, 'a') as f:

@@ -236,7 +236,7 @@ def makecfg_through_gui(outpath,
         err = ("ERROR: The --coverage-from-bam option does not work on "
                 "Windows systems.")
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
         
     configGen.make_config(outpath=outpath,
                           submit_samples=submit_samples,
@@ -403,7 +403,7 @@ def submit(args, listener=None, gui=False):
                         "of README.md for more information."
                     )
                     loggingC.message(err, threshold=-1)
-                    exit(1)
+                    sys.exit(1)
             # Query the taxonomy of bins
             bin_taxonomy = taxQuery.get_bin_taxonomy(filtered_bins, config)
             if args.minitest:
@@ -577,6 +577,6 @@ def submit(args, listener=None, gui=False):
         loggingC.message(err, threshold=-1)
         exc_info = traceback.format_exc()
         loggingC.message(exc_info, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
 

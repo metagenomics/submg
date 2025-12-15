@@ -1,6 +1,7 @@
 import os
 import csv
 import yaml
+import sys
 try:
     import pysam
     HAS_PYSAM = True
@@ -83,14 +84,14 @@ def set_up_staging(staging_dir: str,
     if os.path.exists(stamped_staging_dir):
         err = f"\nERROR: Staging directory already exists: {stamped_staging_dir}"
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     os.makedirs(stamped_staging_dir)
 
     if not os.path.exists(stamped_staging_dir):
         err = f"\nERROR: Could not create staging directory at {stamped_staging_dir}"
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     return stamped_staging_dir
 
@@ -170,27 +171,27 @@ def api_response_check(response: requests.Response):
                     by logging in to the ENA submission web interface. Make sure the environment variables
                     ENA_USER and ENA_PASSWORD contain these credentials."""
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     if response.status_code == 400:
         err = "\nERROR: Submission failed. ENA API returned status code 400. This indicates a bad request."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     if response.status_code == 408:
         err = "\nERROR: Submission failed. ENA API returned status code 408. This indicates a timeout."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     if response.status_code != 200:
         err = f"\nERROR: Submission failed. ENA API returned status code {response.status_code}."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     if response.text == "":
         err = "\nERROR: Submission failed, received an empty response from API endpoint."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
 
 def calculate_md5(fname):
@@ -213,18 +214,18 @@ def get_login():
         if gui_credentials["username"] is None or gui_credentials["password"] is None:
             err = "\nERROR: GUI credentials not set."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
         return gui_credentials["username"], gui_credentials["password"]
     
     # Fallback to environment variables for CLI usage
     if 'ENA_USER' not in os.environ:
         err = "\nERROR: ENA_USER environmental variable not set. Please export your ENA username as ENA_USER."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     if 'ENA_PASSWORD' not in os.environ:
         err = "\nERROR: ENA_PASSWORD environmental variable not set. Please export your ENA password as ENA_PASSWORD."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     return os.environ['ENA_USER'], os.environ['ENA_PASSWORD']
 
@@ -273,11 +274,11 @@ def read_yaml(file_path, convert_file_paths=True):
     except FileNotFoundError:
         err = f"\nERROR: YAML file not found at: {file_path}"
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     except Exception as e:
         err = f"\nERROR: An error occurred while reading {file_path}, error is:\n{e}"
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
 
 
@@ -305,7 +306,7 @@ def prepdir(parent_path, name):
     if not os.path.isdir(parent_path):
         err = f"\nERROR: The path {parent_path} is not a directory."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     newdir = os.path.join(parent_path, name)
     os.makedirs(newdir, exist_ok=False)
     return newdir
@@ -328,14 +329,14 @@ def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
         if not supress_errors:
             err = f"\nERROR: The field '{key}' is missing from the config YAML file."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
         else:
             return None
     if not config[key]:
         if not supress_errors:
             err = f"\nERROR: The field '{key}' is empty in the config YAML file."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
         else:
             return None
     if subkey:
@@ -343,27 +344,27 @@ def from_config(config, key, subkey=None, subsubkey=None, supress_errors=False):
             if not supress_errors:
                 err = f"\nERROR: The field '{key}|{subkey}' is missing from the config YAML file."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                sys.exit(1)
             else:
                 return None
         if not config[key][subkey]:
             if not supress_errors:
                 err = f"\nERROR: The field '{key}|{subkey}' is empty in the config YAML file."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                sys.exit(1)
         if subsubkey:
             if not subsubkey in config[key][subkey]:
                 if not supress_errors:
                     err = f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is missing from the config YAML file."
                     loggingC.message(err, threshold=-1)
-                    exit(1)
+                    sys.exit(1)
                 else:
                     return None
             if not config[key][subkey][subsubkey]:
                 if not supress_errors:
                     err = f"\nERROR: The field '{key}|{subkey}|{subsubkey}' is empty in the config YAML file."
                     loggingC.message(err, threshold=-1)
-                    exit(1)
+                    sys.exit(1)
                 else:
                     return None
             return __strcast(config[key][subkey][subsubkey])
@@ -393,7 +394,7 @@ def samples_from_reads(config):
                 err += "the RELATED_SAMPLE_ACCESSION field must be present for "
                 err += "each read entry."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                sys.exit(1)
             samples.add(read['RELATED_SAMPLE_ACCESSION'])
     if 'PAIRED_END_READS' in config:
         for read in config['PAIRED_END_READS']:
@@ -405,7 +406,7 @@ def samples_from_reads(config):
                 err += "the RELATED_SAMPLE_ACCESSION field must be present for "
                 err += "each read entry."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                sys.exit(1)
             samples.add(read['RELATED_SAMPLE_ACCESSION'])
     return list(samples)
 
@@ -457,12 +458,12 @@ def check_fastq(fastq_filepath: str):
     if not os.path.isfile(fastq_filepath):
         err = f"\nERROR: The FASTQ file '{fastq_filepath}' does not exist."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     extensions = staticConfig.fastq_extensions.split(';')
     if not fastq_filepath.endswith(tuple(extensions)):
         err = f"\nERROR: The FASTQ file '{fastq_filepath}' has an invalid extension. Valid extensions are {'|'.join(extensions)}."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
         
 
 def is_fasta(filepath, extensions=staticConfig.fasta_extensions.split(';')) -> str:
@@ -502,11 +503,11 @@ def check_fasta(fasta_path) -> tuple:
     if fasta_path is None or fasta_path is False or fasta_path == "":
         err = "\nERROR: Trying to submit assembly, but no FASTA file is provided in the description."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     elif not os.path.isfile(fasta_path):
         err = f"\nERROR: Trying to submit assembly, but the FASTA file {fasta_path} does not exist."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     extension = fasta_path.split('.')[-1]
     gzipped = False
     if extension == 'gz':
@@ -515,7 +516,7 @@ def check_fasta(fasta_path) -> tuple:
     if not extension in staticConfig.fasta_extensions:
         err = f"\nERROR: fasta file at {fasta_path} has an unknown file extension ({extension}). Allowed extensions are {staticConfig.fasta_extensions} (+.gz)."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     return fasta_path, gzipped
 
 
@@ -562,7 +563,7 @@ def quality_filter_bins(quality_data, config):
     if len(filtered_bins) == 0:
         err = "\nERROR: No bins left after filtering. Please adjust the quality thresholds."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     return filtered_bins
 
 
@@ -582,7 +583,7 @@ def check_bam(bam_file,
     if not HAS_PYSAM:
         err = "\nERROR: pysam is not installed, but needed for coverage calculations. You CANNOT use pysam on a windows system."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     # Check if the ending of the file is .bam or .BAM
     if bam_file.endswith('.BAM'):
@@ -593,7 +594,7 @@ def check_bam(bam_file,
         ext = bam_file.split('.')[-1]
         err = f"\nERROR: The file {bam_file} has the unexpected extension {ext} (expected .bam or .BAM)."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     # Check if BAM file is sorted, sort it if not. This will also index the file.
     sorted_bam_file = bam_file
@@ -627,7 +628,7 @@ def make_depth_file(bam_file, outdir, num_threads=4):
     if not HAS_PYSAM:
         err = "\nERROR: pysam is not installed, but needed for coverage calculations. You CANNOT use pysam on a windows system."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     sorted_bam_file = check_bam(bam_file, num_threads=num_threads)
     filename = os.path.basename(sorted_bam_file) + '.depth'
     outfile = os.path.join(outdir, filename)
@@ -744,7 +745,7 @@ def read_receipt(receipt_path: str) -> str:
     if success != 'true':
         err = f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     # Check for ANALYSIS receipt
     analysis_element = root.find('.//ANALYSIS')
@@ -823,7 +824,7 @@ def validate_parameter_combination(submit_samples: bool,
             # Dont use loggingC here, because this might be called from configGen
             print(f"\nERROR: The combination of parameters you have specified is not valid.")
             print(staticConfig.submission_modes_message)
-            exit(1)
+            sys.exit(1)
         else:
             return False
 

@@ -1,4 +1,5 @@
 import requests
+import sys
 from requests.exceptions import ConnectionError, ConnectTimeout, HTTPError, RequestException
 
 
@@ -26,13 +27,13 @@ def ensure_server_online(url: str, timeout: float = 5.0):
             f"ERROR: Connection to {url} timed out.\n\t[{e}]",
             threshold=-1
         )
-        exit(1)
+        sys.exit(1)
     except ConnectionError as e:
         loggingC.message(
             f"ERROR: Cannot connect to {url} (server offline?).\n\t[{e}]",
             threshold=-1
         )
-        exit(1)
+        sys.exit(1)
     except HTTPError as e:
         status = e.response.status_code if e.response is not None else None
         if status and status >= 500:
@@ -40,7 +41,7 @@ def ensure_server_online(url: str, timeout: float = 5.0):
                 f"ERROR: Server error at {url} (status code {status}).\n\t[{e}]",
                 threshold=-1
             )
-            exit(1)
+            sys.exit(1)
     except RequestException:
         # Other errors (e.g., TooManyRedirects); propagate or handle as needed
         raise
@@ -80,7 +81,7 @@ def study_exists(study_accession: str,
         if devserver:
             return study_exists(study_accession, False)
         loggingC.message(f"\nERROR: Unexpected response when querying ENA API for study accession {study_accession}.", threshold=-1)
-        exit(1)
+        sys.exit(1)
     if data[1] == study_accession:
         return True
     return False
@@ -114,7 +115,7 @@ def sample_accession_exists(sample_accession: str,
     data = response.text.split('\n')
     if (data[0] != 'sample_accession') or (data[1] not in [sample_accession, '']):
         loggingC.message(f"\nERROR: Unexpected response when querying ENA API for sample accession {sample_accession}.", threshold=-1)
-        exit(1)
+        sys.exit(1)
     if data[1] == sample_accession:
         return True
     return False
@@ -252,7 +253,7 @@ def search_samples_by_assembly_analysis(assembly_analysis_accession: str,
 
     if ',' in sample_accession:
         loggingC.message(f"\nERROR: Multiple sample accessions found for assembly analysis {assembly_analysis_accession}:\n{sample_accession}", threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     return sample_accession
 
@@ -285,11 +286,11 @@ def search_scientific_name_by_sample(sample_accession: str,
         scientific_name = scientific_name.split('\t')[0]
     except IndexError:
         loggingC.message(f"\nERROR: No scientific name found for {sample_accession}. After submission, it can take some hours before an accession can be found through the ENA search. Please check if you can find this accession using the search function of the web interface.", threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     if ',' in scientific_name:
         loggingC.message(f"\nERROR: Multiple scientific names found for sample {sample_accession}:\n{scientific_name}", threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     return scientific_name
 

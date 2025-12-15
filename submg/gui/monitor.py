@@ -1,5 +1,6 @@
 # monitor.py
 import os
+import traceback
 os.environ['XMODIFIERS'] = "@im=none"
 import customtkinter as ctk
 from tkinter import scrolledtext
@@ -33,8 +34,10 @@ def submission_wrapper(config_path, output_dir, development_service, verbosity,
             username=username,
             password=password
         )
-    except Exception as e:
-        log_queue.put(f"Error: {e}")
+    except Exception:
+        log_queue.put("Error: submission crashed with an exception:")
+        log_queue.put(traceback.format_exc())
+        raise
 
 
 class MonitorPage(BasePage):

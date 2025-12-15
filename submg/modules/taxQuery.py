@@ -61,7 +61,7 @@ def __report_tax_issues(issues):
                 except KeyError:
                     loggingC.message(f"\t<Could not find tax_id / scientific name in the following suggestion> {s}", threshold=0)
     
-    exit(1)
+    sys.exit(1)
 
 
 def __check_bin_coherence(bin_basenames: list,
@@ -102,7 +102,7 @@ def __check_bin_coherence(bin_basenames: list,
         if missing_in_quality:
             msg += f"\nBins missing in quality data: {', '.join(missing_in_quality)}"
         loggingC.message(msg, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
 
 def __read_manual_taxonomy_file(manual_taxonomy_file: str) -> dict:
@@ -272,7 +272,7 @@ def __best_classification(ncbi_classifications: dict) -> dict:
             else:
                 err = f"\nERROR: Found unclassified bin {mag_bin} with unknown classification {clasf}. Please check your NCBI taxonomy files."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                sys.exit(1)
             loggingC.message(f">INFO: Bin {mag_bin} is unclassified.", threshold=1)
         else:
             # Iterate through classification strings until we find a valid one
@@ -381,7 +381,7 @@ def __filter_ena_suggestions(level: str,
             err = (f"\nERROR: Encountered unexpected taxonomic level {level} for a "
             "mag bin. Please check your NCBI taxonomy files.")
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
 
     return filtered
 
@@ -423,7 +423,7 @@ def __ena_taxonomy_suggestion(level: str,
         else:
             err = f"\nERROR: Encountered unknown domain {domain} for a mag bin. Please check your NCBI taxonomy files."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
     # If we know only something between domain and genus then we get
     # "<classification> bacterium" / "<classification> archeon"
     else:
@@ -438,7 +438,7 @@ def __ena_taxonomy_suggestion(level: str,
         else:
             err = f"\nERROR: Encountered unknown domain {domain}"
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
         if domain == 'metagenome':
             query = classification
         else:
@@ -465,7 +465,7 @@ def __ena_taxonomy_suggestion(level: str,
         err = f"\nERROR: Trying to fetch taxonomy suggestion for {level}: {classification} (domain: {domain}) but ENA REST API returned status code {response.status_code}"
         loggingC.message(err, threshold=-1)
         loggingC.message(f"Attempted query was {url}", threshold=0)
-        exit(1)
+        sys.exit(1)
     
 
 def __parse_classification_tsvs(ncbi_taxonomy_files: list) -> dict:
@@ -630,7 +630,7 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
 
     if len(issues) > 0:
         __report_tax_issues(issues)
-        exit(1)
+        sys.exit(1)
 
     return upload_taxonomy_data
 

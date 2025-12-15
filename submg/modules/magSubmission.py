@@ -1,5 +1,6 @@
 import os
 import csv
+import sys
 
 import xml.etree.ElementTree as ET
 
@@ -43,7 +44,7 @@ def __read_mag_metadata(mag_metadata_file: str) -> dict:
                     problematic_bin = f"(Bin_id: {row['Bin_id']})"
                 if row[fieldname] is None:
                     loggingC.message(f"\nERROR: {fieldname} is missing for a MAG in {os.path.abspath(mag_metadata_file)} {problematic_bin}", threshold=-1)
-                    exit(1)
+                    sys.exit(1)
 
             # Resolve paths relative to the metadata file location
             paths = {
@@ -147,7 +148,7 @@ def __prep_mags_samplesheet(config: dict,
         else:
             err = f"Quality category {quality_category} found in mag metadata. Only \"finished\", \"high\", and \"medium\" are allowed."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
 
         # Build XML
         sample = ET.SubElement(root, 'SAMPLE', alias=sample_alias)

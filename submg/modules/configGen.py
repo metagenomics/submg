@@ -1,5 +1,6 @@
 import os
 import yaml
+import sys
 
 from submg.modules import utility
 
@@ -102,7 +103,7 @@ def __check_parameters(outpath: str,
     output_directory = os.path.dirname(outpath) or '.'  # Use current directory if no directory in outpath
     if not os.path.exists(output_directory):
         print(f"\nERROR: The directory '{output_directory}' where '{outpath}' should be written does not exist.")
-        exit(1)
+        1)
 
     # Are we submitting any reads?
     if submit_unpaired_reads or submit_paired_end_reads:
@@ -116,14 +117,14 @@ def __check_parameters(outpath: str,
         print("known coverage is", known_coverage)
         if (submit_assembly or submit_bins or submit_mags):
             print("\nERROR: You must specify exactly one of --coverage-from-bam or --known-coverage when submitting assemblies, bins or MAGs.")
-            exit(1)
+            sys.exit(1)
 
     # Check if quality cuttoffs make sense
     if quality_cutoffs:
         if not submit_bins:
             msg = "ERROR: You cannot specify --quality-cutoffs without also specifying --submit-bins."
             print(msg)
-            exit(1)
+            sys.exit(1)
 
     # Check if the specified items can be combined in one submission
     utility.validate_parameter_combination(submit_samples,
