@@ -224,7 +224,7 @@ def webin_cli(manifest,
             err += f" If the submission failed during validation, please consult the output of Webin-CLI."
             err += f" Otherwise please check the receipt at {receipt}"
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
     else:
         loggingC.message(f">Validating {subdir_name} for ENA submission using webin-cli", threshold=1)
         __webin_cli_validate(manifest,
