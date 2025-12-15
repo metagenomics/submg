@@ -103,7 +103,7 @@ def __check_parameters(outpath: str,
     output_directory = os.path.dirname(outpath) or '.'  # Use current directory if no directory in outpath
     if not os.path.exists(output_directory):
         print(f"\nERROR: The directory '{output_directory}' where '{outpath}' should be written does not exist.")
-        1)
+        sys.exit(1)
 
     # Are we submitting any reads?
     if submit_unpaired_reads or submit_paired_end_reads:
