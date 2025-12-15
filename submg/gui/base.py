@@ -97,12 +97,14 @@ class BasePage(ctk.CTkFrame):
         # Ensure the header frame stays at the top
         header_frame.grid_rowconfigure(0, weight=0)  # Fixed height for the header
 
+
     def disable_header_buttons(self):
         """Disable navigation buttons in the header (Home, Manual)."""
         if hasattr(self, "home_button"):
             self.home_button.configure(state="disabled")
         if hasattr(self, "manual_button"):
             self.manual_button.configure(state="disabled")
+
 
     def enable_header_buttons(self):
         """Enable navigation buttons in the header (Home, Manual)."""
