@@ -556,7 +556,9 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
     min_interval = 1.0 / staticConfig.ena_rest_rate_limit
     last_request_time = time.time() - min_interval
 
+    # tqdm can crash in Windows GUI / PyInstaller --noconsole, because stdout/stderr can be None.
     tqdm_file = None
+
     if sys.stderr is not None:
         tqdm_file = sys.stderr
     elif sys.stdout is not None:
@@ -566,14 +568,24 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
     elif getattr(sys, "__stdout__", None) is not None:
         tqdm_file = sys.__stdout__
 
-    disable_tqdm = (tqdm_file is None)
+    use_tqdm = True
+    if tqdm_file is None:
+        use_tqdm = False
+    else:
+        if not hasattr(tqdm_file, "write"):
+            use_tqdm = False
+        if not hasattr(tqdm_file, "flush"):
+            use_tqdm = False
 
-    iterator = tqdm(
-        annotated_bin_taxonomies.items(),
-        leave=False,
-        file=tqdm_file,
-        disable=disable_tqdm
-    )
+    if use_tqdm:
+        iterator = tqdm(
+            annotated_bin_taxonomies.items(),
+            leave=False,
+            file=tqdm_file
+        )
+    else:
+        iterator = annotated_bin_taxonomies.items()
+
 
     for bin_name, taxonomy in iterator:
         # Only check the bins that we actually want to submit
