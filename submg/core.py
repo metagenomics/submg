@@ -232,6 +232,24 @@ def makecfg_through_gui(outpath,
                         submit_bins,
                         submit_mags,
                         quality_cutoffs):
+    """
+    Create a .yml file containing the fields a user needs to fill in order to
+    create a submission for their specific setup.
+
+    Args:
+        outpath (str): Path to the output .yml file.   
+        submit_samples (int): Number of samples to include in the config.
+        submit_unpaired_reads (int): Number of unpaired read files to include.
+        submit_paired_end_reads (int): Number of paired-end read files to include.
+        coverage_from_bam (bool): Whether to include fields for coverage
+                                    calculation from .bam files.
+        known_coverage (bool): Whether to include fields for known coverage.
+        submit_assembly (bool): Whether to include fields for assembly submission.
+        submit_bins (bool): Whether to include fields for bin submission.
+        submit_mags (bool): Whether to include fields for MAG submission.
+        quality_cutoffs (bool): Whether to include fields for bin quality
+                                cutoffs.
+    """
     if coverage_from_bam and sys.platform == "win32":
         err = ("ERROR: The --coverage-from-bam option does not work on "
                 "Windows systems.")
@@ -258,6 +276,9 @@ def makecfg(args):
 
     Will exit with an error if the user tries to use --coverage-from-bam on a
     Windows system.
+
+    Args:
+        args (argparse.Namespace): The arguments object.
     """
     if args.coverage_from_bam and sys.platform == "win32":
         wrn = ("WARNING: The --coverage-from-bam option does not work on "
@@ -293,6 +314,25 @@ def submit_through_gui(config_path,
                        submit_mags,
                        username,
                        password):
+    """
+    Submit data to the ENA after user started the process through the GUI.
+
+    Args:
+        config_path (str): Path to the YAML config file.
+        output_dir (str): Directory where logging and staging directories
+                            will be created.
+        listener (function): A function that can receive log messages.
+        development_service (int): Whether to submit to the ENA development
+                                   service (1) or the production service (0).
+        verbosity (int): Level of verbosity for logging (0, 1, or 2).
+        submit_samples (bool): Whether to submit samples.
+        submit_reads (bool): Whether to submit reads.
+        submit_assembly (bool): Whether to submit an assembly.
+        submit_bins (bool): Whether to submit bins.
+        submit_mags (bool): Whether to submit MAGs.
+        username (str): ENA username.
+        password (str): ENA password.
+    """
     # Create timestamped logging and staging directories
     logging_dir = os.path.join(output_dir, f"submg_logging")
     staging_dir = os.path.join(output_dir, f"submg_staging")
@@ -331,13 +371,32 @@ def submit(args, listener=None, gui=False):
         listener (function): A function that can receive log messages.
         gui (bool): Whether the function was called from the GUI.
     """
-    timestamp = utility.full_timestamp()
+
+    staging_base = os.path.realpath(os.path.abspath(os.path.expanduser(args.staging_dir)))
+    logging_base = os.path.realpath(os.path.abspath(os.path.expanduser(args.logging_dir)))
+
+    print("my staging base:", staging_base)
+    print("my logging base:", logging_base)
+
+    full_timestamp = utility.full_timestamp()
     logging_subdir = loggingC.set_up_logging(args.logging_dir,
                                              args.verbosity,
-                                             timestamp,
+                                             full_timestamp,
                                              listener)
+
+    if staging_base == logging_base:
+        loggingC.message(
+            "\nERROR: --staging-dir and --logging-dir resolve to the same directory:\n"
+            f"  {str(staging_base)}\n\n"
+            "Please provide two different directories.",
+            threshold=-1
+        )
+        sys.exit(1)
+        
+
     staging_subdir = utility.set_up_staging(args.staging_dir,
-                                            timestamp)
+                                            full_timestamp)
+    
     
     if args.timestamps or (args.timestamps is None and args.development_service):
         utility.set_up_timestamps(vars(args))
@@ -566,11 +625,20 @@ def submit(args, listener=None, gui=False):
         )
         loggingC.message(msg, threshold=0)
 
-        # Cleanup
+        # Cleanup: depth files
         if not args.keep_depth_files and depth_files is not None:
-            loggingC.message(">Deleting depth files to free up disk space.", threshold=0)
+            loggingC.message(">Deleting depth files to free up disk space. "
+                             "To keep them in a future run use the, "
+                             "--keep-depth-files option.", threshold=0)
             for depth_file in depth_files:
                 os.remove(depth_file)
+
+        # Cleanup: warn about staging directory
+        if os.path.exists(staging_subdir):
+            wrn = (">Reminder: The staging directory "
+                   f"{staging_subdir} "
+                   "still exists. It may use up a lot of disk space.")
+            loggingC.message(wrn, threshold=-1)
 
     except Exception:
         err = "\n\nTERMINATING BECAUSE AN UNEXPECTED ERROR OCCURED:\n"
