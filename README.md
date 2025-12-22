@@ -29,6 +29,7 @@ subMG was developed within the German [NFDI4Microbiota consortium](https://nfdi4
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/cli_screenshot.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/cli_screenshot.png">
   <img alt="subMG cli screenshot" src="submg/resources/cli_screenshot.png" height=110>
+  <br>
   <em>Command Line Interface</em>
 </p>
 
@@ -36,6 +37,7 @@ subMG was developed within the German [NFDI4Microbiota consortium](https://nfdi4
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/gui_screenshot.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/gui_screenshot.png">
   <img alt="subMG gui screenshot" src="submg/resources/gui_screenshot.png" height=400>
+  <br>
   <em>Graphic User Interface</em>
 </p>
 
