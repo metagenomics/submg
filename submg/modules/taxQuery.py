@@ -3,6 +3,7 @@ import csv
 import requests
 import time
 import re
+import sys
 
 from tqdm import tqdm
 from submg.modules import utility, loggingC, binSubmission
@@ -60,7 +61,7 @@ def __report_tax_issues(issues):
                 except KeyError:
                     loggingC.message(f"\t<Could not find tax_id / scientific name in the following suggestion> {s}", threshold=0)
     
-    exit(1)
+    sys.exit(1)
 
 
 def __check_bin_coherence(bin_basenames: list,
@@ -101,7 +102,7 @@ def __check_bin_coherence(bin_basenames: list,
         if missing_in_quality:
             msg += f"\nBins missing in quality data: {', '.join(missing_in_quality)}"
         loggingC.message(msg, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
 
 def __read_manual_taxonomy_file(manual_taxonomy_file: str) -> dict:
@@ -271,7 +272,7 @@ def __best_classification(ncbi_classifications: dict) -> dict:
             else:
                 err = f"\nERROR: Found unclassified bin {mag_bin} with unknown classification {clasf}. Please check your NCBI taxonomy files."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                sys.exit(1)
             loggingC.message(f">INFO: Bin {mag_bin} is unclassified.", threshold=1)
         else:
             # Iterate through classification strings until we find a valid one
@@ -380,7 +381,7 @@ def __filter_ena_suggestions(level: str,
             err = (f"\nERROR: Encountered unexpected taxonomic level {level} for a "
             "mag bin. Please check your NCBI taxonomy files.")
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
 
     return filtered
 
@@ -422,7 +423,7 @@ def __ena_taxonomy_suggestion(level: str,
         else:
             err = f"\nERROR: Encountered unknown domain {domain} for a mag bin. Please check your NCBI taxonomy files."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
     # If we know only something between domain and genus then we get
     # "<classification> bacterium" / "<classification> archeon"
     else:
@@ -437,7 +438,7 @@ def __ena_taxonomy_suggestion(level: str,
         else:
             err = f"\nERROR: Encountered unknown domain {domain}"
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
         if domain == 'metagenome':
             query = classification
         else:
@@ -464,43 +465,8 @@ def __ena_taxonomy_suggestion(level: str,
         err = f"\nERROR: Trying to fetch taxonomy suggestion for {level}: {classification} (domain: {domain}) but ENA REST API returned status code {response.status_code}"
         loggingC.message(err, threshold=-1)
         loggingC.message(f"Attempted query was {url}", threshold=0)
-        exit(1)
+        sys.exit(1)
     
-    # if response.status_code == 200:
-    #     suggestions = response.json()
-    #     result = []
-    #     for suggestion in suggestions:
-    #         tax_id = suggestion.get("taxId", "N/A")
-    #         scientific_name = suggestion.get("scientificName", "N/A")
-    #         display_name = suggestion.get("displayName", "N/A")
-    #         taxdata = {"tax_id": tax_id, "scientificName": scientific_name, "displayName": display_name}
-    #         # If we don't filter we want all results
-    #         if not filtered:
-    #             result.append(taxdata)
-    #         # For genus level we want the "is species of this genus" result
-    #         elif level == 'genus':
-    #             if scientific_name.endswith('sp.'):
-    #                 result.append(taxdata)
-    #         # For species, we want the result that is the species name (no subspecies)
-    #         # It might have something like "Candidatus" in front so we don't exclude that
-    #         elif level == 'species':
-    #             if scientific_name.endswith(classification):
-    #                 result.append(taxdata)
-    #         # For domain level, we check for a perfect match of the scientific name
-    #         elif level == 'domain':
-    #             if scientific_name == query:
-    #                 result.append(taxdata)
-    #         # For all other cases we want the "<classification> <domain>" taxon.
-    #         else:
-    #             if scientific_name.endswith('archaeon') or scientific_name.endswith('bacterium') or scientific_name.endswith('eukaryote') or level == 'metagenome':
-    #                 result.append(taxdata)                  
-    #     return result
-    # else:
-    #     err = f"\nERROR: Trying to fetch taxonomy suggestion for {level}: {classification} (domain: {domain}) but ENA REST API returned status code {response.status_code}"
-    #     loggingC.message(err, threshold=-1)
-    #     loggingC.message(f"Attempted query was {url}", threshold=0)
-    #     exit(1)
-
 
 def __parse_classification_tsvs(ncbi_taxonomy_files: list) -> dict:
     """
@@ -590,7 +556,38 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
     min_interval = 1.0 / staticConfig.ena_rest_rate_limit
     last_request_time = time.time() - min_interval
 
-    for bin_name, taxonomy in tqdm(annotated_bin_taxonomies.items(), leave=False):
+    # tqdm can crash in Windows GUI / PyInstaller --noconsole, because stdout/stderr can be None.
+    tqdm_file = None
+
+    if sys.stderr is not None:
+        tqdm_file = sys.stderr
+    elif sys.stdout is not None:
+        tqdm_file = sys.stdout
+    elif getattr(sys, "__stderr__", None) is not None:
+        tqdm_file = sys.__stderr__
+    elif getattr(sys, "__stdout__", None) is not None:
+        tqdm_file = sys.__stdout__
+
+    use_tqdm = True
+    if tqdm_file is None:
+        use_tqdm = False
+    else:
+        if not hasattr(tqdm_file, "write"):
+            use_tqdm = False
+        if not hasattr(tqdm_file, "flush"):
+            use_tqdm = False
+
+    if use_tqdm:
+        iterator = tqdm(
+            annotated_bin_taxonomies.items(),
+            leave=False,
+            file=tqdm_file
+        )
+    else:
+        iterator = annotated_bin_taxonomies.items()
+
+
+    for bin_name, taxonomy in iterator:
         # Only check the bins that we actually want to submit
         if bin_name not in filtered_bins:
             continue
@@ -645,7 +642,7 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
 
     if len(issues) > 0:
         __report_tax_issues(issues)
-        exit(1)
+        sys.exit(1)
 
     return upload_taxonomy_data
 

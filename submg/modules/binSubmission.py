@@ -1,5 +1,6 @@
 import csv
 import os
+import sys
 import requests
 from tqdm import tqdm
 import shutil
@@ -95,7 +96,7 @@ def get_bin_quality(config, silent=False) -> dict:
         loggingC.message(msg, threshold=-1)
         msg = f"Do the bin names in the quality file have file extensions like .fa, .fasta etc.? If so, please remove them. The quality file should only contain basenames."
         loggingC.message(msg, threshold=-1)
-        exit(1)
+        sys.exit(1)
     only_in_directory = bin_basenames - set(result.keys())
     if len(only_in_directory) > 0:
         err = f"\nERROR: The following bins were found in the bins directory but not in the quality file:"
@@ -103,7 +104,7 @@ def get_bin_quality(config, silent=False) -> dict:
         for b in only_in_directory:
             msg = f"\t{b}"
             loggingC.message(msg, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     loggingC.message(f"\t...found {len(result)} bins in bin quality file.", threshold=1)
 
@@ -259,7 +260,7 @@ def read_bin_samples_receipt(receipt_path: str) -> dict:
     if success != 'true':
         err = f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
     loggingC.message("\t...samplesheet upload was successful.", threshold=1)
 
@@ -269,12 +270,12 @@ def read_bin_samples_receipt(receipt_path: str) -> dict:
         if alias is None:
             err = f"\nERROR: Submission failed. Didn't find alias for all bins in the receipt. Please check the receipt at {os.path.abspath(receipt_path)}."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
         ext_id = sample.find('EXT_ID')
         if ext_id is None:
             err = f"\nERROR: Submission failed. Didn't find EXT_ID for all bins in the receipt. Please check the receipt at {os.path.abspath(receipt_path)}."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
         accession = ext_id.attrib.get('accession')
         bin_to_accession[alias] = accession
 
@@ -491,7 +492,7 @@ def bin_coverage_from_tsv(filtered_bins: list,
         if known_name not in bin_coverages:
             err = f"\nERROR: Bin {known_name} was not found in the coverage file at {os.path.abspath(bin_coverage_file)}."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
     return bin_coverages
     
 

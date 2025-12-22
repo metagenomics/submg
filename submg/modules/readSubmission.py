@@ -1,5 +1,6 @@
 import os
 import csv
+import sys
 
 from submg.modules import loggingC, utility
 from submg.modules.utility import from_config, stamped_from_config
@@ -40,7 +41,7 @@ def __prep_reads_manifest(config: dict,
         if sample is None:
             err = f"\nERROR: No related sample found for the reads with title '{sample_title}'. Please check the configuration file."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
     elif 'RELATED_SAMPLE_ACCESSION' in data.keys():
         sample = from_config(data, 'RELATED_SAMPLE_ACCESSION')
     else:

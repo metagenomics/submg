@@ -1,4 +1,5 @@
 import os
+import sys
 import platform
 import time
 import csv
@@ -28,7 +29,7 @@ def __check_tsv(tsvfile: str,
     if not os.path.isfile(tsvfile):
         err = f"\nERROR: The .tsv file '{tsvfile}' does not exist."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     with open(tsvfile, 'r') as f:
         header = f.readline().strip().split('\t')
     for col in required_columns:
@@ -230,7 +231,7 @@ def __check_read_type(paired: bool,
     if len(read_items) == 0:
         err = f"\nERROR: You chose to submit {type}, but did not provide any data in the config."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     mandatory_fields = [('NAME', str),
                         ('LIBRARY_SOURCE', str),
                         ('LIBRARY_SELECTION', str),
@@ -342,7 +343,7 @@ def __check_reads(arguments: dict,
     if not reads_present:
         err = f"\nERROR: You chose to submit reads, but did not provide any read data."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
 
 def __check_misc(arguments: dict,
@@ -403,7 +404,7 @@ def __check_assembly_name(arguments: dict,
     if not isinstance(assembly_name, str):
         err = f"\nERROR: Please provide a string as the assembly name (found {type(assembly_name).__name__})."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     max_length = staticConfig.max_assembly_name_length
     if arguments['development_service'] or arguments['timestamps']:
         max_length -= staticConfig.timestamp_length
@@ -442,7 +443,7 @@ def __check_assembly(arguments: dict,
         if len(assembly_data) == 0:
             err = f"\nERROR: You chose to submit an assembly, but did not provide any assembly data."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
         mandatory_fields = [
             ('ASSEMBLY_NAME', str),
             ('ASSEMBLY_SOFTWARE', str),
@@ -477,7 +478,7 @@ def __check_assembly(arguments: dict,
                 if not len(biological_sample_accessions) == 1:
                     err = f"\nERROR: When providing an existing assembly analysis accession, you need to provide exactly one biological sample accession in the SAMPLE_ACCESSIONS field. If the assembly stems from 2 or more samples, please provide a co-assembly accession instead."
                     loggingC.message(err, threshold=-1)
-                    exit(1) 
+                    sys.exit(1) 
             else:
                 resulting_accession = None
         if resulting_accession is None and 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data:
@@ -509,11 +510,11 @@ def __check_assembly(arguments: dict,
         if (not 'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION' in assembly_data) and (not 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data):
             err = f"\nERROR: You chose not to submit an assembly, but did not provide an assembly accession."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
         if resulting_accession is None:
             err = f"\nPlease provide either an existing assembly analysis accession or an existing co-assembly sample accession."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
 
 
 def __check_bins(arguments: dict,
@@ -536,7 +537,7 @@ def __check_bins(arguments: dict,
     if len(bin_data) == 0:
         err = f"\nERROR: You chose to submit bins, but did not provide any bin data."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     mandatory_fields = [('BINS_DIRECTORY', str),
                         ('COMPLETENESS_SOFTWARE', str),
                         ('QUALITY_FILE', str),
@@ -594,7 +595,7 @@ def __check_bins(arguments: dict,
             err = f"\nERROR: The field NCBI_TAXONOMY_FILES in the BINS section is empty."
             err += f"\nPlease provide a valid file path or remove the field from the config file."
             loggingC.message(err, threshold=-1)
-            exit(1) # We cannot carry out the rest of the preflight checks
+            sys.exit(1) # We cannot carry out the rest of the preflight checks
         if not isinstance(ncbi_tax_files, list):
             ncbi_tax_files = [ncbi_tax_files]
         tax_files.extend(ncbi_tax_files)
@@ -603,7 +604,7 @@ def __check_bins(arguments: dict,
         if not os.path.isfile(tax_file):
             err = f"\nERROR: The taxonomy file '{tax_file}' does not exist."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
         gtdb_majority_vote_columns = staticConfig.gtdb_majority_vote_columns.split(';')
         ncbi_taxonomy_columns = staticConfig.ncbi_taxonomy_columns.split(';')
         with open(tax_file, 'r') as f:
@@ -618,7 +619,7 @@ def __check_bins(arguments: dict,
         if isinstance(bin_data['MANUAL_TAXONOMY_FILE'], list):
             err = f"\nERROR: In the BINS section, provide only one MANUAL_TAXONOMY_FILE please"
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
         if not bin_data['MANUAL_TAXONOMY_FILE'] is None:
             if bin_data['MANUAL_TAXONOMY_FILE'] == '':
                 err = f"\nERROR: Ane empty string was provided as MANUAL_TAXONOMY_FILE in the BINS section."
@@ -635,7 +636,7 @@ def __check_bins(arguments: dict,
     if len(tax_files) == 0:
         err = f"\nERROR: You chose to submit bins, but did not provide any taxonomy files."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
 
 
     # Check if the bins directory exists and contains at least one bin
@@ -643,11 +644,11 @@ def __check_bins(arguments: dict,
     if not os.path.isdir(bins_directory):
         err = f"\nERROR: The bins directory '{bins_directory}' does not exist."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     if len(os.listdir(bins_directory)) == 0:
         err = f"\nERROR: The bins directory '{bins_directory}' is empty."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     found = False
     for file in os.listdir(bins_directory):
         if not (utility.is_fasta(os.path.join(bins_directory, file)) is None):
@@ -691,7 +692,7 @@ def __check_mags(arguments: dict,
     if metadata_file is None or metadata_file == '':
         err = f"\nERROR: No MAG_METADATA_FILE was provided in the MAGS section."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     cols = staticConfig.mag_metadata_columns.split(';')
     __check_tsv(metadata_file, cols)
     with open(metadata_file, 'r') as f:
@@ -702,17 +703,17 @@ def __check_mags(arguments: dict,
             if bin_id == '' or bin_id is None:
                 err = f"\nERROR: The metadata file '{metadata_file}' contains an empty bin_id field."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                sys.exit(1)
             quality_category = row['Quality_category'].strip()
             if quality_category == '' or quality_category is None:
                 err = f"\nERROR: The metadata file '{metadata_file}' contains an empty Quality_category field."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                sys.exit(1)
             if not row['Chromosomes_path']:
                 if row['Unlocalised_path']:
                     err = f"\nERROR: Error reading '{metadata_file}' at Bin_id {bin_id}. If you provide an Unlocalised_path, you need to provide a Chromosomes_path as well."
                     loggingC.message(err, threshold=-1)
-                    exit(1)
+                    sys.exit(1)
 
     # Check if all MAGs bins pass the filtering that is being applied to bins
     bin_quality = binSubmission.get_bin_quality(config, silent=True)
@@ -721,7 +722,7 @@ def __check_mags(arguments: dict,
         if bin_id not in filtered_bins:
             err = f"\nERROR: The bin {bin_id} in the MAG_METADATA_FILE does not pass the filtering criteria for bins (MIN_COMPLETENESS / MAX_CONTAMINATION)."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
 
     # Check fields in ASSEMBLY section
     assembly_data = utility.from_config(config, 'ASSEMBLY')
@@ -780,7 +781,7 @@ def __check_coverage(arguments: dict,
             except ValueError:
                 err = f"\nERROR: The coverage value '{assembly_data['COVERAGE_VALUE']}' is not a float value."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                sys.exit(1)
 
     # Are coverage values provided for the bins/MAGs?
     if arguments['submit_bins'] or arguments['submit_mags']:
@@ -793,7 +794,7 @@ def __check_coverage(arguments: dict,
             if bin_coverage_file is None or bin_coverage_file == '':
                 err = f"\nERROR: The field COVERAGE_FILE in the BINS section is empty."
                 loggingC.message(err, threshold=-1)
-                exit(1)
+                sys.exit(1)
             __check_tsv(bin_coverage_file, staticConfig.bin_coverage_columns.split(';'))
 
     # Are there bam files?
@@ -809,18 +810,18 @@ def __check_coverage(arguments: dict,
                 if not os.path.isfile(bam_file):
                     err = f"\nERROR: The BAM file '{bam_file}' does not exist."
                     loggingC.message(err, threshold=-1)
-                    exit(1)
+                    sys.exit(1)
                 extension = '.' + bam_file.split('.')[-1]
                 if not extension in staticConfig.bam_extensions.split(';'):
                     err = f"\nERROR: The BAM file '{bam_file}' has an invalid extension {extension}. Valid extensions are {staticConfig.bam_extensions}."
                     loggingC.message(err, threshold=-1)
-                    exit(1)
+                    sys.exit(1)
 
     # Check if we have at least one coverage source
     if not coverage_values and not coverage_bams:
         err = f"\nERROR: You chose to submit an assembly, bins or MAGs. You need to provide either .BAM files or a known coverage (for assembly AND bins)."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     if coverage_values and coverage_bams:
         err = f"You provided both a known coverage value and .BAM files. The .BAM files will be ignored."
         loggingC.message(err, threshold=0)
@@ -862,7 +863,7 @@ def preflight_checks(arguments: dict) -> None:
     if not os.path.isfile(arguments['config']):
         err = f"\nERROR: The config file '{arguments['config']}' does not exist."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     
     # Read data from the YAML config file
     config = utility.read_yaml(arguments['config'])
@@ -904,7 +905,7 @@ def preflight_checks(arguments: dict) -> None:
                 "adressed, they are likely to cause failure, sometimes after " \
                 "partial submission of the data."
         loggingC.message(msg, threshold=-1)
-        exit(1)
+        sys.exit(1)
     else:
         msg = f">All preflight checks passed."
         loggingC.message(msg, threshold=0)

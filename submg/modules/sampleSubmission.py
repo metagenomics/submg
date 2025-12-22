@@ -1,4 +1,5 @@
 import os
+import sys
 
 from submg.modules import loggingC, utility
 from submg.modules.utility import from_config, stamped_from_config
@@ -79,7 +80,7 @@ def __read_samplesheet_receipt(receipt_path: str) -> list:
     if success != 'true':
         err = f"\nERROR: The submission of the biological samples failed. Consult the receipt file at {os.path.abspath(receipt_path)} for more information."
         loggingC.message(err, threshold=-1)
-        exit(1)
+        sys.exit(1)
     loggingC.message(f"\t...samplesheet upload was successful.", threshold=0)
 
     sample_accessions = []
@@ -91,7 +92,7 @@ def __read_samplesheet_receipt(receipt_path: str) -> list:
         if alias is None is None or accession is None or external_accession is None:
             err = f"\nERROR: The submission of the biological samples failed. Consult the receipt file at {os.path.abspath(receipt_path)} for more information."
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
 
         sample_accessions.append({
             'accession': accession,

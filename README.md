@@ -14,15 +14,29 @@
 </picture>
 
 
-subMG aids in the submission of metagenomic study data to the European Nucleotide Archive (ENA). The tool can be used to submit various combinations of samples, reads, (co-)assemblies, bins, and MAGs. All files and metadata are entered in a single location, eliminating redundant data entry. subMG derives additional information where required, creates samplesheets and manifests, and uploads everything to the ENA.
-A command line interface is available as well as a graphical user interface, with both offering the same functionality.
+subMG aids in the submission of metagenomic study data to the European Nucleotide Archive (ENA). The tool can be used to submit various combinations of samples, reads, (co-)assemblies, bins, and MAGs.
+
+Files and metadata are entered in a single location- no redundant data entry. subMG derives additional information where required, creates samplesheets and manifests, and uploads everything to the ENA.
+
+A command line interface (CLI) is available as well as a graphical user interface (GUI), with both offering the same functionality.
+
 You can use subMG to continue a submission process if some levels of data already exist in ENA (e.g. submitting samples and reads through the ENA web interface, then using subMG to submit the assembly and bins).
 
-subMG was developed in the German [NFDI4Microbiota consortium](https://nfdi4microbiota.de/) with the objective of simplifying [FAIR](https://www.go-fair.org/fair-principles/) data sharing in metagenomics and offering support to microbiology researchers struggling with the submission process.
+subMG was developed within the German [NFDI4Microbiota consortium](https://nfdi4microbiota.de/) with the objective of simplifying [FAIR](https://www.go-fair.org/fair-principles/) data sharing in metagenomics and assisting microbiologists with the submission process.
+
+
+<p align="center">
+  <source media="(prefers-color-scheme: dark)" srcset="submg/resources/cli_screenshot.png">
+  <source media="(prefers-color-scheme: light)" srcset="submg/resources/cli_screenshot.png">
+  <img alt="subMG cli screenshot" src="submg/resources/cli_screenshot.png" height=110>
+  <em>Command Line Interface</em>
+</p>
+
 <p align="center">
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/gui_screenshot.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/gui_screenshot.png">
   <img alt="subMG gui screenshot" src="submg/resources/gui_screenshot.png" height=400>
+  <em>Graphic User Interface</em>
 </p>
 
 
@@ -33,7 +47,7 @@ subMG was developed in the German [NFDI4Microbiota consortium](https://nfdi4micr
 
 Please Note
 > 1. Only for *metagenomic* datasets.  
-> 2. Submit bins *before* MAGs ([ENA’s MAG ≠ metagenomic bin](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena)).  
+> 2. Submit bins *before* MAGs ([MAG ≠ metagenomic bin](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#what-is-considered-a-mag-in-ena)).  
 > 3. Contact the ENA helpdesk [before submitting third-party data](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#introduction).  
 > 4. Report issues & suggest improvements on GitHub (see [Support](#support)). We are happy to help!
 
@@ -81,30 +95,30 @@ Please Note
 
 # Installation
 There are three options for using subMG:
-- Download the [docker container](https://hub.docker.com/r/ttubb/submg) (for CLI use)
+- Download the [docker container](https://hub.docker.com/r/ttubb/submg) (for CLI use only)
+- Install from source (for CLI or GUI use, see below for instructions)
 - Download the GUI executable (for Windows and most Linux distributions, see below for hints)
-- Installing from source (for CLI or GUI use, see below for instructions)
 
 ## Installing from source (CLI & GUI)
-You will need the following software installed
-- Python 3.8 or higher
-- Java 17 or higher
-- Python-Tk (optional, only needed for GUI)
-- [wheel](https://pypi.org/project/wheel/) for Python
+- You will need the following software installed
+  - Python 3.8 or higher
+  - Java 17 or higher
+  - Python-Tk (optional, only needed for GUI)
+  - [wheel](https://pypi.org/project/wheel/) for Python
 
-To install subMG
-- Download the software
-  - either download a [release](https://github.com/metagenomics/submg/releases) and untar/unzip it
-  - or clone the repository via: `git clone https://github.com/metagenomics/submg/`
-- Navigate into the directory you just created
-- Run `python -m pip install .`
-- Run `submg-cli download-webin`
+- To install subMG
+  - Download the software
+    - either download a [release](https://github.com/metagenomics/submg/releases) and untar/unzip it
+    - or clone the repository via: `git clone https://github.com/metagenomics/submg/`
+  - Navigate into the directory you just created
+  - Run `python -m pip install .`
+  - Run `submg-cli download-webin`
 
 You can now use `submg-cli` to run the command-line interface or `submg-gui` to run the graphical user interface.
 
 ## GUI executable
-subMG requires Java 17 or higher for several submission steps. On Windows, you might use free options like [Eclipse/Adoptium](https://adoptopenjdk.net/) or [Amazon/Corretto](https://aws.amazon.com/de/corretto/). On Debian-family Linux, you might install via `sudo apt install openjdk-21-jre-headless`.
-Please reach out if you have trouble running the executable on Windows or any Linux distribution.
+subMG requires Java 17 or higher for data submission. On Windows, you can use free options like [Eclipse/Adoptium](https://adoptopenjdk.net/) or [Amazon/Corretto](https://aws.amazon.com/de/corretto/). On Debian-family Linux, you can install via `sudo apt install openjdk-21-jre-headless`.
+Please reach out if you have trouble running the executable on your operating system.
 
 # Usage
 subMG is intended to submit data related to a *single* (co-)assembly. All samples, sequencing runs, bins and MAGs specified in the config file will be associated with this assembly. If you want to submit data from multiple assemblies, you need to run subMG once for each assembly.
@@ -122,7 +136,7 @@ ENA provides a [development service](https://ena-docs.readthedocs.io/en/latest/s
 A lot of (meta)data is required for a submission. To use subMG, you need to provide metadata and the locations of your files in a YAML document. Which information is required depends on the type of your submission. You can use the `submg-cli makecfg` command to create a template for your config file. It will contain only the fields necessary for your specific submission, along with explanations and examples. Additionally, the `examples` directory contains examples of config files and the associated data. If you are unsure of how to fill out certain fields, please feel free to ask on the [GitHub discussions page](https://github.com/metagenomics/submg/discussions) of this project.
 
 ## Submission Modes
-Not all combinations of items can be submitted. For example, it is not possible to submit only samples and a co-assembly without also submitting the corresponding reads. The figure below illustrates all possible combinations of items that can be submitted.
+Not all combinations of items can be submitted to ENA. For example, it is not possible to submit only samples and a co-assembly without also submitting the corresponding reads. The figure below illustrates all possible combinations:
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/submission_modes_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/submission_modes_light.png">
@@ -220,7 +234,7 @@ Using the table below, MAG `m1` will be submitted as a medium quality contig ass
 |m3|finished|/path/to/m3_flatfile.tsv|/path/to/m3_chromosome.txt|/path/to/m3_unlocalised.txt|
 
 # Preventing Process Interruption
-A submission can take several hours to complete. We recommend using [nohup](https://en.wikipedia.org/wiki/Nohup), [tmux](https://github.com/tmux/tmux/wiki) or something similar to prevent the submission process from being interrupted. 
+A submission can take several hours to complete. We recommend using [nohup](https://en.wikipedia.org/wiki/Nohup), [tmux](https://github.com/tmux/tmux/wiki) or similar to prevent the submission process from being interrupted. 
 
 # Edge Cases
 
@@ -235,4 +249,4 @@ If you absolutely need to submit such (presumably low-quality) bins, you need to
 subMG is being actively developed. Please use the GitHub [issue tracker](https://github.com/metagenomics/submg/issues) to report problems. A [discussions page](https://github.com/metagenomics/submg/discussions) is available for questions, comments and suggestions. 
 
 # Citation
-When using subMG in your work, please cite https://doi.org/10.1186/s13040-025-00453-w
+When using subMG in your work, please cite https://doi.org/10.1186/s13040-025-00453-wd

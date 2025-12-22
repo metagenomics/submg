@@ -5,8 +5,6 @@ import sys
 import customtkinter as ctk
 from tkinter.messagebox import askyesno
 from PIL import Image
-#import importlib.resources as pkg_resources
-
 
 
 from submg.gui.home import HomePage
@@ -67,8 +65,46 @@ class MyApp(ctk.CTk):
             # Place all pages in the same location in the grid
             page.grid(row=0, column=0, sticky="nsew")
 
+        # Handle window close (e.g. clicking the X button)
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
         # Show the home page initially
         self.show_page("HomePage")
+
+
+    def on_close(self):
+        """Handle window close; warn if a submission is running and stop it if exiting."""
+        # Get MonitorPage instance if it exists
+        monitor_page = None
+        if hasattr(self, "pages"):
+            monitor_page = self.pages.get("MonitorPage")
+
+        submission_running = False
+        if monitor_page is not None:
+            submission_running = getattr(monitor_page, "submission_running", False)
+
+        if submission_running:
+            # Ask the user if they really want to exit
+            msg = (
+                "A submission is still in progress.\n\n"
+                "Exiting now will interrupt this submission.\n\n"
+                "Do you want to exit anyway?"
+            )
+            if not askyesno("Exit subMG", msg):
+                return
+
+            if (monitor_page.submission_process is not None and
+                    monitor_page.submission_process.is_alive()):
+                try:
+                    monitor_page.submission_process.terminate()
+                    monitor_page.submission_process.join()
+                except Exception:
+                    # If termination fails for some reason, we still proceed with exit
+                    pass
+
+        # No submission running, or user confirmed to exit and we have tried to stop it
+        self.destroy()
+
 
     def initialize_vars(self):
         # Sizing
@@ -100,6 +136,7 @@ class MyApp(ctk.CTk):
             "form_path": None,
         }
     
+
     def go_home(self):
         """ Ask user whether they really want to return. Clear all data. 
             Switch to the HomePage.
@@ -110,6 +147,7 @@ class MyApp(ctk.CTk):
         if askyesno("Return to Home", msg):
             self.initialize_vars()
             self.show_page("HomePage")
+
 
     def show_page(self, page_name):
         """ Switches the user over to the respective page.
@@ -155,6 +193,7 @@ class MyApp(ctk.CTk):
         ctkImage = ctk.CTkImage(light_image=Image.open(path), size=(width, height))
         return ctkImage
 
+
     def load_and_resize_images(self):
         """Loads and resizes images for the application using resource_path."""
 
@@ -171,34 +210,16 @@ class MyApp(ctk.CTk):
         nodes_path = self.resource_path('submg.resources', 'submission_modes_dark.png')
         self.submodes_img = self.resize_image(nodes_path, width=self.imageWidth_submodes)
 
-    #     # Resize the image
-    #     ctkImage = ctk.CTkImage(light_image=Image.open(path), size=(width, height))
-    #     return ctkImage
-
-    # def load_and_resize_images(self):
-    #     """ Loads and resizes images for the application.
-    #         Uses pkg_resources to load images from the resources folder.
-    #     """
-
-    #     with pkg_resources.path('submg.resources', 'gui_logo.png') as logo_path:
-    #         self.logo_img_subMG = self.resize_image(logo_path, height=self.logoHeight - 15)
-
-    #     with pkg_resources.path('submg.resources', 'nfdi4microbiota_light.png') as microbiota_path:
-    #         self.logo_img_microbiota = self.resize_image(microbiota_path, height=self.logoHeight)
-
-    #     with pkg_resources.path('submg.resources', 'gui_flow.png') as flow_path:
-    #         self.flow_img = self.resize_image(flow_path, width=self.imageWidth_flow)
-
-    #     with pkg_resources.path('submg.resources', 'submission_modes_dark.png') as nodes_path:
-    #         self.submodes_img = self.resize_image(nodes_path, width=self.imageWidth_submodes)
 
     def set_submission_data(self, file_path, staging_dir_path, submission_items):
         self.file_path = file_path
         self.staging_dir_path = staging_dir_path
         self.submission_items = submission_items
 
+
     def set_config_data(self, config_items):
         self.config_items = config_items
+
 
     def truncate_display_path(self, path, max_display_len):
         """ Truncates a path from the left if it exceeds a certain length.
@@ -207,10 +228,11 @@ class MyApp(ctk.CTk):
             return "..." + path[-max_display_len:]
         return path
       
+
 # Run the application
 def main():
     app = MyApp()
     app.mainloop()
 
-    if __name__ == "__main__":
-        main()
+if __name__ == "__main__":
+    main()

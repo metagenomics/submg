@@ -113,6 +113,7 @@ class HomePage(BasePage):
 
         self.check_webin_cli()
 
+
     def check_webin_cli(self):
         """ Checks if java and the correct version of webin-cli are available.
             If java is not available, the user is warned that only config
@@ -178,6 +179,7 @@ class HomePage(BasePage):
 
                 threading.Thread(target=_worker, daemon=True).start()
 
+
     def register_study(self):
         """ Triggered when the user presses the 'Register Study' button. Opens
             the ENA documentation in their web browser.
@@ -187,8 +189,10 @@ class HomePage(BasePage):
         if askyesno("Register Study", msg):
             webbrowser.open(self.ena_register_study_address)
 
+
     def load_config(self):
         self.controller.show_page("LoadConfigPage")
+
 
     def initialize(self):
         """Called whenever monitor renders the page"""

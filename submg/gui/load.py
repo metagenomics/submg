@@ -102,7 +102,6 @@ class LoadConfigPage(BasePage):
                           pady=0,
                           sticky="nsew")
         picker_frame.grid_columnconfigure(0, weight=1)  # Stretch the right frame
-        
 
         # Title
         middle_label = ctk.CTkLabel(
@@ -207,6 +206,7 @@ class LoadConfigPage(BasePage):
         )
         self.start_button.grid(row=0, column=1, padx=(5,0), pady=(0,10), sticky="ew")
 
+
     def initialize_vars(self):
         # Initialize variables
         self.max_display_len = 30
@@ -221,6 +221,7 @@ class LoadConfigPage(BasePage):
                      self.file_path,
                      self.max_display_len)
             )
+
 
     def global_disable(self):
         """ Disable all checkboxes and the start and edit buttons"""
@@ -253,6 +254,7 @@ class LoadConfigPage(BasePage):
             self.file_path_label.configure(text=display_path)
             self.file_path = file_path
             self.load_config()
+
 
     def load_config(self):
         """ Open a file dialog to select a config file.
@@ -328,6 +330,7 @@ class LoadConfigPage(BasePage):
             if self.staging_dir_path:
                 self.start_button.configure(state="normal")
 
+
     def pick_staging_dir(self):
         # Use tkFileDialog.askdirectory() to select a directory
         dir_path = filedialog.askdirectory(title="Choose Output Directory")
@@ -340,6 +343,7 @@ class LoadConfigPage(BasePage):
             # Enable the start button if config file is also selected
             if self.file_path:
                 self.start_button.configure(state="normal")
+
 
     def continue_submission(self):
         # Do we have config & path?
@@ -390,6 +394,7 @@ class LoadConfigPage(BasePage):
         
         # Redirect to MonitorPage
         self.controller.show_page("MonitorPage")
+
 
     def initialize(self):
         """Called whenever monitor renders the page"""

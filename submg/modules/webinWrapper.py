@@ -3,6 +3,7 @@ import os
 import glob
 import signal
 import sys
+import re
 
 from submg.modules import loggingC
 from submg.modules.statConf import staticConfig
@@ -18,31 +19,6 @@ def get_persistent_storage_path():
     else:  # Linux and other Unix-like OS
         return os.path.join(os.path.expanduser("~/.local/share/submg/"), "submg")
 
-# def webin_cli_jar_available():
-#     """ Check if the Webin CLI JAR file is present in the directory of this
-#         script. Then check if it corresponds to the expected version.
-#     """
-#     script_dir = os.path.dirname(os.path.abspath(__file__))
-#     jar_files = glob.glob(os.path.join(script_dir, 'webin*.jar'))
-#     version_string = staticConfig.webin_cli_version
-#     expected_filename = f"webin-cli-{version_string}.jar"
-#     # Check if any JAR file corresponds to this version
-#     for jar_file in jar_files:
-#         if os.path.basename(jar_file) == expected_filename:
-#             return True
-#     # Log warning (either no JAR file found or wrong version)
-#     if len(jar_files) == 0:
-#         warn = (f"WARNING: webin-cli .jar file not found in "
-#                 f"{os.path.abspath(script_dir)}. ")
-#     else:
-#         warn = (f"WARNING: webin-cli .jar file found in "
-#                 f"{os.path.abspath(script_dir)}\n "
-#                 f"but it does not match the expected version "
-#                 f"{version_string}. ")
-#     warn += (f"To download webin-cli, use the GUI or run the following "
-#              f"command:\nsubmg-cli download_webin")
-#     print(warn) # Cannot log because logging might not have been set up yet
-#     return False
 
 def webin_cli_jar_available():
     """Check if the Webin CLI JAR file is present in the directory of this script.
@@ -67,46 +43,43 @@ def webin_cli_jar_available():
     return False
 
 
-# def find_webin_cli_jar():
-#     """ Find the Webin CLI JAR file in the directory of this script.
-#     """
-#     script_dir = os.path.dirname(os.path.abspath(__file__))
-#     #parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
-    
-#     jar_files = glob.glob(os.path.join(script_dir, 'webin*.jar'))
-    
-#     if len(jar_files) == 1:
-#         return jar_files[0]
-#     elif len(jar_files) > 1:
-#         err = f"ERROR: Multiple webin-cli .jar files found in {os.path.abspath(script_dir)}. Please ensure there's only one."
-#         loggingC.message(err, threshold=-1)
-#         exit(1)
-#     else:
-#         err = f"ERROR: webin_cli .jar file not found in {os.path.abspath(script_dir)}.\nYou can download the .jar by running the webin_downloader.py file in the submg/modules directory or manually from the ENA website."
-#         loggingC.message(err, threshold=-1)
-#         exit(1)
-
-
-
-
-
 def find_webin_cli_jar():
-    """Finds the Webin CLI JAR file in the persistent storage directory."""
+    """Finds the Webin CLI JAR file in the persistent storage directory that matches the expected version."""
     storage_dir = get_persistent_storage_path()
     jar_files = glob.glob(os.path.join(storage_dir, 'webin*.jar'))
+    version_string = staticConfig.webin_cli_version
     
-    if len(jar_files) == 1:
-        return jar_files[0]
-    elif len(jar_files) > 1:
-        err = f"ERROR: Multiple webin-cli .jar files found in {storage_dir}. Please ensure there's only one."
+    if len(jar_files) == 0:
+        err = f"ERROR: webin-cli .jar file not found in {storage_dir}.\nYou can download version {version_string} by running submg-cli download-webin or manually from the ENA website and saving to {storage_dir}."
+        loggingC.message(err, threshold=-1)
+        sys.exit(1)
+    
+    # Create regex pattern to match exact version (with word boundaries to avoid partial matches)
+    # This matches the version when it's surrounded by non-alphanumeric characters or at word boundaries
+    version_pattern = re.compile(rf'\b{re.escape(version_string)}\b')
+    
+    # Find JAR files that contain the exact version number in filename
+    version_matching_jars = []
+    for jar_file in jar_files:
+        filename = os.path.basename(jar_file)
+        if version_pattern.search(filename):
+            version_matching_jars.append(jar_file)
+    
+    if len(version_matching_jars) == 1:
+        return version_matching_jars[0]
+    elif len(version_matching_jars) > 1:
+        matching_files = [os.path.basename(f) for f in version_matching_jars]
+        err = f"ERROR: Multiple webin-cli .jar files with version {version_string} found in {storage_dir}: {', '.join(matching_files)}. Please ensure there's only one."
         loggingC.message(err, threshold=-1)
         sys.exit(1)
     else:
-        err = f"ERROR: webin-cli .jar file not found in {storage_dir}.\nYou can download the .jar by running the webin_downloader.py file in the submg/modules directory or manually from the ENA website."
+        # No files match the expected version
+        found_files = [os.path.basename(f) for f in jar_files]
+        err = (f"ERROR: No webin-cli .jar file matching version {version_string} found in {storage_dir}.\n"
+               f"Found files: {', '.join(found_files)}\n"
+               f"You can download the correct version {version_string} by running submg-cli download-webin or by downloading manually from the ENA website and saving to {storage_dir}.")
         loggingC.message(err, threshold=-1)
         sys.exit(1)
-
-
 
 
 def __webin_cli_validate(manifest,
@@ -251,7 +224,7 @@ def webin_cli(manifest,
             err += f" If the submission failed during validation, please consult the output of Webin-CLI."
             err += f" Otherwise please check the receipt at {receipt}"
             loggingC.message(err, threshold=-1)
-            exit(1)
+            sys.exit(1)
     else:
         loggingC.message(f">Validating {subdir_name} for ENA submission using webin-cli", threshold=1)
         __webin_cli_validate(manifest,

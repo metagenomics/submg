@@ -9,7 +9,7 @@ from submg.gui.base import BasePage
 from submg.modules.configGen import write_gui_yaml
 from submg.modules.statConf import YAMLCOMMENTS, GUICOMMENTS, GUIEXAMPLES, GUILINKS, YAML_PRETTYNAMES, YAML_MULTI_FILEKEYS, YAML_SINGLE_FILEKEYS, YAML_DIRKEYS, GUI_STATIC_ADDITIONAL_FIELDS
 import webbrowser
-import time
+
 
 class ConfigFormPage(BasePage):
     def __init__(self, parent, controller):
@@ -186,7 +186,6 @@ class ConfigFormPage(BasePage):
     def update_page_indicator(self):
         """ Update the page indicator label """
         newlabel = f"{self.pagination_index + 1} / {len(self.pagination_list)}"
-        print("Setting page indicator to ", newlabel)
         self.page_indicator.configure(
             text=newlabel
         )
@@ -202,6 +201,7 @@ class ConfigFormPage(BasePage):
             self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
             self.update_page_indicator()
 
+
     def show_previous_page(self):
         """ Hide the currently visible form frame and move to the one that
             is previous in the pagination list.
@@ -213,59 +213,13 @@ class ConfigFormPage(BasePage):
             self.update_page_indicator()
 
 
-    # def show_next_page(self):
-    #     """ Show the next page in the pagination list """
-    #     print("\nle next page ")
-    #     print("our pagination index is ", self.pagination_index)
-    #     for item in self.pagination_list:
-    #         print(f"Frame {item}")
-    #     if self.pagination_index < len(self.pagination_list) - 1:  # Check if we're not at the last page
-    #         print(f"Moving from page {self.pagination_index}")
-    #         # Hide the current frame
-    #         if self.pagination_index > 0:
-    #             print("calling toggle to hide at index ", self.pagination_index)
-    #             self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         else:
-    #             self.core_frame.grid_remove()
-    #         # Move to the next page
-    #         self.pagination_index += 1
-    #         print(f"To page {self.pagination_index} of {len(self.pagination_list)}")
-    #         # Show the next frame
-    #         print("calling toggle at index ", self.pagination_index)
-    #         print("which is ", self.pagination_list[self.pagination_index])
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         for item in self.pagination_list:
-    #             print(f"Frame {item} is visible: {item.winfo_ismapped()}")
-    #         # Update the page indicator
-    #         self.update_page_indicator()
-
-
-
-    # def show_previous_page(self):
-    #     print("\nle prev page")
-    #     """ Show the previous page in the pagination list """
-    #     if self.pagination_index > 0:  # Check if we're not at the first page
-    #         # Hide the current frame
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         # Move to the previous page
-    #         self.pagination_index -= 1
-    #         print(f"To page {self.pagination_index} of {len(self.pagination_list)}")
-    #         # Show the previous frame
-    #         if self.pagination_index > 0:
-    #             self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         else:
-    #             self.core_frame.grid(row=0, column=0, sticky="nsew", padx=self.frame_x_padding, pady=self.frame_y_padding)
-    #         self.toggle_frame_visibility(self.pagination_list[self.pagination_index])
-    #         # Update the page indicator
-    #         self.update_page_indicator()
-
-
     def padding_in_scrollable(self, s_frame: ctk.CTkScrollableFrame):
         """Adds padding to scrollbar of a scrollable frame."""
         
         if scrollbar:=getattr(s_frame, "_scrollbar", None):
             padding = s_frame.cget("border_width") * 2
             ctk.CTkScrollbar.grid_configure(scrollbar, padx=(0, padding))   
+
 
     def show_help(self, key):
         """Fetch the help text from YAMLCOMMENTS and display it in help_frame."""
@@ -300,6 +254,7 @@ class ConfigFormPage(BasePage):
             hyperlink_button.grid(row=row, column=0, padx=5, pady=5, sticky="nsew")
             row += 1
 
+
     def configure_frame_columns(self, frame, weighlist):
         """ Configure the columns of a frame """
         for i, weight in enumerate(weighlist):
@@ -318,6 +273,7 @@ class ConfigFormPage(BasePage):
                    padx=self.item_x_padding,
                    pady=self.item_y_padding)
 
+
     def load_form(self, form_path):
         """ Read a yaml form from the specified path. Translate it into a
             dictionary that will later be rendered. Remove the
@@ -334,6 +290,7 @@ class ConfigFormPage(BasePage):
                 else:
                     self.controller.submission_items[item] = False
             self.original_form_data.pop('submission_outline')
+
 
     def render_form(self):
         """ Render the form based on the loaded yaml data """
@@ -403,7 +360,8 @@ class ConfigFormPage(BasePage):
                                  key,
                                  frame,
                                  manifest_or_samplesheet):
-        """ Command to create an additional field """
+        """ Command to create an additional field
+        """
         def command():
             self.create_additional_field(
                 frame,
@@ -413,12 +371,9 @@ class ConfigFormPage(BasePage):
         return command
 
         
-    def toggle_frame_visibility(self, frame):
-        #print("\n")
-        #print(f"toggle_frame_visibility called for: {frame}")
-        #print(f"while the index is at {self.pagination_index}")
-        #print(f"Frame visibility status before toggle: {frame.winfo_ismapped()}")
-        
+    def toggle_frame_visibility(self, frame):   
+        """ Toggle the visibility of a frame
+        """
         if frame.winfo_ismapped():
             #print("REMOVING FRAME")
             frame.grid_remove()
@@ -426,13 +381,6 @@ class ConfigFormPage(BasePage):
             #print("ADDING FRAME")
             frame.grid(row=0, column=0, sticky="nsew", padx=self.frame_x_padding, pady=self.frame_y_padding)
             frame.update_idletasks()  # Force update to apply layout changes
-
-        # Debug visibility status after toggle
-        #print(f"Frame visibility status after toggle: {frame.winfo_ismapped()}")
-        #print(f"Frame viewable status: {frame.winfo_viewable()}")
-        #print(f"Frame width: {frame.winfo_width()}, height: {frame.winfo_height()}")
-
-
 
 
     def make_form_fields(self, title, data, parent_key):
@@ -709,6 +657,7 @@ class ConfigFormPage(BasePage):
                          pady=0, 
                          padx=self.item_x_padding)
 
+
     def create_single_filepicker(self, frame, row_count, parent_key, key, value):
         """ Create a single-item filepicker with a label, a button and a
             picked-file-label.
@@ -791,6 +740,7 @@ class ConfigFormPage(BasePage):
                                                         "path": value}
             truncated_path = self.controller.truncate_display_path(value, max_display_len=14)
             pathlabel.configure(text=truncated_path)
+
 
     def create_multi_filepicker(self, frame, row_count, parent_key, key, value):
         """ Create a multi-item filepicker with a label, a button and a
@@ -902,6 +852,7 @@ class ConfigFormPage(BasePage):
                                                         "pathlist": value}
             pathlabel.configure(text=f"picked: {len(value)}")
                 
+
     def create_directory_picker(self, frame, row_count, parent_key, key, value):
         """ Create a directory picker with a label, a button and a
             picked-directory-label.
@@ -983,6 +934,7 @@ class ConfigFormPage(BasePage):
             truncated_path = self.controller.truncate_display_path(value, max_display_len=14)
             pathlabel.configure(text=truncated_path)
 
+
     def create_core_item(self, key, value):
         """ Create a core item in the core_frame
         """
@@ -1004,6 +956,7 @@ class ConfigFormPage(BasePage):
                                      key,
                                      value)
         self.core_frame_rowcounter += 1
+
 
     def create_nested_item(self,
                            parent_key,
@@ -1139,8 +1092,6 @@ class ConfigFormPage(BasePage):
             'value': value_entry
         }
 
- 
-
 
     def pick_multifile(self, parent_key, key, pathlabel):
         """ Pick a single field and add it to the list of picked files in a
@@ -1177,6 +1128,7 @@ class ConfigFormPage(BasePage):
         else:
             pathlabel.configure(text="no file selected")
 
+
     def pick_directory(self, parent_key, key, pathlabel):
         directory = filedialog.askdirectory()
 
@@ -1187,12 +1139,14 @@ class ConfigFormPage(BasePage):
         else:
             pathlabel.configure(text="no directory selected")
 
+
     def get_comment(self, key):
         """ Try to get a comment for the key from GUICOMMENTS. Use YAMLCOMMENTS
             as a fallback. If no comment is found, return a default message.
         """
         default = "No help available for this item"
         return GUICOMMENTS.get(key, YAMLCOMMENTS.get(key, default))
+
 
     def clear_files(self, parent_key, key, pathlabel):
         """ Clear the list of picked files """
@@ -1201,6 +1155,7 @@ class ConfigFormPage(BasePage):
         else:
             self.form_data[parent_key]["items"][key]["pathlist"] = []
         pathlabel.configure(text="picked: 0")
+
 
     def extract_data(self, input_dict):
         """
@@ -1420,7 +1375,6 @@ class ConfigFormPage(BasePage):
         return output
 
 
-
     def pretty_print_form_data(self, data, indent=0):
         """
         Pretty print a deeply nested dictionary, replacing CustomTkinter widgets with 'widget'.
@@ -1473,18 +1427,7 @@ class ConfigFormPage(BasePage):
         if not outpath:
             return  # If no file is selected, return without saving
 
-        # # Step 3: Check if the output path exists and confirm overwrite
-        # if os.path.exists(outpath):
-        #     overwrite = askyesno(
-        #         "File Exists",
-        #         f"The file '{outpath}' already exists. Do you want to overwrite it?"
-        #     )
-        #     if not overwrite:
-        #         return  # If the user decides not to overwrite, return without saving
-        #     else:
-        #         os.remove(outpath)     
-
-        # Step 4: Call write_gui_yaml with the extracted data and output path
+        # Step 3: Call write_gui_yaml with the extracted data and output path
         write_gui_yaml(output, outpath)
         self.config_saved = True
         self.controller.config_items["form_path"] = outpath
@@ -1500,13 +1443,6 @@ class ConfigFormPage(BasePage):
         else:
             self.controller.show_page("LoadConfigPage")
 
-
-    #ef initialize(self):
-    #   """Called whenever controller renders the page"""
-    #   self.config_saved = False
-    #   form_path = self.controller.config_items["form_path"]
-    #   self.load_form(form_path)
-    #   self.render_form()
 
     def initialize(self):
         """Called whenever controller renders the page"""
@@ -1527,6 +1463,7 @@ class ConfigFormPage(BasePage):
 
         # Schedule the load_form and render_form to run after a short delay
         self.after(100, self._load_and_render_form)
+
 
     def _load_and_render_form(self):
         """Loads the form and updates the UI."""
