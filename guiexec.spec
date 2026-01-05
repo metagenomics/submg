@@ -23,7 +23,7 @@ main_script = 'submg/gui_main.py'
 # Analysis step
 a = Analysis(
     [main_script],
-    pathex=['.'],  # Current working directory
+    pathex=['.'],
     binaries=[],  # No extra binaries
     datas=all_datas,  # Include resources
     hiddenimports=[
@@ -56,11 +56,11 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=False,  # Avoid standalone UPX packing
+    upx=False,
     name='submg-gui',
     debug=False,
     bootloader_ignore_signals=False,
-    console=False,  # No console window
-    icon=None,  # Add your .ico file here if you have one
-    onefile=True,  # Generate a single executable
+    console=False,
+    icon=None,
+    onefile=True,
 )
