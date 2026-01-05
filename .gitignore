@@ -9,6 +9,8 @@ examples/temp*
 examples/data/mapping/*tmp.sorted.bam
 examples/data/mapping/*tmp.sorted.bam.bai
 examples/data/mapping/*unindexed.bam.bai
+examples/loghere/*
+examples/stagehere/*
 venv_*
 old*
 
