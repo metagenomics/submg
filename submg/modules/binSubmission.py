@@ -30,10 +30,15 @@ def __calculate_bin_coverage(fasta: str,
     """
     # Extract the names of all contigs from the fasta file
     contig_names = []
-    with open(fasta, 'r') as f:
+    if fasta.endswith('.gz'):
+        fasta_handle = gzip.open(fasta, 'rt')
+    else:
+        fasta_handle = open(fasta, 'r')
+    with fasta_handle as f:
         for line in f:
             if line.startswith('>'):
                 contig_names.append(line.strip().split(' ')[0][1:])
+
     # Get the average coverage of the contigs of this bin
     coverage = utility.calculate_coverage(depth_files,
                                           contig_names,
