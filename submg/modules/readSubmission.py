@@ -88,7 +88,7 @@ def __zipcopy(input_path: str,
         input_path (str): The path to the input file.
         output_path (str): The path to the output file.
     """
-    if input_path.lower().endswith('gz'):
+    if input_path.lower().endswith('.gz'):
         shutil.copyfile(input_path, output_path)
     else:
         with open(input_path, 'rb') as f_in:
