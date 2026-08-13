@@ -453,7 +453,7 @@ def check_fastq(fastq_filepath: str):
     Args:
         fastq_filepath (str): The path to the FASTQ file.
     """
-    if fastq_filepath.endswith('.gz') or fastq_filepath.endswith('.GZ'):
+    if fastq_filepath.lower().endswith('.gz'):
         extension_path = fastq_filepath[:-3]
     else:
         extension_path = fastq_filepath
