@@ -128,7 +128,7 @@ def construct_depth_files(staging_dir: str,
                     try:
                         depth_file = future.result()
                         depth_files.append(depth_file)
-ex                    except Exception as exc:
+                    except Exception as exc:
                         loggingC.message(f"{bam_file} generated an exception: {exc}", threshold=-1)
                         raise
 
@@ -536,14 +536,14 @@ def quality_filter_bins(quality_data, config):
 
     # Check arguments in config
     if 'MIN_COMPLETENESS' in config['BINS']:
-        min_completeness = config['BINS']['MIN_COMPLETENESS']
+        min_completeness = float(config['BINS']['MIN_COMPLETENESS'])
         msg = f">Filtering bins based on minimum completeness of {min_completeness}."
     else:
         min_completeness = 0
         msg = ">No MIN_COMPLETENESS specified, bins will not be filtered for completeness."
     loggingC.message(msg, threshold=0)
     if 'MAX_CONTAMINATION' in config['BINS']:
-        max_contamination = config['BINS']['MAX_CONTAMINATION']
+        max_contamination = float(config['BINS']['MAX_CONTAMINATION'])
         msg = f">Filtering bins based on maximum contamination of {max_contamination}."
     else:
         max_contamination = 100

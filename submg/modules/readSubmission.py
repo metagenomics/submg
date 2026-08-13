@@ -165,11 +165,22 @@ def submit_reads(config,
     """
     read_manifests = {}
 
+    def get_unique_read_name(data):
+        name = stamped_from_config(data, 'NAME').replace(' ', '_')
+        if name in read_manifests:
+            err = (
+                f"\nERROR: The normalized read NAME '{name}' is not unique. "
+                "Read filenames must be unique across paired-end and single-end reads."
+            )
+            loggingC.message(err, threshold=-1)
+            sys.exit(1)
+        return name
+
     counter = 0
     if 'PAIRED_END_READS' in config.keys():
         loggingC.message(">Staging paired-end reads for submission. This might take a while.", threshold=0)
         for i, data in enumerate(from_config(config, 'PAIRED_END_READS')):
-            name = stamped_from_config(data, 'NAME').replace(' ', '_')
+            name = get_unique_read_name(data)
             read_set_staging_dir = os.path.join(staging_dir, f"reads_{name}")
             os.makedirs(read_set_staging_dir, exist_ok=False)
             read_set_logging_dir = os.path.join(logging_dir, f"reads_{name}")
@@ -191,7 +202,7 @@ def submit_reads(config,
         loggingC.message(">Staging single-end reads for submission. This might take a while.", threshold=0)
         for j, data in enumerate(from_config(config, 'SINGLE_READS')):
             i = counter + j
-            name = stamped_from_config(data, 'NAME').replace(' ', '_')
+            name = get_unique_read_name(data)
             read_set_staging_dir = os.path.join(staging_dir, f"reads_{name}")
             os.makedirs(read_set_staging_dir, exist_ok=False)
             read_set_logging_dir = os.path.join(logging_dir, f"reads_{name}")

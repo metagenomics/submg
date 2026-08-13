@@ -167,18 +167,19 @@ def __prep_bins_samplesheet(filtered_bins: list,
         contamination = str(bin_quality[bin_id]['contamination'])
 
         # Create XML
-        sample = ET.SubElement(root, "SAMPLE", alias=sample_alias)
+        sample_element = ET.SubElement(root, "SAMPLE", alias=sample_alias)
 
-        title = ET.SubElement(sample, "TITLE")
-        title.text = sample_title
+        title_element = ET.SubElement(sample_element, "TITLE")
+        title_element.text = sample_title
 
-        sample_name = ET.SubElement(sample, "SAMPLE_NAME")
-        taxon_id = ET.SubElement(sample_name, "TAXON_ID")
-        taxon_id.text = str(tax_id)
-        scientific_name = ET.SubElement(sample_name, "SCIENTIFIC_NAME")
-        scientific_name.text = scientific_name
+        sample_name_element = ET.SubElement(sample_element, "SAMPLE_NAME")
 
-        sample_attributes = ET.SubElement(sample, "SAMPLE_ATTRIBUTES")
+        taxon_id_element = ET.SubElement(sample_name_element, "TAXON_ID")
+        taxon_id_element.text = str(tax_id)
+        scientific_name_element = ET.SubElement(sample_name_element, "SCIENTIFIC_NAME")
+        scientific_name_element.text = scientific_name
+
+        sample_attributes_element = ET.SubElement(sample_element, "SAMPLE_ATTRIBUTES")
         
         # Add the attributes we specified above
         attribute_data = {
@@ -227,7 +228,7 @@ def __prep_bins_samplesheet(filtered_bins: list,
         # Add all attributes to the XML tree
         for key, value in attribute_data.items():
             if value:  # Only add attribute if value is not empty
-                attribute = ET.SubElement(sample_attributes, "SAMPLE_ATTRIBUTE")
+                attribute = ET.SubElement(sample_attributes_element, "SAMPLE_ATTRIBUTE")
                 ET.SubElement(attribute, "TAG").text = key
                 ET.SubElement(attribute, "VALUE").text = value
 
@@ -241,6 +242,7 @@ def __prep_bins_samplesheet(filtered_bins: list,
     loggingC.message(f"\t...written bins samplesheet to {outpath}", threshold=0)
 
     return outpath
+
 
 def read_bin_samples_receipt(receipt_path: str) -> dict:
     """
