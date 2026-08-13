@@ -31,7 +31,7 @@ class staticConfig:
     mag_assembly_quality_levels = "Many fragments with little to no review of assembly other than reporting of standard assembly statistics.;Single contiguous sequence without gaps or ambiguities with a consensus error rate equivalent to Q50 or better.;Multiple fragments where gaps span repetitive regions. Presence of the 23S, 16S and 5S rRNA genes and at least 18 tRNAs."
     webin_analysis_accession_line: str = 'The following analysis accession was assigned to the submission'
     webin_run_accessions_line: str = 'The following run accession was assigned to the submission'
-    mag_metadata_columns: str = 'Bin_id;Quality_category;Flatfile_path;Unlocalised_path'
+    mag_metadata_columns: str = 'Bin_id;Quality_category;Flatfile_path;Chromosomes_path;Unlocalised_path'
     ncbi_taxonomy_columns: str = 'Bin_id;NCBI_taxonomy'
     manual_taxonomy_columns: str = 'Bin_id;Scientific_name;Tax_id'
     gtdb_majority_vote_columns: str = 'Genome ID;GTDB classification;Majority vote NCBI classification'

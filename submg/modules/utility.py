@@ -487,7 +487,7 @@ def is_fasta(filepath, extensions=staticConfig.fasta_extensions.split(';')) -> s
         return None
     if filepath.endswith('.gz'):
         filepath = filepath[:-3]
-    if not filepath.endswith(tuple(extensions)):
+    if not filepath.lower().endswith(tuple(extensions)):
         return None
     filename = os.path.basename(filepath)
     basename = filename.rsplit('.', 1)[0]
@@ -513,11 +513,11 @@ def check_fasta(fasta_path) -> tuple:
         err = f"\nERROR: Trying to submit assembly, but the FASTA file {fasta_path} does not exist."
         loggingC.message(err, threshold=-1)
         sys.exit(1)
-    extension = fasta_path.split('.')[-1]
+    extension = fasta_path.split('.')[-1].lower()
     gzipped = False
     if extension == 'gz':
         gzipped = True
-        extension = fasta_path.split('.')[-2]
+        extension = fasta_path.split('.')[-2].lower()
     if not extension in staticConfig.fasta_extensions:
         err = f"\nERROR: fasta file at {fasta_path} has an unknown file extension ({extension}). Allowed extensions are {staticConfig.fasta_extensions} (+.gz)."
         loggingC.message(err, threshold=-1)

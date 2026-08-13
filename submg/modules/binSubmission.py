@@ -30,7 +30,7 @@ def __calculate_bin_coverage(fasta: str,
     """
     # Extract the names of all contigs from the fasta file
     contig_names = []
-    if fasta.endswith('.gz'):
+    if fasta.lower().endswith('.gz'):
         fasta_handle = gzip.open(fasta, 'rt')
     else:
         fasta_handle = open(fasta, 'r')
@@ -414,7 +414,7 @@ def __stage_bin_submission(staging_directory: str,
     
     # Stage the fasta file
     gzipped_fasta_path = os.path.join(staging_directory, "bin"+f"assembly_upload{staticConfig.zipped_fasta_extension}")
-    if bin_fasta.endswith('.gz'):
+    if bin_fasta.lower().endswith('.gz'):
         shutil.copyfile(bin_fasta, gzipped_fasta_path)
     else:
         with open(bin_fasta, 'rb') as f_in:

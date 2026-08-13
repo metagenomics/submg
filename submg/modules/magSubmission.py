@@ -336,7 +336,7 @@ def __stage_mag_submission(metadata,
         bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')
         bin_to_fasta = binSubmission.get_bins_in_dir(bins_directory)
         fasta = bin_to_fasta[mag_id]
-        if fasta.endswith('.gz'):
+        if fasta.lower().endswith('.gz'):
             shutil.copyfile(fasta, gzipped_fasta_path)
         else:
             with open(fasta, 'rb') as f_in:
