@@ -485,7 +485,7 @@ def submit(args, listener=None, gui=False):
                                                         bam_files)
             bin_coverage_file = None
         else:
-            if args.submit_bins or args.submit.mags:
+            if args.submit_bins or args.submit_mags:
                 bin_coverage_file = utility.from_config(config,
                                                         'BINS',
                                                         'COVERAGE_FILE')
