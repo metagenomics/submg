@@ -697,6 +697,10 @@ def __check_mags(arguments: dict,
     __check_tsv(metadata_file, cols)
     with open(metadata_file, 'r') as f:
         reader = csv.DictReader(f, delimiter='\t')
+        header = reader.fieldnames or []
+        for column in cols:
+            if column not in header:
+                return
         for row in reader:
             bin_id = row['Bin_id'].strip()
             all_mag_bins.add(bin_id)

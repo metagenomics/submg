@@ -485,7 +485,7 @@ def is_fasta(filepath, extensions=staticConfig.fasta_extensions.split(';')) -> s
     """
     if not os.path.isfile(filepath):
         return None
-    if filepath.endswith('.gz'):
+    if filepath.lower().endswith('.gz'):
         filepath = filepath[:-3]
     if not filepath.lower().endswith(tuple(extensions)):
         return None
