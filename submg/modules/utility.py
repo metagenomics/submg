@@ -128,8 +128,9 @@ def construct_depth_files(staging_dir: str,
                     try:
                         depth_file = future.result()
                         depth_files.append(depth_file)
-                    except Exception as exc:
+ex                    except Exception as exc:
                         loggingC.message(f"{bam_file} generated an exception: {exc}", threshold=-1)
+                        raise
 
     return depth_files
 
