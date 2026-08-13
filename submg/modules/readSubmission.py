@@ -82,7 +82,7 @@ def __prep_reads_manifest(config: dict,
 def __zipcopy(input_path: str,
               output_path: str) -> None:
     """
-    Copy a file, compressing it if the input file does not have a '.gz' extension.
+    Copy a file, compressing it if the input file does not have a '.gz'/'.GZ' extension.
 
     Args:
         input_path (str): The path to the input file.

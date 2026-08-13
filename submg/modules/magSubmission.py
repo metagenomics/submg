@@ -497,7 +497,8 @@ def submit_mags(config: dict,
                                                                               username=usr,
                                                                               password=pwd,
                                                                               subdir_name=subdir_name,
-                                                                              submit=submit)
+                                                                              submit=submit,
+                                                                              test=test)
     loggingC.message(f"\n>MAG submission completed!", threshold=0)
 
     # Process the results
