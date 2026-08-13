@@ -79,20 +79,20 @@ def __prep_reads_manifest(config: dict,
     return manifest_path
 
 
-def __zipcopy(input: str,
-              output: str) -> None:
+def __zipcopy(input_path: str,
+              output_path: str) -> None:
     """
     Copy a file, compressing it if the input file does not have a '.gz' extension.
 
     Args:
-        input (str): The path to the input file.
-        output (str): The path to the output file.
+        input_path (str): The path to the input file.
+        output_path (str): The path to the output file.
     """
-    if input.endswith('gz'):
-        shutil.copyfile(input, output)
+    if input_path.lower().endswith('gz'):
+        shutil.copyfile(input_path, output_path)
     else:
-        with open(input, 'rb') as f_in:
-            with gzip.open(output, 'wb', compresslevel=5) as f_out:
+        with open(input_path, 'rb') as f_in:
+            with gzip.open(output_path, 'wb', compresslevel=5) as f_out:
                 f_out.writelines(f_in)
 
 

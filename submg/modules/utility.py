@@ -453,18 +453,22 @@ def check_fastq(fastq_filepath: str):
     Args:
         fastq_filepath (str): The path to the FASTQ file.
     """
-    if fastq_filepath.endswith('.gz'):
-        fastq_filepath = fastq_filepath[:-3]
+    if fastq_filepath.endswith('.gz') or fastq_filepath.endswith('.GZ'):
+        extension_path = fastq_filepath[:-3]
+    else:
+        extension_path = fastq_filepath
+
     if not os.path.isfile(fastq_filepath):
         err = f"\nERROR: The FASTQ file '{fastq_filepath}' does not exist."
         loggingC.message(err, threshold=-1)
         sys.exit(1)
+
     extensions = staticConfig.fastq_extensions.split(';')
-    if not fastq_filepath.endswith(tuple(extensions)):
+    if not extension_path.endswith(tuple(extensions)):
         err = f"\nERROR: The FASTQ file '{fastq_filepath}' has an invalid extension. Valid extensions are {'|'.join(extensions)}."
         loggingC.message(err, threshold=-1)
         sys.exit(1)
-        
+
 
 def is_fasta(filepath, extensions=staticConfig.fasta_extensions.split(';')) -> str:
     """
