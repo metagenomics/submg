@@ -190,8 +190,7 @@ def submit_reads(config,
                                                 data,
                                                 read_set_staging_dir,
                                                 read_set_logging_dir)                                                
-            if not name in read_manifests:
-                read_manifests[name] = manifest  
+            read_manifests[name] = manifest
             counter = i + 1
             if minitest:
                 msg = ">Minitest: Only submitting the first paired-end read set."
@@ -213,8 +212,7 @@ def submit_reads(config,
                                                 read_set_staging_dir,
                                                 read_set_logging_dir)         
             
-            if not name in read_manifests:
-                read_manifests[name] = manifest    
+            read_manifests[name] = manifest
             if minitest:
                 msg = ">Minitest: Only submitting the first single-end read set."
                 loggingC.message(msg, threshold=0)
