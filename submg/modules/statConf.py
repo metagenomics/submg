@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 class staticConfig:
     submg_version: str = '1.0.3'
     java_version: str = '17'
-    webin_cli_version: str = '9.0.1'
+    webin_cli_version: str = '9.0.3'
     ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/drop-box/submit/'
     ena_test_dropbox_url: str = 'https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/'
     ena_search_url: str = 'https://www.ebi.ac.uk/ena/portal/api/search'
@@ -81,7 +81,7 @@ YAMLCOMMENTS = {
     'NAME': "Choose any unique name.",
     'SEQUENCING_INSTRUMENT': "One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument",
     'LIBRARY_SOURCE': "One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source",
-    'LIBRARY_SELECTION': "One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source",
+    'LIBRARY_SELECTION': "One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-selection",
     'LIBRARY_STRATEGY': "One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy",
     'FASTQ_FILE': "Path to a fastq file.",
     'FASTQ1_FILE': "Path to a fastq file with forward reads.",
@@ -238,7 +238,7 @@ GUILINKS = {
     'SEQUENCING_PLATFORMS': {'Platform List': 'https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#platform'},
     'SEQUENCING_INSTRUMENT': {'Instrument List': 'https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument'},
     'LIBRARY_SOURCE': {'Library Source List': 'https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source'},
-    'LIBRARY_SELECTION': {'Library Selection List': 'https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source'},
+    'LIBRARY_SELECTION': {'Library Selection List': 'https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-selection'},
     'LIBRARY_STRATEGY': {'Library Strategy List': 'https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy'},
     'geographic location (country and/or sea)': {'Checklist Example': 'https://www.ebi.ac.uk/ena/browser/view/ERC000050'},
     'broad-scale environmental context': {
