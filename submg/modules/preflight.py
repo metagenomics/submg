@@ -233,11 +233,13 @@ def __check_read_type(paired: bool,
         loggingC.message(err, threshold=-1)
         sys.exit(1)
     mandatory_fields = [('NAME', str),
+                        ('SEQUENCING_INSTRUMENT', str),
                         ('LIBRARY_SOURCE', str),
                         ('LIBRARY_SELECTION', str),
                         ('LIBRARY_STRATEGY', str),]
     if paired:
-        mandatory_fields.extend([('FASTQ1_FILE', str),
+        mandatory_fields.extend([('INSERT_SIZE', str),
+                                 ('FASTQ1_FILE', str),
                                  ('FASTQ2_FILE', str),])
     else:
         mandatory_fields.append(('FASTQ_FILE',  str))
