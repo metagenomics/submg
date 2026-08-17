@@ -495,27 +495,20 @@ def __check_assembly(arguments: dict,
         if resulting_accession is None and 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data:
             sample_accessions = utility.optional_from_config(config, 'ASSEMBLY', 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION')
             if not sample_accessions is None or sample_accessions == '':
-                if not enaSearching.sample_accession_exists(sample_accessions, False):
-                    if not enaSearching.sample_accession_exists(sample_accessions, testmode):
-                        if testmode:
-                            wrn = f"\nWARNING: The co-assembly sample " \
-                                   "accession '{sample_accessions}' cannot " \
-                                   "be found on the ENA server. This might be " \
-                                   "okay if you just created it on the " \
-                                   "development server. Consider using " \
-                                   "--skip-checks"
-                            loggingC.message(wrn, threshold=-1)
-                            checks_failed = True
-                        else:
-                            err = f"\nERROR: The co-assembly sample accession '{sample_accessions}' could not be found on the {servertype} ENA server."
-                            loggingC.message(err, threshold=-1)
-                            checks_failed = True
-                else:
+                sample_exists = enaSearching.sample_accession_exists(sample_accessions, False)
+                if not sample_exists and testmode:
+                    sample_exists = enaSearching.sample_accession_exists(sample_accessions, True)
+
+                if sample_exists:
                     resulting_accession = sample_accessions
                     if len(biological_sample_accessions) < 2:
                         err = f"\nERROR: When providing an existing co-assembly sample accession, you need to provide at least two biological sample accessions in the SAMPLE_ACCESSIONS field."
                         loggingC.message(err, threshold=-1)
                         checks_failed = True
+                else:
+                    err = f"\nERROR: The co-assembly sample accession '{sample_accessions}' could not be found on the {servertype} ENA server."
+                    loggingC.message(err, threshold=-1)
+                    checks_failed = True
             else:
                 resulting_accession = None
         if (not 'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION' in assembly_data) and (not 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data):

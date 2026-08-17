@@ -47,6 +47,22 @@ def ensure_server_online(url: str, timeout: float = 5.0):
         raise
 
 
+def _log_unexpected_response(resource: str,
+                             accession: str,
+                             response):
+    """Log the details of an unexpected ENA search response."""
+    loggingC.message(
+        f"\nERROR: Unexpected response when querying ENA API for "
+        f"{resource} accession {accession}.\n"
+        f"\tHTTP status: {response.status_code}\n"
+        f"\tRequest URL: {response.url}\n"
+        f"\tResponse body:\n"
+        f"--- BEGIN ENA RESPONSE ---\n{response.text}\n"
+        f"--- END ENA RESPONSE ---",
+        threshold=-1
+    )
+
+
 def study_exists(study_accession: str,
                  devserver: bool = False) -> bool:
     """
@@ -73,14 +89,14 @@ def study_exists(study_accession: str,
     response = requests.get(url, params=params)
 
     data = response.text.split('\n')
-    if (data[0] != 'study_accession') or (data[1] not in [study_accession, '']):
+    if (len(data) < 2) or (data[0] != 'study_accession') or (data[1] not in [study_accession, '']):
         # There are some weird issues when querying the development server API
         # So if the query fails we try to find the study on the production
         # server. This _might_ lead to issues when the study is not yet
         # available on dev.
         if devserver:
             return study_exists(study_accession, False)
-        loggingC.message(f"\nERROR: Unexpected response when querying ENA API for study accession {study_accession}.", threshold=-1)
+        _log_unexpected_response("study", study_accession, response)
         sys.exit(1)
     if data[1] == study_accession:
         return True
@@ -113,8 +129,8 @@ def sample_accession_exists(sample_accession: str,
     response = requests.get(url, params=params)
 
     data = response.text.split('\n')
-    if (data[0] != 'sample_accession') or (data[1] not in [sample_accession, '']):
-        loggingC.message(f"\nERROR: Unexpected response when querying ENA API for sample accession {sample_accession}.", threshold=-1)
+    if (len(data) < 2) or (data[0] != 'sample_accession') or (data[1] not in [sample_accession, '']):
+        _log_unexpected_response("sample", sample_accession, response)
         sys.exit(1)
     if data[1] == sample_accession:
         return True
