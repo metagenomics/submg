@@ -557,18 +557,19 @@ def submit(args, listener=None, gui=False):
                                                                                                     args.development_service)
 
         # Bin submision
+        bin_sample_accessions = None
         if args.submit_bins:
-            submit_bins(filtered_bins,
-                        config,
-                        bin_taxonomy,
-                        sample_accession_data,
-                        run_accessions,
-                        prepdir(staging_subdir, 'bins'),
-                        prepdir(logging_subdir, 'bins'),
-                        depth_files,
-                        bin_coverage_file,
-                        threads=args.threads,
-                        test=args.development_service)
+            bin_sample_accessions = submit_bins(filtered_bins,
+                                                config,
+                                                bin_taxonomy,
+                                                sample_accession_data,
+                                                run_accessions,
+                                                prepdir(staging_subdir, 'bins'),
+                                                prepdir(logging_subdir, 'bins'),
+                                                depth_files,
+                                                bin_coverage_file,
+                                                threads=args.threads,
+                                                test=args.development_service)
 
 
         # MAG submission
@@ -596,6 +597,7 @@ def submit(args, listener=None, gui=False):
                         prepdir(logging_subdir, 'mags'),
                         depth_files,
                         bin_coverage_file,
+                        bin_sample_accessions=bin_sample_accessions,
                         threads=args.threads,
                         test=args.development_service)
 
@@ -646,5 +648,4 @@ def submit(args, listener=None, gui=False):
         exc_info = traceback.format_exc()
         loggingC.message(exc_info, threshold=-1)
         sys.exit(1)
-
 

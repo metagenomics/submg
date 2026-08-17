@@ -112,7 +112,7 @@ YAMLCOMMENTS = {
     'COVERAGE_VALUE': "Read coverage of the assembly.",
     'COVERAGE_FILE': ".tsv file containing the coverage values of each bin. Columns must be 'Bin_id' and 'Coverage'.",
     'INSERT_SIZE': "Insert size of the paired-end reads (https://www.ebi.ac.uk/fg/annotare/help/seq_lib_spec.html)",
-    'MAG_METADATA_FILE': "A .tsv specifying 'Bin_id', 'Sample_id', 'Quality_category', 'Flatfile_path', 'Chromosomes_path' and 'Unlocalised_path' for all MAGs. See README for more details.",
+    'MAG_METADATA_FILE': "A .tsv specifying 'Bin_id', 'Quality_category', 'Flatfile_path', 'Chromosomes_path' and 'Unlocalised_path' for all MAGs. MAG-only submissions may also include 'Sample_derived_from'. See README for more details.",
     'MIN_COMPLETENESS': "Bins with smaller completeness value will be discarded (in percent, 0-100). Remove this row to ignore bin completeness.",
     'MAX_CONTAMINATION': "Bins with larger contamination value will be discarded (in percent, 0-100). Remove this row to ignore bin contamination (>100% contamination bins will still be discarded).",
     'submission_outline': "This configuration form was created to submit the items listed below."
@@ -215,7 +215,7 @@ GUICOMMENTS = {
     'taxonomic identity marker': "What information was used to assign taxonomy to the bins.",
     'COVERAGE_FILE': ".tsv file containing the coverage values of each bin. Columns must be 'Bin_id' and 'Coverage'. Consult the manual for more information.",
     'QUALITY_FILE': "tsv file containing quality values of each bin. Header must include 'Bin_id', 'Completeness', 'Contamination'. A CheckM output table will work here. Consult the manual for further details on the format.",
-    'MAG_METADATA_FILE': "A .tsv specifying 'Bin_id', 'Sample_id', 'Quality_category', 'Flatfile_path', 'Chromosomes_path' and 'Unlocalised_path' for all MAGs. Consult the manual for more details.",
+    'MAG_METADATA_FILE': "A .tsv specifying 'Bin_id', 'Quality_category', 'Flatfile_path', 'Chromosomes_path' and 'Unlocalised_path' for all MAGs. MAG-only submissions may also include 'Sample_derived_from'. Consult the manual for more details.",
     'NCBI_TAXONOMY_FILES' :"A list of files with NCBI taxonomy information about the bins. Consult the manual to see how the files should be structured.",
     'MANUAL_TAXONOMY_FILE': "Scientific names and taxids for bins. See example file for the structure. Columns must be 'Bin_id', 'Tax_id' and 'Scientific_name'. Consult the manual for more information.",
     'BAM_FILES': "The reads from your experiment mapped back to the assembly. Pick all the BAM files that you have, one after another.",

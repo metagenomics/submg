@@ -680,6 +680,8 @@ def __check_mags(arguments: dict,
         config:       The config file as a dictionary.
         testmode:     Whether or not to use the ENA development server.
     """
+    global checks_failed
+
     if not arguments['submit_mags']:
         return
     
@@ -701,6 +703,18 @@ def __check_mags(arguments: dict,
         for column in cols:
             if column not in header:
                 return
+
+        sample_derived_from_present = 'Sample_derived_from' in header
+        sample_derived_from_values = []
+        if arguments['submit_bins'] and sample_derived_from_present:
+            err = (
+                f"\nERROR: The MAG metadata file '{metadata_file}' contains "
+                "a 'Sample_derived_from' column, but this column is only "
+                "allowed when submitting MAGs without bins."
+            )
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
+
         for row in reader:
             bin_id = row['Bin_id'].strip()
             all_mag_bins.add(bin_id)
@@ -718,6 +732,53 @@ def __check_mags(arguments: dict,
                     err = f"\nERROR: Error reading '{metadata_file}' at Bin_id {bin_id}. If you provide an Unlocalised_path, you need to provide a Chromosomes_path as well."
                     loggingC.message(err, threshold=-1)
                     sys.exit(1)
+
+            if sample_derived_from_present and not arguments['submit_bins']:
+                sample_derived_from_values.append(
+                    (bin_id, (row.get('Sample_derived_from') or '').strip())
+                )
+
+    if sample_derived_from_values:
+        populated = [bool(value) for _, value in sample_derived_from_values]
+        if any(populated) and not all(populated):
+            err = (
+                f"\nERROR: The 'Sample_derived_from' column in "
+                f"'{metadata_file}' is only partially populated. Fill it "
+                "for every MAG or leave the entire column empty."
+            )
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
+        elif all(populated):
+            accessions_to_check = set()
+            malformed = False
+            for bin_id, value in sample_derived_from_values:
+                accessions = [
+                    accession.strip() for accession in value.split(',')
+                ]
+                if any(not accession for accession in accessions):
+                    err = (
+                        f"\nERROR: The 'Sample_derived_from' value for MAG "
+                        f"'{bin_id}' contains an empty accession."
+                    )
+                    loggingC.message(err, threshold=-1)
+                    checks_failed = True
+                    malformed = True
+                else:
+                    accessions_to_check.update(accessions)
+
+            if not malformed:
+                for accession in sorted(accessions_to_check):
+                    if not enaSearching.sample_accession_exists(accession,
+                                                                 testmode):
+                        server = "development" if testmode else "production"
+                        err = (
+                            f"\nERROR: The sample accession '{accession}' "
+                            "from the MAG metadata 'Sample_derived_from' "
+                            f"column could not be found on the ENA {server} "
+                            "server."
+                        )
+                        loggingC.message(err, threshold=-1)
+                        checks_failed = True
 
     # Check if all MAGs bins pass the filtering that is being applied to bins
     bin_quality = binSubmission.get_bin_quality(config, silent=True)

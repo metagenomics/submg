@@ -535,7 +535,7 @@ def submit_bins(filtered_bins: list,
                 bin_coverage_file: str,
                 threads: int = 4,
                 test: bool = True,
-                submit: bool = True) -> tuple:
+                submit: bool = True) -> dict:
     """
     Submits a samplesheet for all metagenomic bins to the ENA. Then submits each
     bin as an individual analysis object using webin-cli.
@@ -561,8 +561,8 @@ def submit_bins(filtered_bins: list,
             Otherwise only validation will happen. Defaults to True.
 
     Returns:
-        tuple: A tuple with the receipt paths and the accession numbers of the
-            bins.
+        dict: A dictionary matching bin ids to their virtual sample
+            accessions.
     """
 
     if test:
@@ -674,3 +674,5 @@ def submit_bins(filtered_bins: list,
             writer.writerow([bin_name, accession])
 
     loggingC.message(f"\n>The preliminary(!) accessions of your bins have been written to {os.path.abspath(bin_to_accession_file)}\n", threshold=0)
+
+    return bin_to_accession

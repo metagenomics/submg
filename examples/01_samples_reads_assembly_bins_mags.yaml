@@ -77,7 +77,7 @@ BINS:
     taxonomic identity marker: "multi marker approach"                        # For more information consult an appropriate ENA samplesheet template (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000047) >>EXAMPLE: "multi marker approach"
   ADDITIONAL_MANIFEST_FIELDS:                                                 # You can add additional fields that will be written to the manifest
 MAGS:                                             
-  MAG_METADATA_FILE: "data/mag_metadata/mag_metadata.tsv"                     # A .tsv specifying 'Bin_id', 'Sample_id', 'Quality_category', 'Flatfile_path' and 'Unlocalised_path' for all MAGs. See README for more details. >>EXAMPLE: "/mnt/data/mag_data.tsv"
+  MAG_METADATA_FILE: "data/mag_metadata/mag_metadata.tsv"                     # A .tsv specifying 'Bin_id', 'Quality_category', 'Flatfile_path', 'Chromosomes_path' and 'Unlocalised_path' for all MAGs. MAG-only submissions may also include 'Sample_derived_from'. See README for more details. >>EXAMPLE: "/mnt/data/mag_data.tsv"
   ADDITIONAL_SAMPLESHEET_FIELDS:                                              # Please add more fields from the ENA samplesheet that most closely matches your experiment
   ADDITIONAL_MANIFEST_FIELDS:                                                 # You can add additional fields that will be written to the manifest
 BAM_FILES:                                                                    # The reads from your experiment mapped back to the assembly
