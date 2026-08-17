@@ -8,4 +8,4 @@ from submg.core import (
 )
 
 # Version information
-__version__ = '1.0.4'
+__version__ = '1.1.0'

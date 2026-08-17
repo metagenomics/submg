@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class staticConfig:
-    submg_version: str = '1.0.4'
+    submg_version: str = '1.1.0'
     java_version: str = '17'
     webin_cli_version: str = '9.0.3'
     ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/drop-box/submit/'
