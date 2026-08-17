@@ -155,7 +155,7 @@ This list details the kinds of files subMG ingests (depending on what items are 
 	- `fasta` or gzipped `fasta` files
 	- (optional) `BAM` files for coverage calculation
 - Binned contig submission
-	- directory with `fasta` or gzipped `fasta` files, one for each contig
+	- directory with `fasta` or gzipped `fasta` files, one for each bin
 	- (optional) `BAM` files for coverage calculation
 	- taxonomic information: e.g. `gtdb_to_ncbi_majority_vote.py` output, see section [Taxonomy Assignment](#taxonomy-assignment)
 	- quality information: e.g. [CheckM](https://github.com/Ecogenomics/CheckM) output, see section [Quality Data](#quality-data)
