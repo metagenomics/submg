@@ -14,6 +14,7 @@ from submg.modules import enaSearching
 
 from submg.modules.statConf import staticConfig
 from submg.modules.utility import prepdir
+from submg.modules.webinWrapper import normalize_development_service
 from submg.modules.sampleSubmission import submit_samples
 from submg.modules.readSubmission import submit_reads
 from submg.modules.assemblySubmission import submit_assembly
@@ -343,7 +344,7 @@ def submit_through_gui(config_path,
     args.staging_dir = staging_dir
     args.logging_dir = logging_dir
     args.verbosity = verbosity
-    args.development_service = development_service
+    args.development_service = normalize_development_service(development_service)
     args.skip_checks = False
     args.timestamps = 1
     args.threads = 4
@@ -371,6 +372,9 @@ def submit(args, listener=None, gui=False):
         listener (function): A function that can receive log messages.
         gui (bool): Whether the function was called from the GUI.
     """
+    args.development_service = normalize_development_service(
+        args.development_service
+    )
 
     staging_base = os.path.realpath(os.path.abspath(os.path.expanduser(args.staging_dir)))
     logging_base = os.path.realpath(os.path.abspath(os.path.expanduser(args.logging_dir)))

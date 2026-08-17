@@ -12,6 +12,52 @@ import platform
 
 WEBIN_PASSWORD_ENV = 'SUBMG_WEBIN_PASSWORD'
 
+
+def normalize_development_service(value):
+    """Convert supported development-service values to a strict boolean.
+
+    The CLI supplies integers while the GUI supplies strings.  Accept both
+    forms, but reject anything else so an invalid value cannot silently select
+    the wrong ENA service.
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int) and value in (0, 1):
+        return bool(value)
+    if isinstance(value, str) and value.strip() in ('0', '1'):
+        return value.strip() == '1'
+    raise ValueError(
+        "development_service must be a boolean or one of 0, 1, '0', or '1'"
+    )
+
+
+def _build_webin_cli_command(action,
+                              jar,
+                              manifest,
+                              inputdir,
+                              outputdir,
+                              username,
+                              context,
+                              test):
+    """Build a Webin-CLI command for either validation or submission."""
+    test = normalize_development_service(test)
+    cmd = [
+        'java',
+        '-jar',
+        jar,
+        action,
+        f'-username={username}',
+        f'-passwordEnv={WEBIN_PASSWORD_ENV}',
+        f'-inputdir={inputdir}',
+        f'-outputdir={outputdir}',
+        f'-context={context}',
+        f'-manifest={manifest}'
+    ]
+    if test:
+        cmd.append('-test')
+    return cmd
+
+
 def get_persistent_storage_path():
     """Returns the appropriate persistent storage directory based on the OS."""
     system = platform.system()
@@ -93,21 +139,23 @@ def __webin_cli_validate(manifest,
                          test,
                          context,
                          jar):
+    test = normalize_development_service(test)
     environment = os.environ.copy()
     environment[WEBIN_PASSWORD_ENV] = password
 
-    cmd = [
-        'java',
-        '-jar',
-        jar,
-        '-validate',
-        f'-username={username}',
-        f'-passwordEnv={WEBIN_PASSWORD_ENV}',
-        f'-inputdir={inputdir}',
-        f'-outputdir={outputdir}',
-        f'-context={context}',
-        f'-manifest={manifest}'
-    ]
+    cmd = _build_webin_cli_command('-validate',
+                                   jar,
+                                   manifest,
+                                   inputdir,
+                                   outputdir,
+                                   username,
+                                   context,
+                                   test)
+    service = 'development' if test else 'PRODUCTION'
+    loggingC.message(
+        f"\n           Validating against {service} service through Webin-CLI",
+        threshold=0
+    )
     try:
         # Run the subprocess and capture stdout and stderr
         result = subprocess.run(cmd,
@@ -144,26 +192,22 @@ def __webin_cli_submit(manifest,
                        test,
                        context,
                        jar):
+    test = normalize_development_service(test)
     environment = os.environ.copy()
     environment[WEBIN_PASSWORD_ENV] = password
 
-    cmd = [
-        'java',
-        '-jar',
-        jar,
-        '-submit',
-        f'-username={username}',
-        f'-passwordEnv={WEBIN_PASSWORD_ENV}',
-        f'-inputdir={inputdir}',
-        f'-outputdir={outputdir}',
-        f'-context={context}',
-        f'-manifest={manifest}'
-    ]
+    cmd = _build_webin_cli_command('-submit',
+                                   jar,
+                                   manifest,
+                                   inputdir,
+                                   outputdir,
+                                   username,
+                                   context,
+                                   test)
 
     
     if test:
         loggingC.message("\n           Submitting to development service through Webin-CLI", threshold=0)
-        cmd.append('-test')
     else:
         loggingC.message("\n           Submitting to PRODUCTION service through Webin-CLI", threshold=0)
     try:
@@ -218,6 +262,7 @@ def webin_cli(manifest,
         test (bool, optional): If True, use the Webin test submission service (default is True).
         context (str, optional): The context for the submission (e.g., 'genome', 'transcriptome', etc.) (default is 'genome').
     """
+    test = normalize_development_service(test)
     jar = find_webin_cli_jar()
     if submit:
         loggingC.message(f">Using ENA Webin-CLI to submit {subdir_name}", threshold=2)
