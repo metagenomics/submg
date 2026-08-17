@@ -13,13 +13,41 @@ from submg.modules import loggingC, utility, binSubmission, webinWrapper
 from submg.modules.statConf import staticConfig
 
 
+def get_mag_bin_ids(config: dict) -> list:
+    """
+    Return MAG Bin_id values in metadata table order.
+
+    Args:
+        config (dict): The config dictionary.
+
+    Returns:
+        list: The Bin_id values from the MAG metadata table.
+    """
+    mag_metadata_file = utility.from_config(config,
+                                            'MAGS',
+                                            'MAG_METADATA_FILE')
+    mag_bin_ids = []
+    with open(os.path.abspath(mag_metadata_file), 'r') as file:
+        reader = csv.DictReader(file, delimiter='\t')
+        for row in reader:
+            bin_id = row.get('Bin_id')
+            if bin_id:
+                mag_bin_ids.append(bin_id.strip())
+
+    return mag_bin_ids
+
+
 def __read_mag_metadata(mag_metadata_file: str,
-                        bin_sample_accessions: dict = None) -> dict:
+                        bin_sample_accessions: dict = None,
+                        selected_mag_ids: list = None) -> dict:
     """
     Reads the MAG metadata file and returns a metadata dict.
 
     Args:
         mag_metadata_file (str): Path to the MAG metadata file.
+        bin_sample_accessions (dict): An optional dictionary matching MAG bin
+            ids to virtual bin sample accessions created in the same run.
+        selected_mag_ids (list): Optional MAG ids to retain for submission.
 
     Returns:
         dict: A dictionary with the metadata for each bin.
@@ -85,18 +113,6 @@ def __read_mag_metadata(mag_metadata_file: str,
                 'Sample_derived_from': row.get('Sample_derived_from'),
             }
 
-    if bin_sample_accessions is not None:
-        missing_accessions = sorted(
-            set(metadata.keys()) - set(bin_sample_accessions.keys())
-        )
-        if missing_accessions:
-            loggingC.message(
-                "\nERROR: No virtual bin sample accession was found for "
-                "the following MAGs: " + ", ".join(missing_accessions),
-                threshold=-1
-            )
-            sys.exit(1)
-
     if bin_sample_accessions is None and sample_derived_from_present:
         populated = [
             bool((value['Sample_derived_from'] or '').strip())
@@ -128,6 +144,41 @@ def __read_mag_metadata(mag_metadata_file: str,
         else:
             for values in metadata.values():
                 values['Sample_derived_from'] = None
+
+    if selected_mag_ids is not None:
+        if not selected_mag_ids:
+            loggingC.message(
+                "\nERROR: No MAG ids were selected for submission.",
+                threshold=-1
+            )
+            sys.exit(1)
+        missing_selected_ids = sorted(
+            set(selected_mag_ids) - set(metadata.keys())
+        )
+        if missing_selected_ids:
+            loggingC.message(
+                "\nERROR: The following selected MAG ids were not found in "
+                "the MAG metadata file: " + ", ".join(missing_selected_ids),
+                threshold=-1
+            )
+            sys.exit(1)
+        selected_mag_ids = set(selected_mag_ids)
+        metadata = {
+            bin_id: values for bin_id, values in metadata.items()
+            if bin_id in selected_mag_ids
+        }
+
+    if bin_sample_accessions is not None:
+        missing_accessions = sorted(
+            set(metadata.keys()) - set(bin_sample_accessions.keys())
+        )
+        if missing_accessions:
+            loggingC.message(
+                "\nERROR: No virtual bin sample accession was found for "
+                "the following MAGs: " + ", ".join(missing_accessions),
+                threshold=-1
+            )
+            sys.exit(1)
     
     return metadata
 
@@ -453,6 +504,7 @@ def submit_mags(config: dict,
                 depth_files: str,
                 bin_coverage_file: str,
                 bin_sample_accessions: dict = None,
+                selected_mag_ids: list = None,
                 threads: int = 4,
                 test: bool = True,
                 submit: bool = True) -> tuple:
@@ -476,6 +528,7 @@ def submit_mags(config: dict,
             bin. Either this or depth_files must be specified.
         bin_sample_accessions (dict): An optional dictionary matching MAG bin
             ids to virtual bin sample accessions created in the same run.
+        selected_mag_ids (list): Optional MAG ids to retain for submission.
         threads (int, optional): Number of threads to use for samtools. Defaults to 4.
         test (bool, optional): If True, the ENA dev server will be used
             instead of the production server. Defaults to True.
@@ -492,7 +545,8 @@ def submit_mags(config: dict,
     loggingC.message(">Reading MAG metadata", threshold=1)
     mag_metadata_file = utility.from_config(config, 'MAGS', 'MAG_METADATA_FILE')
     mag_metadata = __read_mag_metadata(mag_metadata_file,
-                                       bin_sample_accessions)
+                                       bin_sample_accessions,
+                                       selected_mag_ids)
     
     bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')
         

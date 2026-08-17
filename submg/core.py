@@ -18,7 +18,7 @@ from submg.modules.sampleSubmission import submit_samples
 from submg.modules.readSubmission import submit_reads
 from submg.modules.assemblySubmission import submit_assembly
 from submg.modules.binSubmission import submit_bins, get_bin_quality
-from submg.modules.magSubmission import submit_mags
+from submg.modules.magSubmission import get_mag_bin_ids, submit_mags
 
 
 def init_argparse():
@@ -443,6 +443,7 @@ def submit(args, listener=None, gui=False):
         # If we are submitting bins, get the quality scores and the
         # taxonomic information.
         # We do this early so we notice issues before we start staging files.
+        selected_mag_ids = None
         if args.submit_bins or args.submit_mags:
             bin_quality = get_bin_quality(config, silent=True)
             # If there are quality cutoffs, make a list of bins to submit
@@ -466,9 +467,38 @@ def submit(args, listener=None, gui=False):
             # Query the taxonomy of bins
             bin_taxonomy = taxQuery.get_bin_taxonomy(filtered_bins, config)
             if args.minitest:
-                msg = f">Minitest: Discarding every bin except {filtered_bins[0]}"
+                if args.submit_mags:
+                    mag_bin_ids = get_mag_bin_ids(config)
+                    filtered_bin_set = set(filtered_bins)
+                    eligible_mag_ids = [
+                        bin_id for bin_id in mag_bin_ids
+                        if bin_id in filtered_bin_set
+                    ]
+                    if not eligible_mag_ids:
+                        err = (
+                            "\nERROR: Minitest could not find a MAG in the "
+                            "MAG metadata file that passes the bin quality "
+                            "filters."
+                        )
+                        loggingC.message(err, threshold=-1)
+                        sys.exit(1)
+                    selected_mag_ids = eligible_mag_ids[0:1]
+                    filtered_bins = selected_mag_ids
+                    selected_id = selected_mag_ids[0]
+                    if args.submit_bins:
+                        msg = (
+                            ">Minitest: Submitting only matching bin/MAG "
+                            f"{selected_id}"
+                        )
+                    else:
+                        msg = f">Minitest: Submitting only MAG {selected_id}"
+                else:
+                    filtered_bins = filtered_bins[0:1]
+                    msg = (
+                        ">Minitest: Submitting only bin "
+                        f"{filtered_bins[0]}"
+                    )
                 loggingC.message(msg, threshold=0)
-                filtered_bins = filtered_bins[0:1]
             
         # Construct depth files if there are .bam files in the config
         if 'BAM_FILES' in config.keys():
@@ -598,6 +628,7 @@ def submit(args, listener=None, gui=False):
                         depth_files,
                         bin_coverage_file,
                         bin_sample_accessions=bin_sample_accessions,
+                        selected_mag_ids=selected_mag_ids,
                         threads=args.threads,
                         test=args.development_service)
 
@@ -648,4 +679,3 @@ def submit(args, listener=None, gui=False):
         exc_info = traceback.format_exc()
         loggingC.message(exc_info, threshold=-1)
         sys.exit(1)
-
