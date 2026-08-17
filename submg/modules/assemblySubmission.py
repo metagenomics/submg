@@ -49,7 +49,7 @@ def __prep_coassembly_samplesheet(config: dict,
     attributes_data = [
         ("collection date", (from_config(config, 'ASSEMBLY', 'collection date'))),
         ("geographic location (country and/or sea)", from_config(config, 'ASSEMBLY', 'geographic location (country and/or sea)')),
-        ("sample composed of", ','.join(origin_samples)),
+        ("sample derived from", ','.join(origin_samples)),
     ]
 
     assembly_dict = from_config(config, 'ASSEMBLY')
@@ -302,5 +302,4 @@ def submit_assembly(config: dict,
     loggingC.message(msg, threshold=0)
 
     return assembly_sample_accession, assembly_fasta_accession
-
 
