@@ -9,6 +9,9 @@ from submg.modules import loggingC
 from submg.modules.statConf import staticConfig
 
 import platform
+
+WEBIN_PASSWORD_ENV = 'SUBMG_WEBIN_PASSWORD'
+
 def get_persistent_storage_path():
     """Returns the appropriate persistent storage directory based on the OS."""
     system = platform.system()
@@ -90,13 +93,16 @@ def __webin_cli_validate(manifest,
                          test,
                          context,
                          jar):
+    environment = os.environ.copy()
+    environment[WEBIN_PASSWORD_ENV] = password
+
     cmd = [
         'java',
         '-jar',
         jar,
         '-validate',
         f'-username={username}',
-        f'-password={password}',
+        f'-passwordEnv={WEBIN_PASSWORD_ENV}',
         f'-inputdir={inputdir}',
         f'-outputdir={outputdir}',
         f'-context={context}',
@@ -108,7 +114,8 @@ def __webin_cli_validate(manifest,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 text=True,  # Ensures the output is in string format
-                                check=True)
+                                check=True,
+                                env=environment)
 
         # Log the stdout if any
         if result.stdout:
@@ -137,13 +144,16 @@ def __webin_cli_submit(manifest,
                        test,
                        context,
                        jar):
+    environment = os.environ.copy()
+    environment[WEBIN_PASSWORD_ENV] = password
+
     cmd = [
         'java',
         '-jar',
         jar,
         '-submit',
         f'-username={username}',
-        f'-password={password}',
+        f'-passwordEnv={WEBIN_PASSWORD_ENV}',
         f'-inputdir={inputdir}',
         f'-outputdir={outputdir}',
         f'-context={context}',
@@ -160,7 +170,8 @@ def __webin_cli_submit(manifest,
         process = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT,
-                                text=True)
+                                text=True,
+                                env=environment)
     except KeyboardInterrupt:
         process.send_signal(signal.SIGINT)
     
