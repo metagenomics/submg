@@ -8,7 +8,7 @@ RUN apt-get install -y python3 python3-pip python3-tk git && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone and install submg
-RUN git clone https://github.com/ttubb/submg /app
+RUN git clone https://github.com/metagenomics/submg /app
 WORKDIR /app
 RUN python3 -m pip install . --break-system-packages
 
