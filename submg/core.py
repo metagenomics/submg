@@ -398,16 +398,17 @@ def submit(args, listener=None, gui=False):
         sys.exit(1)
         
 
+    if args.minitest and not args.development_service:
+        loggingC.message("ERROR: The --minitest mode cannot be used for a submission to the ENA production server.",
+                         threshold=-1)
+        sys.exit(1)
+
     staging_subdir = utility.set_up_staging(args.staging_dir,
                                             full_timestamp)
     
     
     if args.timestamps or (args.timestamps is None and args.development_service):
         utility.set_up_timestamps(vars(args))
-
-    if args.minitest and not args.development_service:
-        loggingC.message("ERROR: The --minitest mode cannot be used for a submission to the ENA production server.",
-                         threshold=-1)
         
     try:
         sver = staticConfig.submg_version
