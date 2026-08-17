@@ -182,6 +182,7 @@ def __webin_cli_validate(manifest,
 
         # Finally, log the exception itself
         loggingC.message(f"\nERROR: Validation failed with error: {e}", threshold=-1)
+        raise
 
         
 def __webin_cli_submit(manifest,
@@ -264,6 +265,7 @@ def webin_cli(manifest,
     """
     test = normalize_development_service(test)
     jar = find_webin_cli_jar()
+    accession = None
     if submit:
         loggingC.message(f">Using ENA Webin-CLI to submit {subdir_name}", threshold=2)
         accession = __webin_cli_submit(manifest,

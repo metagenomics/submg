@@ -881,6 +881,7 @@ def __check_coverage(arguments: dict,
             bam_files = [bam_files]
         if len(bam_files) > 0:
             coverage_bams = True
+            utility.check_bam_basenames(bam_files)
             # Check if the BAM files exist and have valid extensions
             for bam_file in bam_files:
                 if not os.path.isfile(bam_file):

@@ -95,6 +95,43 @@ def set_up_staging(staging_dir: str,
 
     return stamped_staging_dir
 
+
+def check_bam_basenames(bam_files):
+    """
+    Stop if multiple BAM files would produce the same depth-file basename.
+
+    Args:
+        bam_files: A BAM file path or a list of BAM file paths.
+    """
+    if not isinstance(bam_files, list):
+        bam_files = [bam_files]
+
+    basenames = {}
+    for bam_file in bam_files:
+        basename = os.path.basename(bam_file)
+        basenames.setdefault(basename, []).append(bam_file)
+
+    duplicate_basenames = {
+        basename: paths
+        for basename, paths in basenames.items()
+        if len(paths) > 1
+    }
+    if not duplicate_basenames:
+        return
+
+    collisions = "\n".join(
+        f"\t{basename}: {', '.join(paths)}"
+        for basename, paths in sorted(duplicate_basenames.items())
+    )
+    err = (
+        "\nERROR: BAM files must have unique basenames because. "
+        "The following basenames are used "
+        f"by multiple files:\n{collisions}"
+    )
+    loggingC.message(err, threshold=-1)
+    sys.exit(1)
+
+
 def construct_depth_files(staging_dir: str,
                           threads: int,
                           bam_files: list) -> dict:
@@ -106,6 +143,10 @@ def construct_depth_files(staging_dir: str,
         threads: The total number of threads to use.
         bam_files: The list of bam files.
     """
+    if not isinstance(bam_files, list):
+        bam_files = [bam_files]
+    check_bam_basenames(bam_files)
+
     loggingC.message(">Constructing depth files from bam files. This might take a while.", threshold=0)
     
     depth_directory = os.path.join(staging_dir, 'depth')
