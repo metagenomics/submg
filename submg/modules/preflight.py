@@ -386,6 +386,15 @@ def __check_misc(arguments: dict,
                         to an NCBI tax id."
             loggingC.message(err, threshold=-1)
             checks_failed = True
+        elif str(ena_taxid).strip() != str(metagenome_taxid).strip():
+            err = (
+                f"\nERROR: METAGENOME_TAXID '{metagenome_taxid}' does not "
+                f"match the ENA tax id '{ena_taxid}' resolved for "
+                f"METAGENOME_SCIENTIFIC_NAME "
+                f"'{metagenome_scientific_name}'."
+            )
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
         else:
             msg = f"Matched METAGENOME_SCIENTIFIC_NAME \
                     '{metagenome_scientific_name}' to NCBI tax id {ena_taxid}."
