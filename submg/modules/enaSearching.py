@@ -58,7 +58,10 @@ def _log_unexpected_response(resource: str,
         f"\tRequest URL: {response.url}\n"
         f"\tResponse body:\n"
         f"--- BEGIN ENA RESPONSE ---\n{response.text}\n"
-        f"--- END ENA RESPONSE ---",
+        f"--- END ENA RESPONSE ---\n\n"
+        f"NOTE: In the past, such unexepected responses have "
+        f"often been caused by temporary ENA server issues. "
+        f"Consider trying again tomorrow before making changes.",
         threshold=-1
     )
 
