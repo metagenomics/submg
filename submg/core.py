@@ -325,7 +325,8 @@ def submit_through_gui(config_path,
                        submit_mags,
                        username,
                        password,
-                       exclude_unclassified=False):
+                       exclude_unclassified=False,
+                       truncate_read_names=False):
     """
     Submit data to the ENA after user started the process through the GUI.
 
@@ -344,6 +345,8 @@ def submit_through_gui(config_path,
         submit_mags (bool): Whether to submit MAGs.
         exclude_unclassified (bool): Whether to discard bins whose complete
                                      taxonomy is exactly "unclassified".
+        truncate_read_names (bool): Whether to truncate FASTQ read names while
+                                    staging.
         username (str): ENA username.
         password (str): ENA password.
     """
@@ -359,7 +362,7 @@ def submit_through_gui(config_path,
     args.verbosity = verbosity
     args.development_service = normalize_development_service(development_service)
     args.skip_checks = False
-    args.truncate_read_names = False
+    args.truncate_read_names = truncate_read_names
     args.exclude_unclassified = exclude_unclassified
     args.timestamps = 1
     args.threads = 4

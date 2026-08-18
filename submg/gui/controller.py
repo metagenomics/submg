@@ -118,6 +118,7 @@ class MyApp(ctk.CTk):
         self.staging_dir_path = None
         self.submission_mode = ctk.StringVar(value="1")
         self.exclude_unclassified = ctk.BooleanVar(value=False)
+        self.truncate_read_names = ctk.BooleanVar(value=False)
         self.submission_items = {
             "samples": False,
             "reads": False,

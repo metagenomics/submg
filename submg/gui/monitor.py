@@ -12,8 +12,8 @@ from submg.core import submit_through_gui
 
 def submission_wrapper(config_path, output_dir, development_service, verbosity,
                       submit_samples, submit_reads, submit_assembly,
-                      submit_bins, submit_mags, exclude_unclassified, username,
-                      password, log_queue):
+                      submit_bins, submit_mags, exclude_unclassified,
+                      truncate_read_names, username, password, log_queue):
     """
     Wrapper function to run submit_through_gui and send log messages to a queue.
     """
@@ -33,6 +33,7 @@ def submission_wrapper(config_path, output_dir, development_service, verbosity,
             submit_bins=submit_bins,
             submit_mags=submit_mags,
             exclude_unclassified=exclude_unclassified,
+            truncate_read_names=truncate_read_names,
             username=username,
             password=password
         )
@@ -133,7 +134,8 @@ class MonitorPage(BasePage):
         input_frame.grid_rowconfigure(0, weight=0)  # Username and Password
         input_frame.grid_rowconfigure(1, weight=0)  # Mode Switch
         input_frame.grid_rowconfigure(2, weight=1)  # Spacer
-        input_frame.grid_rowconfigure(3, weight=0)  # Buttons Frame
+        input_frame.grid_rowconfigure(3, weight=0)  # Optional read/bin options
+        input_frame.grid_rowconfigure(4, weight=0)  # Buttons Frame
         input_frame.grid_columnconfigure(0, weight=1)
         input_frame.grid_columnconfigure(1, weight=1)
         input_frame.grid_columnconfigure(2, weight=1)
@@ -171,9 +173,18 @@ class MonitorPage(BasePage):
         self.exclude_unclassified_checkbox.grid(row=2, column=0, columnspan=4, padx=10, pady=10, sticky="w")
         self.exclude_unclassified_checkbox.grid_remove()
 
+        self.truncate_read_names_checkbox = ctk.CTkCheckBox(
+            input_frame,
+            text="Truncate FASTQ read names",
+            font=("Arial", 14),
+            variable=self.controller.truncate_read_names
+        )
+        self.truncate_read_names_checkbox.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="w")
+        self.truncate_read_names_checkbox.grid_remove()
+
         # Buttons Frame
         input_button_frame = ctk.CTkFrame(input_frame, fg_color="transparent")
-        input_button_frame.grid(row=3, column=0, columnspan=4, padx=0, pady=0, sticky="ew")
+        input_button_frame.grid(row=4, column=0, columnspan=4, padx=0, pady=0, sticky="ew")
         # Configure grid columns to distribute space equally
         for i in range(4):
             input_button_frame.grid_columnconfigure(i, weight=1)
@@ -291,6 +302,7 @@ class MonitorPage(BasePage):
                 self.controller.submission_items.get("bins", False),
                 self.controller.submission_items.get("mags", False),
                 self.controller.exclude_unclassified.get(),
+                self.controller.truncate_read_names.get(),
                 self.username_entry.get(),
                 self.password_entry.get(),
                 self.log_queue
@@ -379,6 +391,7 @@ class MonitorPage(BasePage):
         self.password_entry.configure(state="disabled")
         self.mode_switch.configure(state="disabled")
         self.exclude_unclassified_checkbox.configure(state="disabled")
+        self.truncate_read_names_checkbox.configure(state="disabled")
         self.start_button.configure(state="disabled")
         self.stop_button.configure(state="normal")
         self.edit_config_button.configure(state="disabled")
@@ -392,7 +405,9 @@ class MonitorPage(BasePage):
         self.password_entry.configure(state="normal")
         self.mode_switch.configure(state="normal")
         self.exclude_unclassified_checkbox.configure(state="normal")
+        self.truncate_read_names_checkbox.configure(state="normal")
         self.update_exclude_unclassified_visibility()
+        self.update_truncate_read_names_visibility()
         self.start_button.configure(state="normal")
         self.stop_button.configure(state="disabled")
         self.edit_config_button.configure(state="normal")
@@ -407,6 +422,13 @@ class MonitorPage(BasePage):
         else:
             self.exclude_unclassified_checkbox.grid_remove()
 
+    def update_truncate_read_names_visibility(self):
+        """Show the option only for submissions that include reads."""
+        if self.controller.submission_items.get("reads", False):
+            self.truncate_read_names_checkbox.grid()
+        else:
+            self.truncate_read_names_checkbox.grid_remove()
+
     def log_message(self, message):
         """Append a message to the log monitor."""
         self.log_text.configure(state="normal")
@@ -419,7 +441,9 @@ class MonitorPage(BasePage):
         """Called whenever monitor renders the page"""
         self.update_summary()
         self.exclude_unclassified_checkbox.configure(state="normal")
+        self.truncate_read_names_checkbox.configure(state="normal")
         self.update_exclude_unclassified_visibility()
+        self.update_truncate_read_names_visibility()
         if not self.submission_running:
             self.log_message("Ready to submit.\n")
 
