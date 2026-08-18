@@ -12,7 +12,8 @@ from submg.core import submit_through_gui
 
 def submission_wrapper(config_path, output_dir, development_service, verbosity,
                       submit_samples, submit_reads, submit_assembly,
-                      submit_bins, submit_mags, username, password, log_queue):
+                      submit_bins, submit_mags, exclude_unclassified, username,
+                      password, log_queue):
     """
     Wrapper function to run submit_through_gui and send log messages to a queue.
     """
@@ -31,6 +32,7 @@ def submission_wrapper(config_path, output_dir, development_service, verbosity,
             submit_assembly=submit_assembly,
             submit_bins=submit_bins,
             submit_mags=submit_mags,
+            exclude_unclassified=exclude_unclassified,
             username=username,
             password=password
         )
@@ -160,6 +162,15 @@ class MonitorPage(BasePage):
         )
         self.mode_switch.grid(row=1, column=0, columnspan=4, padx=10, pady=10, sticky="w")
 
+        self.exclude_unclassified_checkbox = ctk.CTkCheckBox(
+            input_frame,
+            text="Exclude exact unclassified bins",
+            font=("Arial", 14),
+            variable=self.controller.exclude_unclassified
+        )
+        self.exclude_unclassified_checkbox.grid(row=2, column=0, columnspan=4, padx=10, pady=10, sticky="w")
+        self.exclude_unclassified_checkbox.grid_remove()
+
         # Buttons Frame
         input_button_frame = ctk.CTkFrame(input_frame, fg_color="transparent")
         input_button_frame.grid(row=3, column=0, columnspan=4, padx=0, pady=0, sticky="ew")
@@ -279,6 +290,7 @@ class MonitorPage(BasePage):
                 self.controller.submission_items.get("assembly", False),
                 self.controller.submission_items.get("bins", False),
                 self.controller.submission_items.get("mags", False),
+                self.controller.exclude_unclassified.get(),
                 self.username_entry.get(),
                 self.password_entry.get(),
                 self.log_queue
@@ -366,6 +378,7 @@ class MonitorPage(BasePage):
         self.username_entry.configure(state="disabled")
         self.password_entry.configure(state="disabled")
         self.mode_switch.configure(state="disabled")
+        self.exclude_unclassified_checkbox.configure(state="disabled")
         self.start_button.configure(state="disabled")
         self.stop_button.configure(state="normal")
         self.edit_config_button.configure(state="disabled")
@@ -378,11 +391,21 @@ class MonitorPage(BasePage):
         self.username_entry.configure(state="normal")
         self.password_entry.configure(state="normal")
         self.mode_switch.configure(state="normal")
+        self.exclude_unclassified_checkbox.configure(state="normal")
+        self.update_exclude_unclassified_visibility()
         self.start_button.configure(state="normal")
         self.stop_button.configure(state="disabled")
         self.edit_config_button.configure(state="normal")
         self.edit_outline_button.configure(state="normal")
         self.enable_header_buttons()
+
+    def update_exclude_unclassified_visibility(self):
+        """Show the option only for submissions that include bins or MAGs."""
+        if (self.controller.submission_items.get("bins", False) or
+                self.controller.submission_items.get("mags", False)):
+            self.exclude_unclassified_checkbox.grid()
+        else:
+            self.exclude_unclassified_checkbox.grid_remove()
 
     def log_message(self, message):
         """Append a message to the log monitor."""
@@ -395,6 +418,8 @@ class MonitorPage(BasePage):
     def initialize(self):
         """Called whenever monitor renders the page"""
         self.update_summary()
+        self.exclude_unclassified_checkbox.configure(state="normal")
+        self.update_exclude_unclassified_visibility()
         if not self.submission_running:
             self.log_message("Ready to submit.\n")
 

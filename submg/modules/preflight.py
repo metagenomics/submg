@@ -115,8 +115,9 @@ def __check_unclassified_taxonomies(arguments: dict,
     for bin_id, taxonomy in unclassified_bins:
         loggingC.message(f"\t{bin_id}: {taxonomy}", threshold=-1)
     msg = (
-        "Please provide a valid taxonomy for these bins or use the "
-        "--exclude-unclassified argument to discard all of these bins."
+        "Please provide a valid taxonomy for these bins, use the "
+        "--exclude-unclassified argument, or enable the corresponding GUI "
+        "option to discard all of these bins."
     )
     loggingC.message(msg, threshold=-1)
     checks_failed = True

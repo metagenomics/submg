@@ -319,7 +319,8 @@ def submit_through_gui(config_path,
                        submit_bins,
                        submit_mags,
                        username,
-                       password):
+                       password,
+                       exclude_unclassified=False):
     """
     Submit data to the ENA after user started the process through the GUI.
 
@@ -336,6 +337,8 @@ def submit_through_gui(config_path,
         submit_assembly (bool): Whether to submit an assembly.
         submit_bins (bool): Whether to submit bins.
         submit_mags (bool): Whether to submit MAGs.
+        exclude_unclassified (bool): Whether to discard bins whose complete
+                                     taxonomy is exactly "unclassified".
         username (str): ENA username.
         password (str): ENA password.
     """
@@ -351,7 +354,7 @@ def submit_through_gui(config_path,
     args.verbosity = verbosity
     args.development_service = normalize_development_service(development_service)
     args.skip_checks = False
-    args.exclude_unclassified = False
+    args.exclude_unclassified = exclude_unclassified
     args.timestamps = 1
     args.threads = 4
     args.keep_depth_files = False
