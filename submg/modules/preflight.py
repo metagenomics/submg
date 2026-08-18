@@ -46,6 +46,82 @@ def __check_tsv(tsvfile: str,
         return bin_ids
     
 
+def __check_unclassified_taxonomies(arguments: dict,
+                                    bin_data: dict,
+                                    config: dict):
+    """
+    Check submitted bins for an exact, case-insensitive ``unclassified``
+    taxonomy string.
+
+    Taxonomies in the manual taxonomy file take precedence over NCBI
+    taxonomy-file values. Bins that will be removed by the configured quality
+    thresholds are not reported here. Taxonomy discovery is centralized in
+    taxQuery so this policy is shared with the submission flow.
+
+    Args:
+        arguments (dict): The command line arguments.
+        bin_data (dict): The BINS section of the configuration.
+        config (dict): The complete configuration dictionary.
+    """
+    global checks_failed
+
+    if arguments['exclude_unclassified']:
+        return
+
+    try:
+        min_completeness = float(bin_data.get('MIN_COMPLETENESS', 0))
+        max_contamination = float(
+            bin_data.get('MAX_CONTAMINATION', 100)
+        )
+    except (TypeError, ValueError):
+        # The existing quality-threshold checks report malformed values. Do
+        # not produce a secondary taxonomy error when the eligible bin set is
+        # not known reliably.
+        return
+
+    bin_quality = binSubmission.get_bin_quality(config, silent=True)
+    eligible_bins = set()
+    for bin_id, quality in bin_quality.items():
+        try:
+            completeness = float(quality.get('completeness'))
+            contamination = float(quality.get('contamination'))
+        except (TypeError, ValueError):
+            msg = f"\nERROR: Invalid format for quality values for bin '{bin_id}':"
+            msg += f" completeness='{quality.get('completeness')}', "
+            msg += f"contamination='{quality.get('contamination')}'. Please check the "
+            msg += f"quality file '{bin_data.get('QUALITY_FILE')}'."
+            loggingC.message(msg, threshold=-1)
+            sys.exit(1)
+        if completeness >= min_completeness and contamination <= max_contamination:
+            eligible_bins.add(bin_id)
+
+    unclassified_taxonomies = taxQuery.get_unclassified_bin_taxonomies(config)
+    unclassified_bins = [
+        (bin_id, taxonomy)
+        for bin_id, taxonomy in unclassified_taxonomies.items()
+        if bin_id in eligible_bins
+    ]
+
+    if len(unclassified_bins) == 0:
+        return
+
+    unclassified_bins.sort(key=lambda item: item[0])
+    err = (
+        "\nERROR: Found bins whose complete taxonomy string is exactly "
+        "'unclassified' (case-insensitive). These bins cannot be classified "
+        "automatically or submitted to ENA. Affected bins:"
+    )
+    loggingC.message(err, threshold=-1)
+    for bin_id, taxonomy in unclassified_bins:
+        loggingC.message(f"\t{bin_id}: {taxonomy}", threshold=-1)
+    msg = (
+        "Please provide a valid taxonomy for these bins or use the "
+        "--exclude-unclassified argument to discard all of these bins."
+    )
+    loggingC.message(msg, threshold=-1)
+    checks_failed = True
+
+
 def __check_fields(items: list,
                    mandatory_fields: list,
                    optional: bool = False,
@@ -593,6 +669,7 @@ def __check_bins(arguments: dict,
 
     # Check if at least one NCBI_TAXONOMY_FILE or MANUAL_TAXONOMY_FILE exists
     tax_files = []
+    ncbi_tax_files = []
     if 'NCBI_TAXONOMY_FILES' in bin_data.keys():
         ncbi_tax_files = bin_data['NCBI_TAXONOMY_FILES']
         if ncbi_tax_files is None:
@@ -662,6 +739,10 @@ def __check_bins(arguments: dict,
         err = f"\nERROR: The bins directory '{bins_directory}' does not contain any fasta files."
         loggingC.message(err, threshold=-1)
         checks_failed = True
+
+    __check_unclassified_taxonomies(arguments,
+                                    bin_data,
+                                    config)
 
     # Check if the required arguments in ASSEMBLY section are present
     assembly_data = utility.from_config(config, 'ASSEMBLY')

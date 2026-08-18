@@ -228,10 +228,15 @@ def run_alias_accession(run_alias: str,
         "fields": "run_accession"
     }
     response = requests.get(url, params=params)
-    try:
-        data = response.text.split('\n')[1]
-    except:
-        data = None
+    data = response.text.split('\n')
+    if ((response.status_code != 200)
+            or (len(data) < 2)
+            or (data[0] != 'run_accession')
+            or any(row.lstrip().upper().startswith('ERROR')
+                   for row in data[1:])):
+        _log_unexpected_response("run alias", run_alias, response)
+        sys.exit(1)
+    data = data[1]
     if data == '':
         data = None
     return data

@@ -11,8 +11,24 @@ from submg.modules.statConf import staticConfig
 
 
 def __is_whole_word(term, text):
-    """Return True if *term* appears as a whole word in *text* (case‑insensitive)."""
+    """
+    Return True if *term* appears as a whole word in *text* (case‑insensitive).
+
+    Args:
+        term (str): The term to search for.
+    """
     return bool(re.search(rf'\b{re.escape(term)}\b', text, re.IGNORECASE))
+
+
+def __is_exact_unclassified_taxonomy(taxonomy: str) -> bool:
+    """
+    Return whether a taxonomy value is exactly ``unclassified``
+    (case insensitive, with optional whitespace).
+
+    Args:
+        taxonomy (str): The taxonomy value to check.
+    """
+    return isinstance(taxonomy, str) and taxonomy.strip().casefold() == 'unclassified'
 
 
 def __report_tax_issues(issues):
@@ -190,6 +206,72 @@ def check_manual_taxonomies(manual_taxonomy_file: str) -> bool:
     return True
 
 
+def get_unclassified_bin_taxonomies(config: dict) -> dict:
+    """
+    Return bins whose effective NCBI taxonomy value is exactly
+    ``unclassified``.
+
+    Discovers taxonomy values. It does not
+    apply quality filters or emit log messages; callers decide how the result
+    should affect submission.
+
+    Args:
+        config (dict): The complete configuration dictionary.
+
+    Returns:
+        dict: A mapping from bin ID to the trimmed original taxonomy string.
+    """
+    ncbi_taxonomy_files = utility.optional_from_config(
+        config, 'BINS', 'NCBI_TAXONOMY_FILES'
+    )
+    if ncbi_taxonomy_files is None:
+        return {}
+    if not isinstance(ncbi_taxonomy_files, list):
+        ncbi_taxonomy_files = [ncbi_taxonomy_files]
+
+    manual_taxonomy_file = utility.optional_from_config(
+        config, 'BINS', 'MANUAL_TAXONOMY_FILE'
+    )
+    manual_bin_ids = set()
+    if isinstance(manual_taxonomy_file, str) and os.path.isfile(manual_taxonomy_file):
+        with open(manual_taxonomy_file, 'r') as f:
+            reader = csv.DictReader(f, delimiter='\t')
+            for row in reader:
+                bin_id = (row.get('Bin_id') or '').strip()
+                if bin_id:
+                    manual_bin_ids.add(bin_id)
+
+    gtdb_columns = staticConfig.gtdb_majority_vote_columns.split(';')
+    taxonomy_by_bin = {}
+    for taxonomy_file in ncbi_taxonomy_files:
+        if not isinstance(taxonomy_file, str) or not os.path.isfile(taxonomy_file):
+            continue
+        with open(taxonomy_file, 'r') as f:
+            reader = csv.DictReader(f, delimiter='\t')
+            header = reader.fieldnames or []
+            if header == gtdb_columns:
+                bin_column = 'Genome ID'
+                taxonomy_column = 'Majority vote NCBI classification'
+            elif 'Bin_id' in header and 'NCBI_taxonomy' in header:
+                bin_column = 'Bin_id'
+                taxonomy_column = 'NCBI_taxonomy'
+            else:
+                continue
+
+            for row in reader:
+                bin_id = (row.get(bin_column) or '').strip()
+                taxonomy = (row.get(taxonomy_column) or '').strip()
+                if bin_id:
+                    taxonomy_by_bin[bin_id] = taxonomy
+
+    return {
+        bin_id: taxonomy
+        for bin_id, taxonomy in taxonomy_by_bin.items()
+        if bin_id not in manual_bin_ids
+        and __is_exact_unclassified_taxonomy(taxonomy)
+    }
+
+
 def __read_ncbi_taxonomy(ncbi_taxonomy_file: str) -> dict:
     """
     Read the output of GTDB-TKs 'gtdb_to_ncbi_majority_vote.py' or a file using
@@ -251,7 +333,14 @@ def __best_classification(ncbi_classifications: dict) -> dict:
         # Check if we have an "unclassified" bin here
         if len(clist) == 1:
             clasf = clist[0]
-            if clasf == 'Unclassified Bacteria':
+            if __is_exact_unclassified_taxonomy(clasf):
+                result[mag_bin] = {
+                    'level': 'unclassified',
+                    'classification': clasf.strip(),
+                    'domain': 'unclassified',
+                }
+                continue
+            elif clasf == 'Unclassified Bacteria':
                 result[mag_bin] = {
                     'level': 'domain',
                     'classification': 'Bacteria',
@@ -290,13 +379,6 @@ def __best_classification(ncbi_classifications: dict) -> dict:
                 'domain': clist[0][3:]
             }
     return result
-
-
-# --------------------changed below-----------------------
-def __is_whole_word(term: str, text: str) -> bool:
-    """Return True if *term* appears as a whole word in *text* (case‑insensitive)."""
-    _RE_WHOLE_WORD = lambda term: re.compile(rf"\b{re.escape(term)}\b", re.IGNORECASE)
-    return bool(_RE_WHOLE_WORD(term).search(text))
 
 
 def __filter_ena_suggestions(level: str,

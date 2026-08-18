@@ -129,6 +129,11 @@ def init_argparse():
                                action="store_true",
                                default=False,
                                help="Skip preflight checks. Use with caution.")
+    parser_submit.add_argument("--exclude-unclassified",
+                               action="store_true",
+                               default=False,
+                               help="Discard bins whose complete taxonomy is "
+                               "exactly the string 'unclassified' (ignoring case).")
     parser_submit.add_argument("-z", "--timestamps",
                                type=int,
                                choices=[0, 1],
@@ -346,6 +351,7 @@ def submit_through_gui(config_path,
     args.verbosity = verbosity
     args.development_service = normalize_development_service(development_service)
     args.skip_checks = False
+    args.exclude_unclassified = False
     args.timestamps = 1
     args.threads = 4
     args.keep_depth_files = False
@@ -454,6 +460,38 @@ def submit(args, listener=None, gui=False):
             bin_quality = get_bin_quality(config, silent=True)
             # If there are quality cutoffs, make a list of bins to submit
             filtered_bins = utility.quality_filter_bins(bin_quality, config)
+            if args.exclude_unclassified:
+                unclassified_taxonomies = taxQuery.get_unclassified_bin_taxonomies(
+                    config
+                )
+                excluded_bins = [
+                    (bin_id, unclassified_taxonomies[bin_id])
+                    for bin_id in filtered_bins
+                    if bin_id in unclassified_taxonomies
+                ]
+                if excluded_bins:
+                    loggingC.message(
+                        ">WARNING: Excluding bins with an exact "
+                        "'unclassified' taxonomy:",
+                        threshold=0
+                    )
+                    for bin_id, taxonomy in excluded_bins:
+                        loggingC.message(
+                            f"\t{bin_id}: {taxonomy}",
+                            threshold=0
+                        )
+                    excluded_ids = {bin_id for bin_id, _ in excluded_bins}
+                    filtered_bins = [
+                        bin_id for bin_id in filtered_bins
+                        if bin_id not in excluded_ids
+                    ]
+                    if not filtered_bins:
+                        err = (
+                            "\nERROR: No bins remain after excluding bins "
+                            "with an exact 'unclassified' taxonomy."
+                        )
+                        loggingC.message(err, threshold=-1)
+                        sys.exit(1)
             # Test if there are bins which are too contaminated
             for name in filtered_bins:
                 contamination = bin_quality[name]['contamination']
