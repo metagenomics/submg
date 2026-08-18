@@ -449,6 +449,7 @@ def submit(args, listener=None, gui=False):
         # taxonomic information.
         # We do this early so we notice issues before we start staging files.
         selected_mag_ids = None
+        filtered_bins = []
         if args.submit_bins or args.submit_mags:
             bin_quality = get_bin_quality(config, silent=True)
             # If there are quality cutoffs, make a list of bins to submit
@@ -504,27 +505,20 @@ def submit(args, listener=None, gui=False):
                         f"{filtered_bins[0]}"
                     )
                 loggingC.message(msg, threshold=0)
-            
-        # Construct depth files if there are .bam files in the config
-        if 'BAM_FILES' in config.keys():
-            bam_files = utility.from_config(config, 'BAM_FILES')
 
-            if not isinstance(bam_files, list):
-                bam_files = [bam_files]
-            if args.minitest:
-                msg = f">Minitest: Ignoring bam files except for {bam_files[0]}"
-                loggingC.message(msg, threshold=0)
-                bam_files = bam_files[0:1]
-            depth_files = utility.construct_depth_files(staging_subdir,
-                                                        args.threads,
-                                                        bam_files)
-            bin_coverage_file = None
-        else:
-            if args.submit_bins or args.submit_mags:
-                bin_coverage_file = utility.from_config(config,
-                                                        'BINS',
-                                                        'COVERAGE_FILE')
-            depth_files = None
+        if args.submit_assembly or args.submit_bins or args.submit_mags:
+            assembly_coverage, bin_coverage_file = utility.resolve_coverage(
+                config=config,
+                submit_assembly=args.submit_assembly,
+                submit_bins=args.submit_bins,
+                submit_mags=args.submit_mags,
+                filtered_bins=filtered_bins,
+                staging_dir=staging_subdir,
+                logging_dir=logging_subdir,
+                threads=args.threads,
+                minitest=args.minitest,
+                keep_depth_files=args.keep_depth_files,
+            )
 
         if args.submit_samples:
             sample_accession_data = submit_samples(config,
@@ -567,10 +561,9 @@ def submit(args, listener=None, gui=False):
             assembly_sample_accession, assembly_fasta_accession = submit_assembly(config,
                                                                                   staging_subdir,
                                                                                   logging_subdir,
-                                                                                  depth_files,
+                                                                                  assembly_coverage,
                                                                                   sample_accession_data,
                                                                                   run_accessions,
-                                                                                  threads=args.threads,
                                                                                   test=args.development_service)
             # Assembly sample accession will be either the accession of the
             # co-assembly virtual sample or the accession of the single sample
@@ -601,9 +594,7 @@ def submit(args, listener=None, gui=False):
                                                 run_accessions,
                                                 prepdir(staging_subdir, 'bins'),
                                                 prepdir(logging_subdir, 'bins'),
-                                                depth_files,
                                                 bin_coverage_file,
-                                                threads=args.threads,
                                                 test=args.development_service)
 
 
@@ -630,11 +621,9 @@ def submit(args, listener=None, gui=False):
                         bin_taxonomy,
                         prepdir(staging_subdir, 'mags'),
                         prepdir(logging_subdir, 'mags'),
-                        depth_files,
                         bin_coverage_file,
                         bin_sample_accessions=bin_sample_accessions,
                         selected_mag_ids=selected_mag_ids,
-                        threads=args.threads,
                         test=args.development_service)
 
         msg = "\n>All submissions completed."
@@ -662,14 +651,6 @@ def submit(args, listener=None, gui=False):
             "https://doi.org/10.1186/s13040-025-00453-w"
         )
         loggingC.message(msg, threshold=0)
-
-        # Cleanup: depth files
-        if not args.keep_depth_files and depth_files is not None:
-            loggingC.message(">Deleting depth files to free up disk space. "
-                             "To keep them in a future run use the, "
-                             "--keep-depth-files option.", threshold=0)
-            for depth_file in depth_files:
-                os.remove(depth_file)
 
         # Cleanup: warn about staging directory
         if os.path.exists(staging_subdir):

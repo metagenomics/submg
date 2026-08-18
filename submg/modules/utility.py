@@ -1,5 +1,6 @@
 import os
 import csv
+import gzip
 import yaml
 import sys
 try:
@@ -134,7 +135,7 @@ def check_bam_basenames(bam_files):
 
 def construct_depth_files(staging_dir: str,
                           threads: int,
-                          bam_files: list) -> dict:
+                          bam_files: list) -> list:
     """
     Construct depth files from bam files.
 
@@ -709,70 +710,166 @@ def contigs_coverage(depth_file):
     return contig_coverage, contig_length
 
 
-def calculate_coverage(depth_files: list,
-                       target_contigs: set = None,
-                       threads=4,
-                       outfile=None,
-                       silent=False):
+def _read_depth_files(depth_files: list,
+                      threads: int) -> tuple:
     """
-    Calculate the average coverage of an assembly based on multiple depth files using parallel processing.
+    Read depth files once and sum depth per contig across all files.
 
     Args:
-    depth_files (list of str): List of file paths to depth files.
-    target_contigs (set of str): Set of contigs to calculate coverage for.
+        depth_files: Paths to depth files.
+        threads: Maximum number of concurrent workers.
 
     Returns:
-    float: Average depth of coverage of the assembly.
+        Tuple containing summed contig depths and one length per contig.
     """
-    total_coverage = 0.0
-    total_length = 0.0
-
     def process_file(depth_file):
-        """
-        Process a single depth file and calculate coverage and length.
-        """
         with open(depth_file, 'r') as depth:
-            local_coverage = 0
-            local_length = 0
-            contig_coverage, contig_length = contigs_coverage(depth)
-            for contig in contig_coverage:
-                if target_contigs is not None:
-                    if not contig in target_contigs:
-                        continue
-                local_coverage += contig_coverage[contig]
-                local_length += contig_length[contig]
-            return local_coverage, local_length
+            return contigs_coverage(depth)
 
-    if silent:
-        threshold = 3
-    else:
-        threshold = 0
-    loggingC.message(">Calculating coverage from depth files. This might take a while.", threshold)
-    msg = f">The coverage value will be written to {outfile} in case you " \
-            " want to provide a KNOWN_COVERAGE in the ASSEMBLY section " \
-            " in the config for subsequent submission attempts."
-    if outfile:
-        loggingC.message(msg, threshold=0)
-
-    inuse = min(threads, len(depth_files))
+    loggingC.message(">Calculating coverage from depth files. This might take a while.", threshold=0)
+    inuse = min(max(1, threads), len(depth_files))
     with yaspin(text=f"Processing with {inuse} threads...\t", color="yellow") as spinner:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=inuse) as executor:
             results = executor.map(process_file, depth_files)
 
-        for coverage, length in results:
-            total_coverage += coverage
-            total_length += length
+        total_depth = {}
+        contig_lengths = {}
+        for contig_depth, contig_length in results:
+            for contig, depth in contig_depth.items():
+                total_depth[contig] = total_depth.get(contig, 0) + depth
+            for contig, length in contig_length.items():
+                if contig not in contig_lengths:
+                    contig_lengths[contig] = length
 
-        average_coverage = total_coverage / total_length if total_length > 0 else 0
+    return total_depth, contig_lengths
 
-    if not silent:
-        loggingC.message(f"\t...coverage is {str(average_coverage)}", threshold=0)
 
-    if outfile:
-        with open(outfile, 'w') as f:
-            f.write(str(average_coverage))
+def _coverage_from_contigs(total_depth: dict,
+                           contig_lengths: dict,
+                           target_contigs=None) -> float:
+    """Calculate coverage from already-summed per-contig depths."""
+    if target_contigs is None:
+        target_contigs = contig_lengths.keys()
+    depth = sum(total_depth.get(contig, 0) for contig in target_contigs)
+    length = sum(contig_lengths.get(contig, 0) for contig in target_contigs)
+    coverage = depth / length if length > 0 else 0.0
+    return round(coverage, 1)
 
-    return average_coverage
+
+def _bin_contigs(config: dict,
+                 filtered_bins: list) -> dict:
+    """Read the contig names for each filtered bin."""
+    bins_directory = from_config(config, 'BINS', 'BINS_DIRECTORY')
+    filtered_bins = set(filtered_bins)
+    bin_contigs = {}
+
+    for filename in os.listdir(bins_directory):
+        fasta = os.path.join(bins_directory, filename)
+        bin_name = is_fasta(fasta)
+        if bin_name not in filtered_bins:
+            continue
+
+        fasta_handle = gzip.open(fasta, 'rt') if fasta.lower().endswith('.gz') else open(fasta, 'r')
+        with fasta_handle as handle:
+            bin_contigs[bin_name] = {
+                line.strip().split(' ')[0][1:]
+                for line in handle
+                if line.startswith('>')
+            }
+
+    return bin_contigs
+
+
+def _write_bin_coverage(outfile: str,
+                        filtered_bins: list,
+                        bin_coverages: dict) -> None:
+    """Write bin coverage values in the configured TSV format."""
+    with open(outfile, 'w') as f:
+        writer = csv.writer(f, delimiter='\t')
+        writer.writerow(['Bin_id', 'Coverage'])
+        for bin_name in filtered_bins:
+            writer.writerow([bin_name, bin_coverages[bin_name]])
+
+
+def resolve_coverage(config: dict,
+                     submit_assembly: bool,
+                     submit_bins: bool,
+                     submit_mags: bool,
+                     filtered_bins: list,
+                     staging_dir: str,
+                     logging_dir: str,
+                     threads: int,
+                     minitest: bool,
+                     keep_depth_files: bool) -> tuple:
+    """Resolve all coverage needed by the requested submissions once."""
+    assembly_required = submit_assembly
+    bins_required = submit_bins or submit_mags
+
+    assembly_coverage = None
+    if assembly_required and 'COVERAGE_VALUE' in config.get('ASSEMBLY', {}):
+        assembly_coverage = float(config['ASSEMBLY']['COVERAGE_VALUE'])
+
+    bin_coverage_file = None
+    if bins_required and 'COVERAGE_FILE' in config.get('BINS', {}):
+        bin_coverage_file = config['BINS']['COVERAGE_FILE']
+
+    assembly_missing = assembly_required and assembly_coverage is None
+    bins_missing = bins_required and bin_coverage_file is None
+    assembly_outfile = os.path.join(logging_dir, 'assembly_coverage.txt')
+    bin_outfile = os.path.join(logging_dir, 'bin_coverages.tsv')
+
+    if minitest:
+        if assembly_missing:
+            assembly_coverage = 1.0
+        if bins_missing:
+            mock_coverages = {bin_name: 1.0 for bin_name in filtered_bins}
+            _write_bin_coverage(bin_outfile, filtered_bins, mock_coverages)
+            bin_coverage_file = bin_outfile
+        return assembly_coverage, bin_coverage_file
+
+    depth_files = []
+    try:
+        if assembly_missing or bins_missing:
+            bam_files = from_config(config, 'BAM_FILES')
+            if not isinstance(bam_files, list):
+                bam_files = [bam_files]
+            depth_files = construct_depth_files(staging_dir, threads, bam_files)
+            total_depth, contig_lengths = _read_depth_files(depth_files, threads)
+
+            if assembly_missing:
+                assembly_coverage = _coverage_from_contigs(total_depth,
+                                                           contig_lengths)
+
+            if bins_missing:
+                contigs_by_bin = _bin_contigs(config, filtered_bins)
+                bin_coverages = {
+                    bin_name: _coverage_from_contigs(total_depth,
+                                                     contig_lengths,
+                                                     contigs_by_bin[bin_name])
+                    for bin_name in filtered_bins
+                }
+                _write_bin_coverage(bin_outfile, filtered_bins, bin_coverages)
+                bin_coverage_file = bin_outfile
+    finally:
+        if depth_files and not keep_depth_files:
+            loggingC.message(">Deleting depth files to free up disk space. "
+                             "To keep them in a future run use the "
+                             "--keep-depth-files option.", threshold=0)
+            for depth_file in depth_files:
+                os.remove(depth_file)
+
+    if assembly_missing:
+        with open(assembly_outfile, 'w') as f:
+            f.write(str(assembly_coverage))
+        loggingC.message(f">Assembly coverage is {assembly_coverage}", threshold=0)
+        loggingC.message(">Assembly coverage has been written to "
+                         f"{os.path.abspath(assembly_outfile)}", threshold=0)
+
+    if bins_required:
+        loggingC.message(">Bin coverage file: "
+                         f"{os.path.abspath(bin_coverage_file)}", threshold=0)
+
+    return assembly_coverage, bin_coverage_file
 
 
 def read_receipt(receipt_path: str) -> str:

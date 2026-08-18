@@ -501,11 +501,9 @@ def submit_mags(config: dict,
                 bin_taxonomy_data: dict,
                 staging_dir: str,
                 logging_dir: str,
-                depth_files: str,
                 bin_coverage_file: str,
                 bin_sample_accessions: dict = None,
                 selected_mag_ids: list = None,
-                threads: int = 4,
                 test: bool = True,
                 submit: bool = True) -> tuple:
     """
@@ -522,14 +520,11 @@ def submit_mags(config: dict,
             name for each bin.
         staging_dir (str): The directory where the bins will be staged.
         logging_dir (str): The directory where the logs will be written to.
-        depth_files (list): A list of paths to the depth files. Either this or
-            bin_coverage_file must be specified.
         bin_coverage_file (str): Path to a tsv file with the coverage for each
-            bin. Either this or depth_files must be specified.
+            bin.
         bin_sample_accessions (dict): An optional dictionary matching MAG bin
             ids to virtual bin sample accessions created in the same run.
         selected_mag_ids (list): Optional MAG ids to retain for submission.
-        threads (int, optional): Number of threads to use for samtools. Defaults to 4.
         test (bool, optional): If True, the ENA dev server will be used
             instead of the production server. Defaults to True.
         submit (bool, optional): If True, the bins will be submitted to ENA.
@@ -548,19 +543,10 @@ def submit_mags(config: dict,
                                        bin_sample_accessions,
                                        selected_mag_ids)
     
-    bins_directory = utility.from_config(config, 'BINS', 'BINS_DIRECTORY')
-        
     # Get the coverage for each MAG
     loggingC.message(">Deriving MAG coverage", threshold=1)
-    bin_files = binSubmission.get_bins_in_dir(bins_directory)
-    if not depth_files is None:
-        bin_coverages = binSubmission.bin_coverage_from_depth(depth_files,
-                                                              bin_files,
-                                                              threads=threads)
-    elif not bin_coverage_file is None:
-        bin_coverages = binSubmission.bin_coverage_from_tsv(mag_metadata.keys(),
-                                                            bin_coverage_file,
-                                                            bin_files)
+    bin_coverages = binSubmission.bin_coverage_from_tsv(mag_metadata.keys(),
+                                                        bin_coverage_file)
         
     # Make a samplesheet for all MAGs
     loggingC.message(">Making MAG samplesheet", threshold=1)

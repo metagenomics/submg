@@ -2,7 +2,6 @@ import csv
 import os
 import sys
 import requests
-from tqdm import tqdm
 import shutil
 import gzip
 import xml.etree.ElementTree as ET
@@ -11,41 +10,6 @@ from requests.auth import HTTPBasicAuth
 from submg.modules import loggingC, utility
 from submg.modules.webinWrapper import webin_cli
 from submg.modules.statConf import staticConfig
-
-
-def __calculate_bin_coverage(fasta: str,
-                             depth_files: list,
-                             threads=4) -> float:
-    """
-    Extract the names of contigs in the bin and calculate the bin coverage
-    based on the depth files.
-
-    Args:
-        fasta (str): Path to the fasta file of the bin.
-        depth_files (list): A list of paths to the depth files.
-        threads (int, optional): Number of threads to use for samtools. Defaults to 4.
-
-    Returns:
-        float: The average coverage of the contigs in the bin.
-    """
-    # Extract the names of all contigs from the fasta file
-    contig_names = []
-    if fasta.lower().endswith('.gz'):
-        fasta_handle = gzip.open(fasta, 'rt')
-    else:
-        fasta_handle = open(fasta, 'r')
-    with fasta_handle as f:
-        for line in f:
-            if line.startswith('>'):
-                contig_names.append(line.strip().split(' ')[0][1:])
-
-    # Get the average coverage of the contigs of this bin
-    coverage = utility.calculate_coverage(depth_files,
-                                          contig_names,
-                                          threads=threads,
-                                          silent=True)
-    
-    return coverage
 
 
 def get_bin_quality(config, silent=False) -> dict:
@@ -432,57 +396,14 @@ def __stage_bin_submission(staging_directory: str,
     return manifest_path          
 
     
-def bin_coverage_from_depth(depth_files: str,
-                            bin_name_to_fasta: dict,
-                            outfile: str=None,
-                            threads: int = 4) -> dict:
-    """
-    Calculate coverage for each bin from depth files.
-
-    Args:
-        depth_files (str): Path to the depth files.
-        bin_name_to_fasta (dict): Dictionary mapping bin names to fasta files.
-        threads (int, optional): Number of threads to use for calculation. Defaults to 4.
-
-    Returns:
-        dict: Dictionary mapping bin names to coverage values.
-    """
-    msg = ">Calculating coverage for each bin from depth files."
-    loggingC.message(msg, threshold=0)
-    msg = f">A coverage file will be written to {outfile}\n You can use it to " \
-          " provide a KNOWN_COVERAGE_FILE instead of BAM_FILES in the config " \
-          " if you need to run the submission process again."
-    if outfile:
-        loggingC.message(msg, threshold=0)
-        
-    bin_coverages = {}
-    for bin_name, bin_fasta in tqdm(bin_name_to_fasta.items(), leave=False):
-        coverage = __calculate_bin_coverage(bin_fasta,
-                                            depth_files,
-                                            threads=threads)
-        bin_coverages[bin_name] = coverage
-
-    if outfile:
-        with open(outfile, 'w') as f:
-            writer = csv.writer(f, delimiter='\t')
-            writer.writerow(['Bin_id', 'Coverage'])
-            for bin_name, coverage in bin_coverages.items():
-                writer.writerow([bin_name, coverage])
-    
-    return bin_coverages
-
-
 def bin_coverage_from_tsv(filtered_bins: list,
-                          bin_coverage_file: str,
-                          bin_names: dict) -> dict:
+                          bin_coverage_file: str) -> dict:
     """Reads coverage for each bin from a tsv file.
 
     Args:
         filtered_bins (list): A list of bin names to submit.
         bin_coverage_file (str): The path to the tsv file containing the bin
             coverage data.
-        bin_names (dict): A dictionary mapping bin names to their corresponding
-            IDs.
 
     Returns:
         dict: A dictionary mapping bin names to their coverage values.
@@ -531,9 +452,7 @@ def submit_bins(filtered_bins: list,
                 run_accessions,
                 staging_dir: str,
                 logging_dir: str,
-                depth_files: list,
                 bin_coverage_file: str,
-                threads: int = 4,
                 test: bool = True,
                 submit: bool = True) -> dict:
     """
@@ -550,11 +469,8 @@ def submit_bins(filtered_bins: list,
         run_accessions (list): A list of accession numbers of the runs.
         staging_dir (str): The directory where the bins will be staged.
         logging_dir (str): The directory where the logs will be written to.
-        depth_files (list): A list of paths to the depth files. Either this or
-            bin_coverage_file must be specified.
         bin_coverage_file (str): Path to a tsv file with the coverage for each
-            bin. Either this or depth_files must be specified.
-        threads (int, optional): Number of threads to use for samtools. Defaults to 4.
+            bin.
         test (bool, optional): If True, the ENA dev server will be used
             instead of the production server. Defaults to True.
         submit (bool, optional): If True, the bins will be submitted to ENA.
@@ -581,16 +497,8 @@ def submit_bins(filtered_bins: list,
 
     # Get the coverage for each bin file
     loggingC.message(">Deriving bin coverage", threshold=1)
-    coverage_outfile = os.path.join(logging_dir, 'bin_coverages.tsv')
-    if depth_files is not None:
-        bin_coverages = bin_coverage_from_depth(depth_files,
-                                                bin_name_to_fasta,
-                                                coverage_outfile,
-                                                threads=threads)
-    elif bin_coverage_file is not None:
-        bin_coverages = bin_coverage_from_tsv(filtered_bins,
-                                              bin_coverage_file,
-                                              bin_name_to_fasta.keys())
+    bin_coverages = bin_coverage_from_tsv(filtered_bins,
+                                          bin_coverage_file)
         
 
     # Make a samplesheet for filtered bins
