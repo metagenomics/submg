@@ -337,9 +337,7 @@ def __check_read_type(paired: bool,
         err = (
             f"\nERROR: The FASTQ file '{fastq_filepath}' contains a read "
             f"name with {header_length} characters. The ENA limit is "
-            f"{staticConfig.max_fastq_read_name_length} characters. The "
-            f"problem was found in read {read_number} of the first "
-            f"{staticConfig.fastq_preflight_read_count} reads. Use "
+            f"{staticConfig.max_fastq_read_name_length} characters. Use "
             "--truncate-read-names to truncate read names during staging."
         )
         loggingC.message(err, threshold=-1)
