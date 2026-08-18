@@ -15,6 +15,8 @@ class staticConfig:
     zipped_emblff_extension: str = ".embl.gz"
     fasta_extensions: str = '.fa;.fasta;.fna;.FA;.FASTA;.FNA'
     fastq_extensions: str = '.fq;.fastq;.FQ;.FASTQ'
+    max_fastq_read_name_length: int = 256
+    fastq_preflight_read_count: int = 10
     bam_extensions: str = '.bam;.BAM;'
     taxonomic_levels: str = 'species;genus;family;order;class;phylum;domain'
     molecule_types: str = 'genomic DNA;genomic RNA;viral cRNA;viral ssDNA;viral ssRNA;viral dsDNA;viral dsRNA'

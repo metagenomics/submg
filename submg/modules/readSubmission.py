@@ -96,11 +96,64 @@ def __zipcopy(input_path: str,
                 f_out.writelines(f_in)
 
 
+def __process_fastq(input_path: str,
+                    output_path: str,
+                    truncate_read_names: bool) -> None:
+    """
+    Check and/or rewrite a FASTQ file while staging it as gzip.
+
+    Args:
+        input_path (str): The path to the input FASTQ file.
+        output_path (str): The path to the staged gzip FASTQ file.
+        truncate_read_names (bool): Whether to truncate read headers.
+    """
+    seen_read_names = set()
+    with utility.open_fastq(input_path, 'rb') as f_in:
+        with gzip.open(output_path, 'wb', compresslevel=5) as f_out:
+            read_number = 0
+            while True:
+                header = f_in.readline()
+                if not header:
+                    break
+                sequence = f_in.readline()
+                separator = f_in.readline()
+                quality = f_in.readline()
+                read_number += 1
+
+                header_content = utility.fastq_header_content(header)
+                if truncate_read_names:
+                    staged_header_content = header_content[:staticConfig.max_fastq_read_name_length]
+                    if staged_header_content in seen_read_names:
+                        err = (
+                            f"\nERROR: Truncating read names in '{input_path}' "
+                            f"would create a duplicate name in read {read_number}."
+                        )
+                        loggingC.message(err, threshold=-1)
+                        sys.exit(1)
+                    seen_read_names.add(staged_header_content)
+                    header = staged_header_content + header[len(header_content):]
+                elif len(header_content) > staticConfig.max_fastq_read_name_length:
+                    err = (
+                        f"\nERROR: The FASTQ file '{input_path}' contains a "
+                        f"read name with {len(header_content)} characters in "
+                        f"read {read_number}. The ENA limit is "
+                        f"{staticConfig.max_fastq_read_name_length} characters. "
+                        "Use --truncate-read-names to truncate read names "
+                        "during staging."
+                    )
+                    loggingC.message(err, threshold=-1)
+                    sys.exit(1)
+
+                f_out.writelines([header, sequence, separator, quality])
+
+
 def __stage_reads_submission(config: dict,
                              sample_accession_data,
                              data: dict,
                              staging_dir: str,
-                             logging_dir: str) -> str:
+                             logging_dir: str,
+                             skip_checks: bool,
+                             truncate_read_names: bool) -> str:
     """
     Stage the reads for submission.
 
@@ -113,6 +166,8 @@ def __stage_reads_submission(config: dict,
         staging_dir (str): The directory where the reads will be staged.
         logging_dir (str): The directory where the submission logs will be
             written.
+        skip_checks (bool): Whether to skip the full staging length check.
+        truncate_read_names (bool): Whether to truncate read headers.
 
     Returns:
         str: The path to the manifest file.
@@ -126,9 +181,19 @@ def __stage_reads_submission(config: dict,
     else: # Paired-end reads
         fastq1_path = from_config(data, 'FASTQ1_FILE')
         fastq2_path = from_config(data, 'FASTQ2_FILE')
-    __zipcopy(fastq1_path, gzipped_fastq1_path)
+    if skip_checks and not truncate_read_names:
+        __zipcopy(fastq1_path, gzipped_fastq1_path)
+    else:
+        __process_fastq(fastq1_path,
+                        gzipped_fastq1_path,
+                        truncate_read_names)
     if not fastq2_path is None:
-        __zipcopy(fastq2_path, gzipped_fastq2_path)
+        if skip_checks and not truncate_read_names:
+            __zipcopy(fastq2_path, gzipped_fastq2_path)
+        else:
+            __process_fastq(fastq2_path,
+                            gzipped_fastq2_path,
+                            truncate_read_names)
 
     # Make the MANIFEST file
     manifest = __prep_reads_manifest(config,
@@ -145,7 +210,9 @@ def submit_reads(config,
                  staging_dir,
                  logging_dir,
                  test=True,
-                 minitest=False):
+                 minitest=False,
+                 skip_checks=False,
+                 truncate_read_names=False):
     """
     Submits the specified reads to ENA.
 
@@ -159,6 +226,10 @@ def submit_reads(config,
             written.
         test (bool, optional): If True, use the Webin test submission service
         (default is True).
+        skip_checks (bool, optional): Whether to skip the full staging length
+            check (default is False).
+        truncate_read_names (bool, optional): Whether to truncate read headers
+            during staging (default is False).
 
     Returns:
         list: The accessions of the submitted reads.
@@ -189,7 +260,9 @@ def submit_reads(config,
                                                 sample_accession_data,
                                                 data,
                                                 read_set_staging_dir,
-                                                read_set_logging_dir)                                                
+                                                read_set_logging_dir,
+                                                skip_checks,
+                                                truncate_read_names)
             read_manifests[name] = manifest
             counter = i + 1
             if minitest:
@@ -210,7 +283,9 @@ def submit_reads(config,
                                                 sample_accession_data,
                                                 data,
                                                 read_set_staging_dir,
-                                                read_set_logging_dir)         
+                                                read_set_logging_dir,
+                                                skip_checks,
+                                                truncate_read_names)
             
             read_manifests[name] = manifest
             if minitest:

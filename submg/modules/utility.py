@@ -513,6 +513,62 @@ def check_fastq(fastq_filepath: str):
         sys.exit(1)
 
 
+def open_fastq(fastq_filepath: str, mode: str = 'rb'):
+    """
+    Open a plain or gzip-compressed FASTQ file.
+
+    Args:
+        fastq_filepath (str): The path to the FASTQ file.
+        mode (str): The file-open mode.
+
+    Returns:
+        A file object for the FASTQ file.
+    """
+    if fastq_filepath.lower().endswith('.gz'):
+        return gzip.open(fastq_filepath, mode)
+    return open(fastq_filepath, mode)
+
+
+def fastq_header_content(header_line: bytes) -> bytes:
+    """
+    Return a FASTQ header without its line ending.
+
+    Args:
+        header_line (bytes): The first line of a FASTQ record.
+
+    Returns:
+        The header content without trailing carriage-return or newline bytes.
+    """
+    return header_line.rstrip(b'\r\n')
+
+
+def check_fastq_read_names(fastq_filepath: str,
+                           read_count: int = staticConfig.fastq_preflight_read_count):
+    """
+    Check the first ``read_count`` FASTQ records for long read names.
+
+    Args:
+        fastq_filepath (str): The path to the FASTQ file.
+        read_count (int): The maximum number of records to inspect.
+
+    Returns:
+        A tuple containing the 1-based read number and header length for the
+        first violation, or None if no violation is found.
+    """
+    lines_to_check = read_count * 4
+    with open_fastq(fastq_filepath, 'rb') as fastq_file:
+        for line_number in range(lines_to_check):
+            line = fastq_file.readline()
+            if not line:
+                break
+            if line_number % 4 == 0:
+                header_length = len(fastq_header_content(line))
+                if header_length > staticConfig.max_fastq_read_name_length:
+                    read_number = (line_number // 4) + 1
+                    return read_number, header_length
+    return None
+
+
 def is_fasta(filepath, extensions=staticConfig.fasta_extensions.split(';')) -> str:
     """
     Checks if the file at filepath is a FASTA file. Return the basename if it is.

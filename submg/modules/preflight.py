@@ -326,6 +326,26 @@ def __check_read_type(paired: bool,
         mandatory_fields.append(('RELATED_SAMPLE_ACCESSION',  str),)
 
     read_aliases = []
+
+    def check_fastq_read_names(fastq_filepath: str):
+        if arguments.get('truncate_read_names', False):
+            return
+        violation = utility.check_fastq_read_names(fastq_filepath)
+        if violation is None:
+            return
+        read_number, header_length = violation
+        err = (
+            f"\nERROR: The FASTQ file '{fastq_filepath}' contains a read "
+            f"name with {header_length} characters. The ENA limit is "
+            f"{staticConfig.max_fastq_read_name_length} characters. The "
+            f"problem was found in read {read_number} of the first "
+            f"{staticConfig.fastq_preflight_read_count} reads. Use "
+            "--truncate-read-names to truncate read names during staging."
+        )
+        loggingC.message(err, threshold=-1)
+        global checks_failed
+        checks_failed = True
+
     for s in read_items:
         # Check if all fields are present and not empty
         __check_fields(read_items,
@@ -384,11 +404,14 @@ def __check_read_type(paired: bool,
         if paired:
             fastq1_filepath = os.path.abspath(s['FASTQ1_FILE'])
             utility.check_fastq(fastq1_filepath)
+            check_fastq_read_names(fastq1_filepath)
             fastq2_filepath = os.path.abspath(s['FASTQ2_FILE'])
             utility.check_fastq(fastq2_filepath)
+            check_fastq_read_names(fastq2_filepath)
         else:
             fastq_filepath = os.path.abspath(s['FASTQ_FILE'])
             utility.check_fastq(fastq_filepath)
+            check_fastq_read_names(fastq_filepath)
 
 
 def __check_reads(arguments: dict,

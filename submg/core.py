@@ -129,6 +129,11 @@ def init_argparse():
                                action="store_true",
                                default=False,
                                help="Skip preflight checks. Use with caution.")
+    parser_submit.add_argument("--truncate-read-names",
+                               action="store_true",
+                               default=False,
+                               help="Truncate FASTQ read names to the 256 "
+                               "character limit imposed by ENA.")
     parser_submit.add_argument("--exclude-unclassified",
                                action="store_true",
                                default=False,
@@ -354,6 +359,7 @@ def submit_through_gui(config_path,
     args.verbosity = verbosity
     args.development_service = normalize_development_service(development_service)
     args.skip_checks = False
+    args.truncate_read_names = False
     args.exclude_unclassified = exclude_unclassified
     args.timestamps = 1
     args.threads = 4
@@ -591,7 +597,9 @@ def submit(args, listener=None, gui=False):
                                           prepdir(staging_subdir, 'reads'),
                                           prepdir(logging_subdir, 'reads'),
                                           test=args.development_service,
-                                          minitest=args.minitest)
+                                          minitest=args.minitest,
+                                          skip_checks=args.skip_checks,
+                                          truncate_read_names=args.truncate_read_names)
         else:
             if args.submit_bins or args.submit_mags or args.submit_assembly:
                 run_accessions = utility.from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS')
