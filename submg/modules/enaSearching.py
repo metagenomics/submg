@@ -226,7 +226,7 @@ def sample_alias_accession(sample_alias: str,
     ensure_server_online(url)
 
     params = {
-        "query": f"sample_alias={sample_alias} AND study_accession={study_accession}",
+        "query": f'sample_alias="{sample_alias}" AND study_accession={study_accession}',
         "result": "sample",
         "fields": "sample_accession"
     }
@@ -259,7 +259,7 @@ def sample_title_accession(sample_title: str,
     ensure_server_online(url)
 
     params = {
-        "query": f"sample_title={sample_title} AND study_accession={study_accession}",
+        "query": f'sample_title="{sample_title}" AND study_accession={study_accession}',
         "result": "sample",
         "fields": "sample_accession"
     }
@@ -293,7 +293,7 @@ def run_alias_accession(run_alias: str,
     ensure_server_online(url)
 
     params = {
-        "query": f"run_alias={run_alias} AND study_accession={study_accession}",
+        "query": f'run_alias="{run_alias}" AND study_accession={study_accession}',
         "result": "read_run",
         "fields": "run_accession"
     }
