@@ -377,7 +377,7 @@ def __submit_mags_samplesheet(samplesheet: str,
     loggingC.message(f"\tHTTP status: {response.status_code}", threshold=1)
 
     # Process response
-    utility.api_response_check(response)
+    utility.api_response_check(response, submission_xml)
     with open(receipt_path, 'wb') as f:
         f.write(response.content)
     bin_to_Accession = binSubmission.read_bin_samples_receipt(receipt_path)
@@ -505,7 +505,8 @@ def submit_mags(config: dict,
                 bin_sample_accessions: dict = None,
                 selected_mag_ids: list = None,
                 test: bool = True,
-                submit: bool = True) -> tuple:
+                submit: bool = True,
+                ascp: bool = False) -> tuple:
     """
     Submits a samplesheet for all MAGs to ENA. Then submits each MAG as an
     individual analysis object using webin-cli.
@@ -620,7 +621,8 @@ def submit_mags(config: dict,
                                                                               password=pwd,
                                                                               subdir_name=subdir_name,
                                                                               submit=submit,
-                                                                              test=test)
+                                                                              test=test,
+                                                                              ascp=ascp)
     loggingC.message(f"\n>MAG submission completed!", threshold=0)
 
     # Process the results

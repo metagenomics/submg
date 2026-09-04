@@ -107,7 +107,7 @@ def __submit_coassembly_samplesheet(sample_xml: str,
                     'SAMPLE': open(sample_xml, "rb"),
                 }, auth=HTTPBasicAuth(usr, pwd))
     loggingC.message("\tHTTP status: "+str(response.status_code), threshold=1)
-    utility.api_response_check(response)
+    utility.api_response_check(response, submission_xml)
 
     with open(receipt_path, 'w') as f:
         f.write(response.text)
@@ -180,7 +180,8 @@ def submit_assembly(config: dict,
                     run_accessions,
                     test: bool = True,
                     submit: bool = True,
-                    staticConfig=staticConfig):
+                    staticConfig=staticConfig,
+                    ascp: bool = False):
     """
     Submits the assembly to ENA.
 
@@ -273,7 +274,8 @@ def submit_assembly(config: dict,
                                    password=pwd,
                                    subdir_name=assembly_name,
                                    submit=submit,
-                                   test=test)
+                                   test=test,
+                                   ascp=ascp)
     
     # Parse the receipt
     assembly_fasta_accession = utility.read_receipt(receipt)

@@ -1,6 +1,8 @@
 import os
 import sys
 import platform
+import shutil
+import subprocess
 import time
 import csv
 from datetime import datetime
@@ -992,7 +994,23 @@ def __check_coverage(arguments: dict,
 
     # Check if we have at least one coverage source
     if not coverage_values and not coverage_bams:
-        err = f"\nERROR: You chose to submit an assembly, bins or MAGs. You need to provide either .BAM files or a known coverage (for assembly AND bins)."
+        required_coverage = []
+        direct_coverage_fields = []
+        if arguments['submit_assembly']:
+            required_coverage.append("  - Assembly coverage")
+            direct_coverage_fields.append("ASSEMBLY.COVERAGE_VALUE")
+        if arguments['submit_bins'] or arguments['submit_mags']:
+            required_coverage.append("  - Bin coverage")
+            direct_coverage_fields.append("BINS.COVERAGE_FILE")
+        required_coverage_text = '\n'.join(required_coverage)
+        err = (
+            "ERROR: Coverage information is missing.\n\n"
+            "Required for this submission:\n"
+            f"{required_coverage_text}\n\n"
+            "Provide one of:\n"
+            "  - BAM_FILES from which subMG can calculate coverage\n"
+            f"  - {' and '.join(direct_coverage_fields)}"
+        )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
     if coverage_values and coverage_bams:
@@ -1022,6 +1040,32 @@ def __check_windows_pysam(config: dict):
             checks_failed = True
 
 
+def __check_ascp():
+    """Check that the Aspera ``ascp`` executable is available and runnable."""
+    global checks_failed
+    ascp_path = shutil.which('ascp')
+    if ascp_path is None:
+        err = ("\nERROR: --ascp was specified, but the 'ascp' executable "
+               "cannot be found on PATH. Please install IBM Aspera CLI and "
+               "ensure that 'ascp' is on PATH.")
+        loggingC.message(err, threshold=-1)
+        checks_failed = True
+        return
+
+    try:
+        subprocess.run([ascp_path, '-A'],
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE,
+                       text=True,
+                       timeout=10,
+                       check=True)
+    except (OSError, subprocess.SubprocessError) as exc:
+        err = (f"\nERROR: The 'ascp' executable found at '{ascp_path}' could "
+               f"not be run successfully with 'ascp -A': {exc}")
+        loggingC.message(err, threshold=-1)
+        checks_failed = True
+
+
 def preflight_checks(arguments: dict) -> None:
     """
     Check if everything looks like we can start.
@@ -1045,11 +1089,17 @@ def preflight_checks(arguments: dict) -> None:
     loggingC.message(f">Checking if webin-cli can be found", threshold=1)
     find_webin_cli_jar()
 
+    if arguments.get('ascp', False):
+        loggingC.message(f">Checking if ascp can be found", threshold=1)
+        __check_ascp()
+
     # Check for login data
     utility.get_login()
 
     # Skip checks if requested
     if arguments['skip_checks'] == True:
+        if checks_failed:
+            sys.exit(1)
         message = f"WARNING: Skipping ALL preflight checks."
         delay = 3
         time.sleep(delay)

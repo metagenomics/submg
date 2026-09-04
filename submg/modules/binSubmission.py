@@ -229,7 +229,9 @@ def read_bin_samples_receipt(receipt_path: str) -> dict:
 
     success = root.attrib['success']
     if success != 'true':
-        err = f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information."
+        err = utility.format_receipt_failure(
+            root, receipt_path, "bin/MAG sample"
+        )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
 
@@ -286,7 +288,7 @@ def __submit_bins_samplesheet(sample_xml: str,
     loggingC.message(f"\tHTTP status: {response.status_code}", threshold=1)
 
     # Process response
-    utility.api_response_check(response)
+    utility.api_response_check(response, submission_xml)
     with open(receipt_path, 'w') as f:
         f.write(response.text)
     bin_to_accession = read_bin_samples_receipt(receipt_path)
@@ -454,7 +456,8 @@ def submit_bins(filtered_bins: list,
                 logging_dir: str,
                 bin_coverage_file: str,
                 test: bool = True,
-                submit: bool = True) -> dict:
+                submit: bool = True,
+                ascp: bool = False) -> dict:
     """
     Submits a samplesheet for all metagenomic bins to the ENA. Then submits each
     bin as an individual analysis object using webin-cli.
@@ -567,7 +570,8 @@ def submit_bins(filtered_bins: list,
                                                                      password=pwd,
                                                                      subdir_name=subdir_name,
                                                                      submit=submit,
-                                                                     test=test)
+                                                                     test=test,
+                                                                     ascp=ascp)
     loggingC.message("\n>Bin submission completed!", threshold=0)
 
     # Process the results    

@@ -207,32 +207,76 @@ def build_sample_submission_xml(outpath: str,
     loggingC.message(f"\t...written to {os.path.abspath(outpath)}", threshold=0)
 
 
-def api_response_check(response: requests.Response):
+def format_receipt_failure(root, receipt_path, submission_name):
+    """Format an ENA rejection and include errors recorded in its receipt."""
+    receipt_path = os.path.abspath(receipt_path)
+    ena_errors = [
+        ''.join(error.itertext()).strip()
+        for error in root.iter('ERROR')
+        if ''.join(error.itertext()).strip()
+    ]
+    ena_report = '\n'.join(f"  - {error}" for error in ena_errors)
+    if not ena_report:
+        ena_report = "  <no detailed error message in receipt>"
+
+    return (
+        f"ERROR: ENA rejected the {submission_name} submission.\n\n"
+        f"Receipt:\n  {receipt_path}\n\n"
+        f"ENA reported:\n{ena_report}\n\n"
+        "Likely cause:\n"
+        "  The submitted metadata did not satisfy ENA requirements\n\n"
+        "How to proceed:\n"
+        "  - Review the ENA messages above\n"
+        f"  - Check the complete receipt at {receipt_path}\n"
+        "  - Correct the metadata and retry"
+    )
+
+
+def api_response_check(response: requests.Response, submission_xml=None):
     if response.status_code == 403:
-        err = """\nERROR: Submission failed. ENA API returned status code 403.
-                    This indicates incorrect ENA login credentials. Please test your credentials
-                    by logging in to the ENA submission web interface. Make sure the environment variables
-                    ENA_USER and ENA_PASSWORD contain these credentials."""
+        err = (
+            "ERROR: ENA authentication failed.\n\n"
+            f"Endpoint:\n  {response.url}\n\n"
+            f"HTTP status:\n  {response.status_code} {response.reason}\n\n"
+            "Likely cause:\n"
+            "  ENA rejected the supplied Webin credentials\n\n"
+            "Recommended actions:\n"
+            "  - Verify that ENA_USER contains your Webin account name\n"
+            "  - Verify that ENA_PASSWORD contains the corresponding password\n"
+            "  - Confirm the credentials by signing in to the ENA Webin portal\n"
+            "  - Check whether you are using the intended development or production service"
+        )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
 
-    if response.status_code == 400:
-        err = "\nERROR: Submission failed. ENA API returned status code 400. This indicates a bad request."
-        loggingC.message(err, threshold=-1)
-        sys.exit(1)
+    if response.status_code != 200 or not response.text:
+        response_text = response.text.strip() or '<empty>'
+        response_text = response_text.replace('\n', '\n  ')
+        if response.status_code == 400:
+            likely_cause = "ENA rejected the submitted metadata or XML"
+        elif response.status_code == 408:
+            likely_cause = "The request to ENA timed out"
+        elif response.status_code >= 500:
+            likely_cause = "The ENA service encountered a temporary server error"
+        elif not response.text:
+            likely_cause = "ENA returned an empty response"
+        else:
+            likely_cause = "unknown"
 
-    if response.status_code == 408:
-        err = "\nERROR: Submission failed. ENA API returned status code 408. This indicates a timeout."
-        loggingC.message(err, threshold=-1)
-        sys.exit(1)
-
-    if response.status_code != 200:
-        err = f"\nERROR: Submission failed. ENA API returned status code {response.status_code}."
-        loggingC.message(err, threshold=-1)
-        sys.exit(1)
-
-    if response.text == "":
-        err = "\nERROR: Submission failed, received an empty response from API endpoint."
+        err = (
+            "ERROR: ENA API request failed.\n\n"
+            f"Endpoint:\n  {response.url}\n\n"
+            f"HTTP status:\n  {response.status_code} {response.reason}\n\n"
+            f"ENA response:\n  {response_text}\n\n"
+            f"Likely cause:\n  {likely_cause}\n\n"
+            "How to proceed:\n"
+            "  - Review the ENA response above"
+        )
+        if submission_xml is not None:
+            err += (
+                "\n  - Check the generated submission XML at "
+                f"{os.path.abspath(submission_xml)}"
+            )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
 
@@ -942,7 +986,7 @@ def read_receipt(receipt_path: str) -> str:
     success = root.attrib['success']
 
     if success != 'true':
-        err = f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information."
+        err = format_receipt_failure(root, receipt_path, "sample")
         loggingC.message(err, threshold=-1)
         sys.exit(1)
 

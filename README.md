@@ -77,6 +77,7 @@ Please Note
   - [The Config File](#the-config-file)
   - [Submission Modes](#submission-modes)
   - [Input Overview](#input-overview)
+  - [Aspera Uploads](#aspera-uploads)
 - [Taxonomy Assignment](#taxonomy-assignment)
   - [GTDB-Toolkit (GTDB-Tk) Taxonomy](#gtdb-toolkit-gtdb-tk-taxonomy)
   - [NCBI-Taxonomy](#ncbi-taxonomy)
@@ -164,6 +165,14 @@ This list details the kinds of files subMG ingests (depending on what items are 
 - MAG submission (see [MAG submission](#mag-submission) section for details)
 	- `fasta` or gzipped `fasta` or [EMBL-Flatfile](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html)
 	-  tab separated table with [MAG details](#mag-metadata)
+
+## Aspera Uploads
+By default, files like reads are uploaded via FTP. To request an [Aspera upload through Webin-CLI](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/webin-cli.html#using-aspera-instead-of-ftp-to-upload-files),
+use `submg-cli submit --ascp <other options>` or select **Use Aspera instead of
+FTP** in the GUI.
+
+This requires that the [IBM Aspera CLI](https://github.com/IBM/aspera-cli#install) is available as `ascp` on `PATH`. Webin-CLI may automatically fall back to FTP if Aspera is unavailable. For transfer problems,
+see the [ENA upload documentation](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/upload.html).
 
 # Taxonomy Assignment
 Assemblies and bins need a valid NCBI taxonomy (scientific name and taxonomic identifier) for submission. For metagenome submissions, [environmental organism-level taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) is required.

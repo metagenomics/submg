@@ -83,7 +83,10 @@ def __report_tax_issues(issues):
 def __check_bin_coherence(bin_basenames: list,
                           bin_quality_data: dict,
                           annotated_bin_taxonomies: dict,
-                          upload_taxonomy_data: dict):
+                          upload_taxonomy_data: dict,
+                          bins_directory: str,
+                          quality_file: str,
+                          taxonomy_files: list):
     """
     Check if all the sources of bin names are coherent (e.g. the set of bins in
     the quality file, the fasta files and the taxonomy files has to be
@@ -97,6 +100,9 @@ def __check_bin_coherence(bin_basenames: list,
             scientific name for each bin in the taxonomy files
         upload_taxonomy_data (dict): A dictionary with the taxid and scientific
             name for each bin in the manual taxonomy file
+        bins_directory (str): Directory containing the bin FASTA files
+        quality_file (str): File containing bin quality values
+        taxonomy_files (list): Taxonomy files used for the bins
     """
     # Get the set of bin_ids from different sources
     ids_from_quality = set(bin_quality_data.keys())
@@ -110,13 +116,33 @@ def __check_bin_coherence(bin_basenames: list,
 
     # Log errors and exit if there are any
     if missing_in_fasta or missing_in_taxonomies or missing_in_quality:
-        msg = "\n>ERROR: Bin sources are not coherent."
+        taxonomy_paths = '\n'.join(
+            f"    - {os.path.abspath(path)}" for path in taxonomy_files
+        ) or "    <none configured>"
+        msg = (
+            "ERROR: Bin identifiers do not match across the input sources.\n\n"
+            "Input sources:\n"
+            f"  BINS_DIRECTORY:\n    {os.path.abspath(bins_directory)}\n"
+            f"  QUALITY_FILE:\n    {os.path.abspath(quality_file)}\n"
+            f"  Taxonomy files:\n{taxonomy_paths}\n"
+        )
         if missing_in_fasta:
-            msg += f"\nBins missing in fasta files: {', '.join(missing_in_fasta)}"
+            missing = '\n'.join(f"  - {name}" for name in sorted(missing_in_fasta))
+            msg += f"\nMissing from BINS_DIRECTORY:\n{missing}\n"
         if missing_in_taxonomies:
-            msg += f"\nBins missing in taxonomy files: {', '.join(missing_in_taxonomies)}"
+            missing = '\n'.join(f"  - {name}" for name in sorted(missing_in_taxonomies))
+            msg += f"\nMissing from taxonomy files:\n{missing}\n"
         if missing_in_quality:
-            msg += f"\nBins missing in quality data: {', '.join(missing_in_quality)}"
+            missing = '\n'.join(f"  - {name}" for name in sorted(missing_in_quality))
+            msg += f"\nMissing from QUALITY_FILE:\n{missing}\n"
+        msg += (
+            "\nLikely cause:\n"
+            "  Different bin names are used in the FASTA filenames and metadata files\n\n"
+            "Recommended actions:\n"
+            "  - Use the same basename for each bin in every input source\n"
+            "  - Do not include FASTA extensions in metadata Bin_id values\n"
+            "  - Check for differences in capitalization and whitespace"
+        )
         loggingC.message(msg, threshold=-1)
         sys.exit(1)
 
@@ -625,10 +651,18 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
 
     # Make sure that, for each bin showing up in the taxonomy files, we have
     # a corresponding fasta file
-    __check_bin_coherence(bin_basenames,
-                          binSubmission.get_bin_quality(config, silent=True),
-                          annotated_bin_taxonomies,
-                          upload_taxonomy_data)
+    taxonomy_files = list(ncbi_taxonomy_files)
+    if os.path.exists(manual_taxonomy_file):
+        taxonomy_files.append(manual_taxonomy_file)
+    __check_bin_coherence(
+        bin_basenames,
+        binSubmission.get_bin_quality(config, silent=True),
+        annotated_bin_taxonomies,
+        upload_taxonomy_data,
+        bins_directory,
+        utility.from_config(config, 'BINS', 'QUALITY_FILE'),
+        taxonomy_files
+    )
     
 
     # Query the ENA API for taxids and scientific names for each bin

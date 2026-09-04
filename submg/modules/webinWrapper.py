@@ -38,7 +38,8 @@ def _build_webin_cli_command(action,
                               outputdir,
                               username,
                               context,
-                              test):
+                              test,
+                              ascp=False):
     """Build a Webin-CLI command for either validation or submission."""
     test = normalize_development_service(test)
     cmd = [
@@ -55,6 +56,8 @@ def _build_webin_cli_command(action,
     ]
     if test:
         cmd.append('-test')
+    if action == '-submit' and ascp:
+        cmd.append('-ascp')
     return cmd
 
 
@@ -174,15 +177,41 @@ def __webin_cli_validate(manifest,
             loggingC.message(result.stderr.strip().replace('\n','; '), threshold=0)
 
     except subprocess.CalledProcessError as e:
-        # Even if the subprocess fails, it may produce output or errors, so capture and log them
-        if e.stdout:
-            loggingC.message(e.stdout.strip().replace('\n','; '), threshold=-1)
-        if e.stderr:
-            loggingC.message(e.stderr.strip().replace('\n','; '), threshold=-1)
+        webin_output = '\n'.join(
+            output for output in (e.stdout, e.stderr) if output
+        )
+        report_match = re.search(
+            r'Creating report file:\s*(.+?)\s*$',
+            webin_output,
+            flags=re.MULTILINE
+        )
+        if report_match:
+            report_path = os.path.abspath(
+                os.path.normpath(report_match.group(1))
+            )
+        else:
+            report_files = glob.glob(
+                os.path.join(outputdir, '**', 'webin-cli.report'),
+                recursive=True
+            )
+            report_path = (
+                os.path.abspath(report_files[0])
+                if report_files
+                else f"<not found under {os.path.abspath(outputdir)}>"
+            )
 
-        # Finally, log the exception itself
-        loggingC.message(f"\nERROR: Validation failed with error: {e}", threshold=-1)
-        raise
+        err = (
+            "ERROR: Webin-CLI validation failed.\n\n"
+            f"Submission directory:\n  {os.path.abspath(inputdir)}\n\n"
+            f"Webin-CLI report:\n  {report_path}\n\n"
+            "Likely cause:\n"
+            "  Validation errors were found in the manifest or submitted files\n\n"
+            "How to proceed:\n"
+            f"  - Check the Webin-CLI report at {report_path}\n"
+            "  - Correct the reported validation errors and retry"
+        )
+        loggingC.message(err, threshold=-1)
+        sys.exit(1)
 
         
 def __webin_cli_submit(manifest,
@@ -192,7 +221,8 @@ def __webin_cli_submit(manifest,
                        password,
                        test,
                        context,
-                       jar):
+                       jar,
+                       ascp=False):
     test = normalize_development_service(test)
     environment = os.environ.copy()
     environment[WEBIN_PASSWORD_ENV] = password
@@ -204,7 +234,8 @@ def __webin_cli_submit(manifest,
                                    outputdir,
                                    username,
                                    context,
-                                   test)
+                                   test,
+                                   ascp)
 
     
     if test:
@@ -221,6 +252,8 @@ def __webin_cli_submit(manifest,
         process.send_signal(signal.SIGINT)
     
     accession = None
+    report_path = None
+    webin_output = []
     if context == 'genome':
         accession_line = staticConfig.webin_analysis_accession_line
     elif context == 'reads':
@@ -228,6 +261,11 @@ def __webin_cli_submit(manifest,
     else:
         raise ValueError(f"ERROR: Invalid context {context}")
     for line in iter(process.stdout.readline, ''):
+        webin_output.append(line)
+        report_match = re.search(r'Creating report file:\s*(.+?)\s*$', line)
+        if report_match:
+            report_path = os.path.abspath(os.path.normpath(report_match.group(1)))
+
         if accession_line in line:
             accession = line.strip().split(' ')[-1]
 
@@ -238,7 +276,7 @@ def __webin_cli_submit(manifest,
 
     process.wait()
 
-    return accession
+    return accession, report_path, ''.join(webin_output)
 
 
 def webin_cli(manifest,
@@ -249,7 +287,8 @@ def webin_cli(manifest,
               subdir_name,
               submit=False,
               test=True,
-              context='genome'):
+              context='genome',
+              ascp=False):
     """
     Submit or validate data to/from the Webin submission system.
 
@@ -268,19 +307,84 @@ def webin_cli(manifest,
     accession = None
     if submit:
         loggingC.message(f">Using ENA Webin-CLI to submit {subdir_name}", threshold=2)
-        accession = __webin_cli_submit(manifest,
-                                        inputdir,
-                                        outputdir,
-                                        username,
-                                        password,
-                                        test,
-                                        context,
-                                        jar)
+        accession, report_path, webin_output = __webin_cli_submit(manifest,
+                                                                  inputdir,
+                                                                  outputdir,
+                                                                  username,
+                                                                  password,
+                                                                  test,
+                                                                  context,
+                                                                  jar,
+                                                                  ascp)
         receipt = os.path.join(outputdir, context, subdir_name.replace(' ','_'), 'submit', 'receipt.xml')
         if accession is None:
-            err =  f"ERROR: The submission failed for {inputdir}."
-            err += f" If the submission failed during validation, please consult the output of Webin-CLI."
-            err += f" Otherwise please check the receipt at {receipt}"
+            submission_output_dir = os.path.join(
+                outputdir, context, subdir_name.replace(' ', '_')
+            )
+            if report_path is None:
+                report_path = os.path.abspath(
+                    os.path.join(submission_output_dir, 'webin-cli.report')
+                )
+
+            report_text = ''
+            try:
+                with open(report_path, 'r', errors='replace') as report_file:
+                    report_text = report_file.read()
+            except OSError:
+                pass
+
+            diagnostic_text = (webin_output + '\n' + report_text).lower()
+            ftp_timed_out = (
+                'sockettimeoutexception' in diagnostic_text
+                and 'read timed out' in diagnostic_text
+                and ('ftp server' in diagnostic_text or 'ftpservice' in diagnostic_text)
+            )
+            ascp_fell_back = ascp and (
+                'connecting to ftp server' in diagnostic_text
+                or 'failed to upload files to ftp server' in diagnostic_text
+            )
+
+            err = (
+                f"ERROR: ENA submission failed.\n\n"
+                f"Submission directory:\n  {os.path.abspath(inputdir)}\n\n"
+                f"Webin-CLI report:\n  {report_path}\n\n"
+                "Likely cause:\n"
+            )
+            if ftp_timed_out:
+                err += (
+                    "  The FTP upload timed out while Webin-CLI was opening or using its data\n"
+                    "  connection\n"
+                )
+                if ascp_fell_back:
+                    err += (
+                        "\nTransport note:\n"
+                        "  Aspera was requested with --ascp, but Webin-CLI attempted an FTP upload.\n"
+                        "  It may have fallen back because Aspera was unavailable or blocked.\n"
+                    )
+                err += (
+                    "\nPossible reasons:\n"
+                    "  - A temporary ENA transfer or storage-service problem\n"
+                    "  - An unstable network connection\n"
+                    "  - FTP restrictions imposed by an institutional or HPC firewall/proxy, see\n"
+                    "    https://ena-docs.readthedocs.io/en/latest/submit/fileprep/upload.html#appendix-configuring-your-firewall-for-ena-upload\n"
+                    "\nRecommended actions:\n"
+                    f"  - Check the Webin-CLI report at {report_path}\n"
+                )
+                if not ascp:
+                    err += (
+                        "  - Use Aspera instead of FTP by rerunning subMG with --ascp; see\n"
+                        "    https://github.com/metagenomics/submg#aspera-uploads\n"
+                    )
+                err += (
+                    "  - Retry the submission later (in our experience, the ENA server is just\n"
+                    "    overwhelmed sometimes)"
+                )
+            else:
+                err += (
+                    "  unknown\n\n"
+                    "Recommended action:\n"
+                    f"  - Check the Webin-CLI report at {report_path}"
+                )
             loggingC.message(err, threshold=-1)
             sys.exit(1)
     else:

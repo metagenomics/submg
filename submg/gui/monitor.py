@@ -13,7 +13,7 @@ from submg.core import submit_through_gui
 def submission_wrapper(config_path, output_dir, development_service, verbosity,
                       submit_samples, submit_reads, submit_assembly,
                       submit_bins, submit_mags, exclude_unclassified,
-                      truncate_read_names, username, password, log_queue):
+                      truncate_read_names, ascp, username, password, log_queue):
     """
     Wrapper function to run submit_through_gui and send log messages to a queue.
     """
@@ -34,6 +34,7 @@ def submission_wrapper(config_path, output_dir, development_service, verbosity,
             submit_mags=submit_mags,
             exclude_unclassified=exclude_unclassified,
             truncate_read_names=truncate_read_names,
+            ascp=ascp,
             username=username,
             password=password
         )
@@ -135,7 +136,8 @@ class MonitorPage(BasePage):
         input_frame.grid_rowconfigure(1, weight=0)  # Mode Switch
         input_frame.grid_rowconfigure(2, weight=1)  # Spacer
         input_frame.grid_rowconfigure(3, weight=0)  # Optional read/bin options
-        input_frame.grid_rowconfigure(4, weight=0)  # Buttons Frame
+        input_frame.grid_rowconfigure(4, weight=0)  # Aspera option
+        input_frame.grid_rowconfigure(5, weight=0)  # Buttons Frame
         input_frame.grid_columnconfigure(0, weight=1)
         input_frame.grid_columnconfigure(1, weight=1)
         input_frame.grid_columnconfigure(2, weight=1)
@@ -182,9 +184,17 @@ class MonitorPage(BasePage):
         self.truncate_read_names_checkbox.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="w")
         self.truncate_read_names_checkbox.grid_remove()
 
+        self.ascp_checkbox = ctk.CTkCheckBox(
+            input_frame,
+            text="Use Aspera instead of FTP",
+            font=("Arial", 14),
+            variable=self.controller.ascp
+        )
+        self.ascp_checkbox.grid(row=4, column=0, columnspan=4, padx=10, pady=10, sticky="w")
+
         # Buttons Frame
         input_button_frame = ctk.CTkFrame(input_frame, fg_color="transparent")
-        input_button_frame.grid(row=4, column=0, columnspan=4, padx=0, pady=0, sticky="ew")
+        input_button_frame.grid(row=5, column=0, columnspan=4, padx=0, pady=0, sticky="ew")
         # Configure grid columns to distribute space equally
         for i in range(4):
             input_button_frame.grid_columnconfigure(i, weight=1)
@@ -303,6 +313,7 @@ class MonitorPage(BasePage):
                 self.controller.submission_items.get("mags", False),
                 self.controller.exclude_unclassified.get(),
                 self.controller.truncate_read_names.get(),
+                self.controller.ascp.get(),
                 self.username_entry.get(),
                 self.password_entry.get(),
                 self.log_queue
@@ -390,6 +401,7 @@ class MonitorPage(BasePage):
         self.username_entry.configure(state="disabled")
         self.password_entry.configure(state="disabled")
         self.mode_switch.configure(state="disabled")
+        self.ascp_checkbox.configure(state="disabled")
         self.exclude_unclassified_checkbox.configure(state="disabled")
         self.truncate_read_names_checkbox.configure(state="disabled")
         self.start_button.configure(state="disabled")
@@ -404,6 +416,7 @@ class MonitorPage(BasePage):
         self.username_entry.configure(state="normal")
         self.password_entry.configure(state="normal")
         self.mode_switch.configure(state="normal")
+        self.ascp_checkbox.configure(state="normal")
         self.exclude_unclassified_checkbox.configure(state="normal")
         self.truncate_read_names_checkbox.configure(state="normal")
         self.update_exclude_unclassified_visibility()
@@ -440,6 +453,7 @@ class MonitorPage(BasePage):
     def initialize(self):
         """Called whenever monitor renders the page"""
         self.update_summary()
+        self.ascp_checkbox.configure(variable=self.controller.ascp, state="normal")
         self.exclude_unclassified_checkbox.configure(state="normal")
         self.truncate_read_names_checkbox.configure(state="normal")
         self.update_exclude_unclassified_visibility()

@@ -212,7 +212,8 @@ def submit_reads(config,
                  test=True,
                  minitest=False,
                  skip_checks=False,
-                 truncate_read_names=False):
+                 truncate_read_names=False,
+                 ascp=False):
     """
     Submits the specified reads to ENA.
 
@@ -310,7 +311,8 @@ def submit_reads(config,
                                                                subdir_name=name,
                                                                submit=True,
                                                                test=test,
-                                                               context='reads')
+                                                               context='reads',
+                                                               ascp=ascp)
         
     loggingC.message("\n>Read submission completed!", threshold=0)
     loggingC.message(">Read receipt paths are:", threshold=1)

@@ -84,6 +84,10 @@ def init_argparse():
                                help="Run a minimal test submission using just "
                                "a fraction of your dataset. Intended for quick "
                                "troubleshooting. [default false]")
+    parser_submit.add_argument("--ascp",
+                               action="store_true",
+                               help="Ask Webin-CLI to upload files using Aspera "
+                               "instead of FTP. [default false]")
     parser_submit.add_argument("-t",
                                "--threads",
                                type=int,
@@ -326,7 +330,8 @@ def submit_through_gui(config_path,
                        username,
                        password,
                        exclude_unclassified=False,
-                       truncate_read_names=False):
+                       truncate_read_names=False,
+                       ascp=False):
     """
     Submit data to the ENA after user started the process through the GUI.
 
@@ -347,6 +352,7 @@ def submit_through_gui(config_path,
                                      taxonomy is exactly "unclassified".
         truncate_read_names (bool): Whether to truncate FASTQ read names while
                                     staging.
+        ascp (bool): Whether Webin-CLI should use Aspera for file uploads.
         username (str): ENA username.
         password (str): ENA password.
     """
@@ -362,6 +368,7 @@ def submit_through_gui(config_path,
     args.verbosity = verbosity
     args.development_service = normalize_development_service(development_service)
     args.skip_checks = False
+    args.ascp = ascp
     args.truncate_read_names = truncate_read_names
     args.exclude_unclassified = exclude_unclassified
     args.timestamps = 1
@@ -393,6 +400,7 @@ def submit(args, listener=None, gui=False):
     args.development_service = normalize_development_service(
         args.development_service
     )
+    ascp = getattr(args, 'ascp', False)
 
     staging_base = os.path.realpath(os.path.abspath(os.path.expanduser(args.staging_dir)))
     logging_base = os.path.realpath(os.path.abspath(os.path.expanduser(args.logging_dir)))
@@ -459,6 +467,10 @@ def submit(args, listener=None, gui=False):
                                                 args.submit_assembly,
                                                 args.submit_bins,
                                                 args.submit_mags)
+        if ascp:
+            msg += (">Aspera upload requested. Webin-CLI may still fall back "
+                    "to FTP, for example if Aspera is unavailable or blocked "
+                    "by a firewall.\n")
         loggingC.message(msg, threshold=0)
 
         config = preflight.preflight_checks(vars(args))
@@ -602,7 +614,8 @@ def submit(args, listener=None, gui=False):
                                           test=args.development_service,
                                           minitest=args.minitest,
                                           skip_checks=args.skip_checks,
-                                          truncate_read_names=args.truncate_read_names)
+                                          truncate_read_names=args.truncate_read_names,
+                                          ascp=ascp)
         else:
             if args.submit_bins or args.submit_mags or args.submit_assembly:
                 run_accessions = utility.from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS')
@@ -616,7 +629,8 @@ def submit(args, listener=None, gui=False):
                                                                                   assembly_coverage,
                                                                                   sample_accession_data,
                                                                                   run_accessions,
-                                                                                  test=args.development_service)
+                                                                                  test=args.development_service,
+                                                                                  ascp=ascp)
             # Assembly sample accession will be either the accession of the
             # co-assembly virtual sample or the accession of the single sample
             # which the assembly is based on
@@ -647,7 +661,8 @@ def submit(args, listener=None, gui=False):
                                                 prepdir(staging_subdir, 'bins'),
                                                 prepdir(logging_subdir, 'bins'),
                                                 bin_coverage_file,
-                                                test=args.development_service)
+                                                test=args.development_service,
+                                                ascp=ascp)
 
 
         # MAG submission
@@ -676,7 +691,8 @@ def submit(args, listener=None, gui=False):
                         bin_coverage_file,
                         bin_sample_accessions=bin_sample_accessions,
                         selected_mag_ids=selected_mag_ids,
-                        test=args.development_service)
+                        test=args.development_service,
+                        ascp=ascp)
 
         msg = "\n>All submissions completed."
         if args.development_service:
