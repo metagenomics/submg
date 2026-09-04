@@ -145,13 +145,32 @@ def __check_fields(items: list,
             Only used for error messages. Defaults to "item".
     """
     global checks_failed
-    if not isinstance(items, list):
+    repeated_section = isinstance(items, list)
+    if not repeated_section:
         items = [items]
-    for item in items:
+    for item_number, item in enumerate(items, start=1):
         for field, field_type in mandatory_fields:
             if field not in item.keys():
                 if not optional:
-                    err = f"\nERROR: A '{field}' field is missing in the {category_name} section (or one of the items in this section)."
+                    err = (
+                        "ERROR: A required configuration field is missing.\n\n"
+                        f"Configuration section:\n  {category_name}\n"
+                    )
+                    if repeated_section:
+                        identifier = next(
+                            (key for key in ('NAME', 'TITLE', 'Bin_id') if item.get(key)),
+                            'NAME'
+                        )
+                        identifier_value = item.get(identifier, '<not provided>')
+                        err += (
+                            "\nItem in section:\n"
+                            f"  {identifier}: {identifier_value} (item #{item_number})\n"
+                        )
+                    err += (
+                        f"\nMissing field:\n  {field}\n\n"
+                        "Recommended action:\n"
+                        f"  Add {field} to this item and rerun the preflight checks"
+                    )
                     loggingC.message(err, threshold=-1)
                     checks_failed = True
             elif item[field] is None or item[field] == '':
@@ -346,11 +365,12 @@ def __check_read_type(paired: bool,
         global checks_failed
         checks_failed = True
 
+    section_name = 'PAIRED_END_READS' if paired else 'SINGLE_READS'
+    __check_fields(read_items,
+                   mandatory_fields,
+                   category_name=section_name)
+
     for s in read_items:
-        # Check if all fields are present and not empty
-        __check_fields(read_items,
-                       mandatory_fields,
-                       category_name=read_type)
         # Check if the read name already exists as aliases in ENA
         read_alias = s['NAME']
         read_aliases.append(read_alias)

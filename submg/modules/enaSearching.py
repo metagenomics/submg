@@ -17,6 +17,36 @@ from submg.modules.statConf import staticConfig
 _standalone_diagnostic_mode = False
 
 
+def _report_connection_failure(url: str, network_error: str, details: str):
+    """Report an ENA connectivity failure with service-specific status links."""
+    details = details.replace('\n', '\n  ')
+    status_actions = (
+        "  - Check https://www.ebi.ac.uk/ena/browser/service-status"
+    )
+    if 'wwwdev.ebi.ac.uk' in url:
+        status_actions += (
+            "\n  - Check https://wwwdev.ebi.ac.uk/ena/browser/service-status"
+        )
+
+    message = (
+        "ERROR: Could not connect to the ENA service.\n\n"
+        f"Endpoint:\n  {url}\n\n"
+        f"Network error:\n  {network_error}\n  {details}\n\n"
+        "Likely cause:\n"
+        "  unknown\n\n"
+        "Possible reasons:\n"
+        "  - A temporary ENA service problem\n"
+        "  - An unstable network connection\n"
+        "  - A firewall, proxy, or DNS restriction\n\n"
+        "Recommended actions:\n"
+        f"{status_actions}\n"
+        "  - Verify that the endpoint is reachable from this machine\n"
+        "  - Retry the operation later"
+    )
+    loggingC.message(message, threshold=-1)
+    sys.exit(1)
+
+
 
 def ensure_server_online(url: str, timeout: float = 5.0):
     """
@@ -33,28 +63,21 @@ def ensure_server_online(url: str, timeout: float = 5.0):
         resp = requests.options(url, timeout=timeout)
         resp.raise_for_status()
     except ConnectTimeout as e:
-        loggingC.message(
-            f"ERROR: Connection to {url} timed out.\n\t[{e}]",
-            threshold=-1
-        )
-        sys.exit(1)
+        _report_connection_failure(url, "Connection timed out", str(e))
     except ConnectionError as e:
-        loggingC.message(
-            f"ERROR: Cannot connect to {url} (server offline?).\n\t[{e}]",
-            threshold=-1
+        _report_connection_failure(
+            url, "Connection could not be established", str(e)
         )
-        sys.exit(1)
     except HTTPError as e:
         status = e.response.status_code if e.response is not None else None
         if status and status >= 500:
-            loggingC.message(
-                f"ERROR: Server error at {url} (status code {status}).\n\t[{e}]",
-                threshold=-1
+            _report_connection_failure(
+                url, f"ENA returned HTTP status {status}", str(e)
             )
-            sys.exit(1)
-    except RequestException:
-        # Other errors (e.g., TooManyRedirects); propagate or handle as needed
-        raise
+    except RequestException as e:
+        _report_connection_failure(
+            url, type(e).__name__, str(e)
+        )
 
 
 def _search_request(url: str, params: dict):

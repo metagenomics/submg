@@ -351,19 +351,80 @@ def read_yaml(file_path, convert_file_paths=True):
                 return os.path.abspath(os.path.join(base_path, data))
         return data
 
+    config_path = os.path.abspath(file_path)
     try:
-        with open(file_path, 'r') as yaml_file:
+        with open(config_path, 'r') as yaml_file:
             data = yaml.safe_load(yaml_file)
             if convert_file_paths:
-                base_path = os.path.dirname(os.path.abspath(file_path))
+                base_path = os.path.dirname(config_path)
                 data = convert_paths(data, base_path)
             return data
     except FileNotFoundError:
-        err = f"\nERROR: YAML file not found at: {file_path}"
+        err = (
+            "ERROR: Configuration file not found.\n\n"
+            f"Configuration file:\n  {config_path}\n\n"
+            "Likely cause:\n"
+            "  The configured path does not point to an existing file\n\n"
+            "How to proceed:\n"
+            "  - Check the configuration-file path and try again"
+        )
+        loggingC.message(err, threshold=-1)
+        sys.exit(1)
+    except PermissionError as e:
+        err = (
+            "ERROR: Cannot read the configuration file.\n\n"
+            f"Configuration file:\n  {config_path}\n\n"
+            f"System error:\n  {e}\n\n"
+            "Likely cause:\n"
+            "  Permission to read the configuration file was denied\n\n"
+            "How to proceed:\n"
+            "  - Check the file permissions and try again"
+        )
+        loggingC.message(err, threshold=-1)
+        sys.exit(1)
+    except yaml.YAMLError as e:
+        parser_message = getattr(e, 'problem', None) or str(e)
+        parser_message = parser_message.replace('\n', '\n  ')
+        mark = getattr(e, 'problem_mark', None)
+        location = ''
+        location_hint = ''
+        if mark is not None:
+            line = mark.line + 1
+            column = mark.column + 1
+            location = f"\nLocation:\n  line {line}, column {column}\n"
+            location_hint = f" near line {line}"
+        err = (
+            "ERROR: Could not parse the configuration file.\n\n"
+            f"Configuration file:\n  {config_path}\n\n"
+            f"Parser message:\n  {parser_message}\n"
+            f"{location}\n"
+            "Likely cause:\n"
+            "  The YAML structure or indentation is invalid\n\n"
+            "How to proceed:\n"
+            f"  - Inspect the configuration{location_hint}\n"
+            "  - Check indentation, colons, quotes, and list markers\n"
+            "  - Correct the YAML and try again"
+        )
+        loggingC.message(err, threshold=-1)
+        sys.exit(1)
+    except OSError as e:
+        err = (
+            "ERROR: Could not read the configuration file.\n\n"
+            f"Configuration file:\n  {config_path}\n\n"
+            f"System error:\n  {e}\n\n"
+            "Likely cause:\n"
+            "  The operating system could not read the file\n\n"
+            "How to proceed:\n"
+            "  - Check that the path is a readable regular file and try again"
+        )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
     except Exception as e:
-        err = f"\nERROR: An error occurred while reading {file_path}, error is:\n{e}"
+        err = (
+            "ERROR: Unexpected error while processing the configuration file.\n\n"
+            f"Configuration file:\n  {config_path}\n\n"
+            f"Error:\n  {type(e).__name__}: {e}"
+        )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
 
