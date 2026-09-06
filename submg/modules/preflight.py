@@ -286,6 +286,13 @@ def __check_sample_accessions(config: dict,
                 "the SAMPLE_ACCESSIONS field could not be found on the ENA "
                 f"{server} server."
             )
+            if not testmode:
+                err += (
+                    " Recently submitted samples may not yet be available "
+                    "through the ENA search API due to an indexing delay. If "
+                    "you are certain the accession exists, consider using "
+                    "--skip-checks."
+                )
             loggingC.message(err, threshold=-1)
             checks_failed = True
 
@@ -430,7 +437,16 @@ def __check_read_type(paired: bool,
                         loggingC.message(wrn, threshold=-1)
                         checks_failed = True
                     else:
-                        err = f"\nERROR: The sample accession '{sample_accession}' was provided in the reads section but does not exist on the ENA server."
+                        err = (
+                            f"\nERROR: The sample accession "
+                            f"'{sample_accession}' was provided in the reads "
+                            "section but does not exist on the ENA server. "
+                            "If you submitted the sample very recently, "
+                            "it might not yet be available through the "
+                            "ENA search API due to indexing delays. "
+                            "If you are certain the accession exists, "
+                            "you can wait for a while or use --skip-checks."
+                        )
                         loggingC.message(err, threshold=-1)
                         checks_failed = True
             # Is it the same samples from the sample_accessions field
