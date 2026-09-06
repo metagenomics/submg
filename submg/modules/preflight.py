@@ -261,6 +261,35 @@ def __check_study(config: dict,
             checks_failed = True
 
 
+def __check_sample_accessions(config: dict,
+                              testmode: bool):
+    """Check top-level SAMPLE_ACCESSIONS on the target ENA service."""
+    global checks_failed
+    if 'SAMPLE_ACCESSIONS' not in config:
+        return
+
+    sample_accessions = utility.from_config(config, 'SAMPLE_ACCESSIONS')
+    if not isinstance(sample_accessions, list):
+        sample_accessions = [sample_accessions]
+
+    for sample_accession in sample_accessions:
+        sample_exists = enaSearching.sample_accession_exists(sample_accession,
+                                                             False)
+        if not sample_exists and testmode:
+            sample_exists = enaSearching.sample_accession_exists(
+                sample_accession, True
+            )
+        if not sample_exists:
+            server = "production or development" if testmode else "production"
+            err = (
+                f"\nERROR: The sample accession '{sample_accession}' from "
+                "the SAMPLE_ACCESSIONS field could not be found on the ENA "
+                f"{server} server."
+            )
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
+
+
 def __check_samples(arguments: dict,
                     config: dict):
     """
@@ -1133,6 +1162,7 @@ def preflight_checks(arguments: dict) -> None:
     testmode = arguments['development_service']
     __check_windows_pysam(config)
     __check_study(config, testmode)
+    __check_sample_accessions(config, testmode)
     __check_misc(arguments, config)
     __check_samples(arguments, config)
     __check_reads(arguments, config, testmode)
