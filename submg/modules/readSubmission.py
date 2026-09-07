@@ -1,6 +1,9 @@
 import os
 import csv
 import sys
+import sqlite3
+import tempfile
+from contextlib import ExitStack, closing
 
 from submg.modules import loggingC, utility
 from submg.modules.utility import from_config, stamped_from_config
@@ -107,8 +110,16 @@ def __process_fastq(input_path: str,
         output_path (str): The path to the staged gzip FASTQ file.
         truncate_read_names (bool): Whether to truncate read headers.
     """
-    seen_read_names = set()
-    with utility.open_fastq(input_path, 'rb') as f_in:
+    with ExitStack() as stack, utility.open_fastq(input_path, 'rb') as f_in:
+        if truncate_read_names:
+            # Keep the collision index on the staging disk, with a bounded cache.
+            temp_dir = stack.enter_context(tempfile.TemporaryDirectory(
+                dir=os.path.dirname(os.path.abspath(output_path))))
+            seen_read_names = stack.enter_context(closing(sqlite3.connect(
+                os.path.join(temp_dir, 'read_names.sqlite'))))
+            seen_read_names.execute('PRAGMA cache_size = -2048')
+            seen_read_names.execute('PRAGMA journal_mode = OFF')
+            seen_read_names.execute('CREATE TABLE names (name BLOB PRIMARY KEY) WITHOUT ROWID')
         with gzip.open(output_path, 'wb', compresslevel=5) as f_out:
             read_number = 0
             while True:
@@ -123,14 +134,14 @@ def __process_fastq(input_path: str,
                 header_content = utility.fastq_header_content(header)
                 if truncate_read_names:
                     staged_header_content = header_content[:staticConfig.max_fastq_read_name_length]
-                    if staged_header_content in seen_read_names:
+                    if seen_read_names.execute('INSERT OR IGNORE INTO names VALUES (?)',
+                                               (staged_header_content,)).rowcount == 0:
                         err = (
                             f"\nERROR: Truncating read names in '{input_path}' "
                             f"would create a duplicate name in read {read_number}."
                         )
                         loggingC.message(err, threshold=-1)
                         sys.exit(1)
-                    seen_read_names.add(staged_header_content)
                     header = staged_header_content + header[len(header_content):]
                 elif len(header_content) > staticConfig.max_fastq_read_name_length:
                     err = (
