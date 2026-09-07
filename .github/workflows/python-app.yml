@@ -94,7 +94,7 @@ jobs:
         EXAMPLE: ${{ matrix.example }}
         SUBMIT_FLAGS: ${{ matrix.flags }}
       run: |
-        RANDOM_STR=$(python -c 'import secrets; print(secrets.token_hex(8))')
+        RANDOM_STR=$(python -c 'import secrets, string; print("".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(5)))')
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
         read -r -a flags <<< "$SUBMIT_FLAGS"
         submg-cli submit \
