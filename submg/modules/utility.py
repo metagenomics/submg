@@ -840,7 +840,7 @@ def make_depth_file(bam_file, outdir, num_threads=4):
     sorted_bam_file = check_bam(bam_file, num_threads=num_threads)
     filename = os.path.basename(sorted_bam_file) + '.depth'
     outfile = os.path.join(outdir, filename)
-    pysam.depth("-@", str(num_threads), "-a", sorted_bam_file, "-o", outfile)
+    pysam.depth("-@", str(num_threads), "-aa", sorted_bam_file, "-o", outfile)
     return outfile
 
 
