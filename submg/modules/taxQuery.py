@@ -553,7 +553,7 @@ def __ena_taxonomy_suggestion(level: str,
             query = f"{classification} {dstring}"    
 
     url = f"https://www.ebi.ac.uk/ena/taxonomy/rest/suggest-for-submission/{query}"
-    response = requests.get(url)
+    response = requests.get(url, timeout=staticConfig.http_timeout)
     if response.status_code == 200:
         raw = response.json()
 
@@ -772,7 +772,7 @@ def taxid_from_scientific_name(scientific_name: str) -> str:
         scientific_name (str): The scientific name to query for.
     """
     url = f"https://www.ebi.ac.uk/ena/taxonomy/rest/scientific-name/{scientific_name}"
-    response = requests.get(url)
+    response = requests.get(url, timeout=staticConfig.http_timeout)
     items = response.json()
     if not (len(items) == 1):
         return None

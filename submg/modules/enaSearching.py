@@ -84,7 +84,9 @@ def _search_request(url: str, params: dict):
     """Run an ENA Search API request and report its URL in diagnostic mode."""
     prepared_url = requests.Request("GET", url, params=params).prepare().url
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url,
+                                params=params,
+                                timeout=staticConfig.http_timeout)
     except Exception:
         if _standalone_diagnostic_mode:
             print(f"Request URL: {prepared_url}")

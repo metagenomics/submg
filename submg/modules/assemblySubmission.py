@@ -105,7 +105,8 @@ def __submit_coassembly_samplesheet(sample_xml: str,
                 files={
                     'SUBMISSION': open(submission_xml, "rb"),
                     'SAMPLE': open(sample_xml, "rb"),
-                }, auth=HTTPBasicAuth(usr, pwd))
+                }, auth=HTTPBasicAuth(usr, pwd),
+                timeout=staticConfig.http_timeout)
     loggingC.message("\tHTTP status: "+str(response.status_code), threshold=1)
     utility.api_response_check(response, submission_xml)
 

@@ -9,6 +9,7 @@ class staticConfig:
     ena_test_dropbox_url: str = 'https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/'
     ena_search_url: str = 'https://www.ebi.ac.uk/ena/portal/api/search'
     ena_test_search_url: str = 'https://wwwdev.ebi.ac.uk/ena/portal/api/search'
+    http_timeout: tuple = (10, 60)
     sequence_assembly_type: str = "primary metagenome"
     zipped_fasta_extension: str = ".fna.gz"
     zipped_fastq_extension: str = ".fastq.gz"

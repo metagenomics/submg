@@ -284,7 +284,8 @@ def __submit_bins_samplesheet(sample_xml: str,
                 files={
                     'SUBMISSION': open(submission_xml, "rb"),
                     'SAMPLE': open(sample_xml, "rb"),
-                }, auth=HTTPBasicAuth(usr, pwd))
+                }, auth=HTTPBasicAuth(usr, pwd),
+                timeout=staticConfig.http_timeout)
     loggingC.message(f"\tHTTP status: {response.status_code}", threshold=1)
 
     # Process response

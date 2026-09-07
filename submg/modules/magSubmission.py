@@ -373,7 +373,8 @@ def __submit_mags_samplesheet(samplesheet: str,
                              files={
                                  'SUBMISSION': open(submission_xml, 'rb'),
                                  'SAMPLE': open(samplesheet, 'rb')
-                             }, auth=HTTPBasicAuth(usr, pwd))
+                             }, auth=HTTPBasicAuth(usr, pwd),
+                             timeout=staticConfig.http_timeout)
     loggingC.message(f"\tHTTP status: {response.status_code}", threshold=1)
 
     # Process response

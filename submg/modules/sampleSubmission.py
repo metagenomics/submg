@@ -137,7 +137,8 @@ def __submit_samplesheet(samplesheet: str,
                              files={
                                 'SUBMISSION': open(submission_xml, 'rb'),
                                 'SAMPLE': open(samplesheet, 'rb'),},
-                             auth=requests.auth.HTTPBasicAuth(usr, pwd))
+                             auth=requests.auth.HTTPBasicAuth(usr, pwd),
+                             timeout=staticConfig.http_timeout)
     loggingC.message(f"\t...HTTP status: {response.status_code}", threshold=0)
     utility.api_response_check(response, submission_xml)
 

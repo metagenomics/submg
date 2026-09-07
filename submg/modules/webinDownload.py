@@ -68,7 +68,9 @@ def download_webin_cli(version):
     
     if not os.path.exists(jar_path):
         print(f">Trying to download Webin-CLI from {url}")
-        response = requests.get(url, stream=True)
+        response = requests.get(url,
+                                stream=True,
+                                timeout=statConf.staticConfig.http_timeout)
         if response.status_code == 200:
             with open(jar_path, 'wb') as file:
                 for chunk in response.iter_content(chunk_size=8192):
