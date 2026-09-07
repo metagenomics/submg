@@ -4,6 +4,7 @@ import os
 import subprocess
 import requests
 import sys
+import tempfile
 
 from submg.modules import statConf
 from submg.modules import webinWrapper
@@ -68,17 +69,20 @@ def download_webin_cli(version):
     
     if not os.path.exists(jar_path):
         print(f">Trying to download Webin-CLI from {url}")
-        response = requests.get(url,
-                                stream=True,
-                                timeout=statConf.staticConfig.http_timeout)
-        if response.status_code == 200:
-            with open(jar_path, 'wb') as file:
-                for chunk in response.iter_content(chunk_size=8192):
-                    file.write(chunk)
-            print(f">Webin-CLI downloaded successfully to {jar_path}")
-        else:
-            print("#####")
+        try:
+            with requests.get(url, stream=True,
+                              timeout=statConf.staticConfig.http_timeout) as response:
+                response.raise_for_status()
+                with tempfile.TemporaryDirectory(dir=storage_dir) as temp_dir:
+                    temp_path = os.path.join(temp_dir, 'webin-cli.jar')
+                    with open(temp_path, 'wb') as file:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            file.write(chunk)
+                    os.replace(temp_path, jar_path)
+        except requests.RequestException as error:
+            print(f">Download error: {error}")
             print(f">WARNING: Failed to download Webin-CLI. Please download version {version} manually from the ENA website and place it in {storage_dir}.")
-            print("#####")
+            sys.exit(1)
+        print(f">Webin-CLI downloaded successfully to {jar_path}")
     else:
         print(f">Webin-CLI already exists at {jar_path}")
