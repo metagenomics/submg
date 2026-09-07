@@ -20,7 +20,7 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v2
       with:
-        context: ./docker
+        context: .
         file: ./docker/Dockerfile
         push: true
         tags: ttubb/submg:latest # You can also use other tags or versioning schemes
