@@ -1,6 +1,3 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: Python application
 
 on:
@@ -14,6 +11,57 @@ permissions:
 
 jobs:
   build:
+    name: Example ${{ matrix.example }}
+    strategy:
+      fail-fast: false
+      max-parallel: 25
+      matrix:
+        include:
+          - example: "01"
+            config: 01_samples_reads_assembly_bins_mags.yaml
+            flags: --submit-samples --submit-reads --submit-assembly --submit-bins --submit-mags
+          - example: "02"
+            config: 02_samples_reads_assembly_bins.yaml
+            flags: --submit-samples --submit-reads --submit-assembly --submit-bins
+          - example: "03"
+            config: 03_samples_reads_assembly.yaml
+            flags: --submit-samples --submit-reads --submit-assembly
+          - example: "04"
+            config: 04_reads_assembly_bins_mags.yaml
+            flags: --submit-reads --submit-assembly --submit-bins --submit-mags
+          - example: "05"
+            config: 05_reads_assembly_bins.yaml
+            flags: --submit-reads --submit-assembly --submit-bins
+          - example: "06"
+            config: 06_reads_assembly.yaml
+            flags: --submit-reads --submit-assembly
+          - example: "07"
+            config: 07_assembly_bins_mags.yaml
+            flags: --submit-assembly --submit-bins --submit-mags
+          - example: "08"
+            config: 08_assembly_bins.yaml
+            flags: --submit-assembly --submit-bins
+          - example: "09"
+            config: 09_assembly.yaml
+            flags: --submit-assembly
+          - example: "10"
+            config: 10_bins_mags.yaml
+            flags: --submit-bins --submit-mags
+          - example: "11"
+            config: 11_bins.yaml
+            flags: --submit-bins
+          - example: "12"
+            config: 12_mags.yaml
+            flags: --submit-mags
+          - example: "13"
+            config: 13_samples.yaml
+            flags: --submit-samples
+          - example: "14"
+            config: 14_reads.yaml
+            flags: --submit-reads
+          - example: "15"
+            config: 15_samples_reads.yaml
+            flags: --submit-samples --submit-reads
 
     runs-on: ubuntu-latest
 
@@ -37,190 +85,20 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Example 01
+    - name: Submit example
+      working-directory: examples
       env:
         ENA_USER: ${{ secrets.ENA_USER }}
         ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
+        CFG: ${{ matrix.config }}
+        EXAMPLE: ${{ matrix.example }}
+        SUBMIT_FLAGS: ${{ matrix.flags }}
       run: |
-        cd examples
-        CFG=01_samples_reads_assembly_bins_mags.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
+        RANDOM_STR=$(python -c 'import secrets, string; print("".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(5)))')
         sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
+        read -r -a flags <<< "$SUBMIT_FLAGS"
         submg-cli submit \
-          --config $CFG \
-          --staging-dir example01/staging \
-          --logging-dir example01/logging \
-          --submit-samples \
-          --submit-reads \
-          --submit-assembly \
-          --submit-bins \
-          --submit-mags
-    - name: Example 02
-      env:
-        ENA_USER: ${{ secrets.ENA_USER }}
-        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
-      run: |
-        cd examples
-        CFG=02_samples_reads_assembly_bins.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
-        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
-        submg-cli submit \
-          --config $CFG \
-          --staging-dir example02/staging \
-          --logging-dir example02/logging \
-          --submit-samples \
-          --submit-reads \
-          --submit-assembly \
-          --submit-bins
-    - name: Example 03
-      env:
-        ENA_USER: ${{ secrets.ENA_USER }}
-        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
-      run: |
-        cd examples
-        CFG=03_samples_reads_assembly.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
-        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
-        submg-cli submit \
-          --config $CFG \
-          --staging-dir example03/staging \
-          --logging-dir example03/logging \
-          --submit-samples \
-          --submit-reads \
-          --submit-assembly
-    - name: Example 04
-      env:
-        ENA_USER: ${{ secrets.ENA_USER }}
-        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
-      run: |
-        cd examples
-        CFG=04_reads_assembly_bins_mags.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
-        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
-        submg-cli submit \
-          --config $CFG \
-          --staging-dir example04/staging \
-          --logging-dir example04/logging \
-          --submit-reads \
-          --submit-assembly \
-          --submit-bins \
-          --submit-mags
-    - name: Example 05
-      env:
-        ENA_USER: ${{ secrets.ENA_USER }}
-        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
-      run: |
-        cd examples
-        CFG=05_reads_assembly_bins.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
-        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
-        submg-cli submit \
-          --config $CFG \
-          --staging-dir example05/staging \
-          --logging-dir example05/logging \
-          --submit-reads \
-          --submit-assembly \
-          --submit-bins
-    - name: Example 06
-      env:
-        ENA_USER: ${{ secrets.ENA_USER }}
-        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
-      run: |
-        cd examples
-        CFG=06_reads_assembly.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
-        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
-        submg-cli submit \
-          --config $CFG \
-          --staging-dir example06/staging \
-          --logging-dir example06/logging \
-          --submit-reads \
-          --submit-assembly
-    - name: Example 07
-      env:
-        ENA_USER: ${{ secrets.ENA_USER }}
-        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
-      run: |
-        cd examples
-        CFG=07_assembly_bins_mags.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
-        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
-        submg-cli submit \
-          --config $CFG \
-          --staging-dir example07/staging \
-          --logging-dir example07/logging \
-          --submit-assembly \
-          --submit-bins \
-          --submit-mags
-    - name: Example 08
-      env:
-        ENA_USER: ${{ secrets.ENA_USER }}
-        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
-      run: |
-        cd examples
-        CFG=08_assembly_bins.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
-        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
-        submg-cli submit \
-          --config $CFG \
-          --staging-dir example08/staging \
-          --logging-dir example08/logging \
-          --submit-assembly \
-          --submit-bins
-    - name: Example 09
-      env:
-        ENA_USER: ${{ secrets.ENA_USER }}
-        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
-      run: |
-        cd examples
-        CFG=09_assembly.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
-        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
-        submg-cli submit \
-          --config $CFG \
-          --staging-dir example09/staging \
-          --logging-dir example09/logging \
-          --submit-assembly
-    - name: Example 10
-      env:
-        ENA_USER: ${{ secrets.ENA_USER }}
-        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
-      run: |
-        cd examples
-        CFG=10_bins_mags.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
-        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
-        submg-cli submit \
-          --config $CFG \
-          --staging-dir example10/staging \
-          --logging-dir example10/logging \
-          --submit-bins \
-          --submit-mags
-    - name: Example 11
-      env:
-        ENA_USER: ${{ secrets.ENA_USER }}
-        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
-      run: |
-        cd examples
-        CFG=11_bins.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
-        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
-        submg-cli submit \
-          --config $CFG \
-          --staging-dir example11/staging \
-          --logging-dir example11/logging \
-          --submit-bins
-    - name: Example 12
-      env:
-        ENA_USER: ${{ secrets.ENA_USER }}
-        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
-      run: |
-        cd examples
-        CFG=12_mags.yaml
-        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
-        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
-        submg-cli submit \
-          --config $CFG \
-          --staging-dir example12/staging \
-          --logging-dir example12/logging \
-          --submit-mags
+          --config "$CFG" \
+          --staging-dir "example${EXAMPLE}/staging" \
+          --logging-dir "example${EXAMPLE}/logging" \
+          "${flags[@]}"

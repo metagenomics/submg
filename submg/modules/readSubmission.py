@@ -1,6 +1,9 @@
 import os
 import csv
 import sys
+import sqlite3
+import tempfile
+from contextlib import ExitStack, closing
 
 from submg.modules import loggingC, utility
 from submg.modules.utility import from_config, stamped_from_config
@@ -96,11 +99,72 @@ def __zipcopy(input_path: str,
                 f_out.writelines(f_in)
 
 
+def __process_fastq(input_path: str,
+                    output_path: str,
+                    truncate_read_names: bool) -> None:
+    """
+    Check and/or rewrite a FASTQ file while staging it as gzip.
+
+    Args:
+        input_path (str): The path to the input FASTQ file.
+        output_path (str): The path to the staged gzip FASTQ file.
+        truncate_read_names (bool): Whether to truncate read headers.
+    """
+    with ExitStack() as stack, utility.open_fastq(input_path, 'rb') as f_in:
+        if truncate_read_names:
+            # Keep the collision index on the staging disk, with a bounded cache.
+            temp_dir = stack.enter_context(tempfile.TemporaryDirectory(
+                dir=os.path.dirname(os.path.abspath(output_path))))
+            seen_read_names = stack.enter_context(closing(sqlite3.connect(
+                os.path.join(temp_dir, 'read_names.sqlite'))))
+            seen_read_names.execute('PRAGMA cache_size = -2048')
+            seen_read_names.execute('PRAGMA journal_mode = OFF')
+            seen_read_names.execute('CREATE TABLE names (name BLOB PRIMARY KEY) WITHOUT ROWID')
+        with gzip.open(output_path, 'wb', compresslevel=5) as f_out:
+            read_number = 0
+            while True:
+                header = f_in.readline()
+                if not header:
+                    break
+                sequence = f_in.readline()
+                separator = f_in.readline()
+                quality = f_in.readline()
+                read_number += 1
+
+                header_content = utility.fastq_header_content(header)
+                if truncate_read_names:
+                    staged_header_content = header_content[:staticConfig.max_fastq_read_name_length]
+                    if seen_read_names.execute('INSERT OR IGNORE INTO names VALUES (?)',
+                                               (staged_header_content,)).rowcount == 0:
+                        err = (
+                            f"\nERROR: Truncating read names in '{input_path}' "
+                            f"would create a duplicate name in read {read_number}."
+                        )
+                        loggingC.message(err, threshold=-1)
+                        sys.exit(1)
+                    header = staged_header_content + header[len(header_content):]
+                elif len(header_content) > staticConfig.max_fastq_read_name_length:
+                    err = (
+                        f"\nERROR: The FASTQ file '{input_path}' contains a "
+                        f"read name with {len(header_content)} characters in "
+                        f"read {read_number}. The ENA limit is "
+                        f"{staticConfig.max_fastq_read_name_length} characters. "
+                        "Use --truncate-read-names to truncate read names "
+                        "during staging."
+                    )
+                    loggingC.message(err, threshold=-1)
+                    sys.exit(1)
+
+                f_out.writelines([header, sequence, separator, quality])
+
+
 def __stage_reads_submission(config: dict,
                              sample_accession_data,
                              data: dict,
                              staging_dir: str,
-                             logging_dir: str) -> str:
+                             logging_dir: str,
+                             skip_checks: bool,
+                             truncate_read_names: bool) -> str:
     """
     Stage the reads for submission.
 
@@ -113,6 +177,8 @@ def __stage_reads_submission(config: dict,
         staging_dir (str): The directory where the reads will be staged.
         logging_dir (str): The directory where the submission logs will be
             written.
+        skip_checks (bool): Whether to skip the full staging length check.
+        truncate_read_names (bool): Whether to truncate read headers.
 
     Returns:
         str: The path to the manifest file.
@@ -126,9 +192,19 @@ def __stage_reads_submission(config: dict,
     else: # Paired-end reads
         fastq1_path = from_config(data, 'FASTQ1_FILE')
         fastq2_path = from_config(data, 'FASTQ2_FILE')
-    __zipcopy(fastq1_path, gzipped_fastq1_path)
+    if skip_checks and not truncate_read_names:
+        __zipcopy(fastq1_path, gzipped_fastq1_path)
+    else:
+        __process_fastq(fastq1_path,
+                        gzipped_fastq1_path,
+                        truncate_read_names)
     if not fastq2_path is None:
-        __zipcopy(fastq2_path, gzipped_fastq2_path)
+        if skip_checks and not truncate_read_names:
+            __zipcopy(fastq2_path, gzipped_fastq2_path)
+        else:
+            __process_fastq(fastq2_path,
+                            gzipped_fastq2_path,
+                            truncate_read_names)
 
     # Make the MANIFEST file
     manifest = __prep_reads_manifest(config,
@@ -145,7 +221,10 @@ def submit_reads(config,
                  staging_dir,
                  logging_dir,
                  test=True,
-                 minitest=False):
+                 minitest=False,
+                 skip_checks=False,
+                 truncate_read_names=False,
+                 ascp=False):
     """
     Submits the specified reads to ENA.
 
@@ -159,6 +238,10 @@ def submit_reads(config,
             written.
         test (bool, optional): If True, use the Webin test submission service
         (default is True).
+        skip_checks (bool, optional): Whether to skip the full staging length
+            check (default is False).
+        truncate_read_names (bool, optional): Whether to truncate read headers
+            during staging (default is False).
 
     Returns:
         list: The accessions of the submitted reads.
@@ -189,7 +272,9 @@ def submit_reads(config,
                                                 sample_accession_data,
                                                 data,
                                                 read_set_staging_dir,
-                                                read_set_logging_dir)                                                
+                                                read_set_logging_dir,
+                                                skip_checks,
+                                                truncate_read_names)
             read_manifests[name] = manifest
             counter = i + 1
             if minitest:
@@ -210,7 +295,9 @@ def submit_reads(config,
                                                 sample_accession_data,
                                                 data,
                                                 read_set_staging_dir,
-                                                read_set_logging_dir)         
+                                                read_set_logging_dir,
+                                                skip_checks,
+                                                truncate_read_names)
             
             read_manifests[name] = manifest
             if minitest:
@@ -235,7 +322,8 @@ def submit_reads(config,
                                                                subdir_name=name,
                                                                submit=True,
                                                                test=test,
-                                                               context='reads')
+                                                               context='reads',
+                                                               ascp=ascp)
         
     loggingC.message("\n>Read submission completed!", threshold=0)
     loggingC.message(">Read receipt paths are:", threshold=1)

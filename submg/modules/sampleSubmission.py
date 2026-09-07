@@ -78,7 +78,9 @@ def __read_samplesheet_receipt(receipt_path: str) -> list:
 
     success = tree_root.attrib['success']
     if success != 'true':
-        err = f"\nERROR: The submission of the biological samples failed. Consult the receipt file at {os.path.abspath(receipt_path)} for more information."
+        err = utility.format_receipt_failure(
+            tree_root, receipt_path, "biological-sample"
+        )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
     loggingC.message(f"\t...samplesheet upload was successful.", threshold=0)
@@ -135,9 +137,10 @@ def __submit_samplesheet(samplesheet: str,
                              files={
                                 'SUBMISSION': open(submission_xml, 'rb'),
                                 'SAMPLE': open(samplesheet, 'rb'),},
-                             auth=requests.auth.HTTPBasicAuth(usr, pwd))
+                             auth=requests.auth.HTTPBasicAuth(usr, pwd),
+                             timeout=staticConfig.http_timeout)
     loggingC.message(f"\t...HTTP status: {response.status_code}", threshold=0)
-    utility.api_response_check(response)
+    utility.api_response_check(response, submission_xml)
 
     # Write receipt
     with open(receipt_path, 'w') as f:

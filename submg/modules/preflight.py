@@ -1,6 +1,8 @@
 import os
 import sys
 import platform
+import shutil
+import subprocess
 import time
 import csv
 from datetime import datetime
@@ -46,6 +48,83 @@ def __check_tsv(tsvfile: str,
         return bin_ids
     
 
+def __check_unclassified_taxonomies(arguments: dict,
+                                    bin_data: dict,
+                                    config: dict):
+    """
+    Check submitted bins for an exact, case-insensitive ``unclassified``
+    taxonomy string.
+
+    Taxonomies in the manual taxonomy file take precedence over NCBI
+    taxonomy-file values. Bins that will be removed by the configured quality
+    thresholds are not reported here. Taxonomy discovery is centralized in
+    taxQuery so this policy is shared with the submission flow.
+
+    Args:
+        arguments (dict): The command line arguments.
+        bin_data (dict): The BINS section of the configuration.
+        config (dict): The complete configuration dictionary.
+    """
+    global checks_failed
+
+    if arguments['exclude_unclassified']:
+        return
+
+    try:
+        min_completeness = float(bin_data.get('MIN_COMPLETENESS', 0))
+        max_contamination = float(
+            bin_data.get('MAX_CONTAMINATION', 100)
+        )
+    except (TypeError, ValueError):
+        # The existing quality-threshold checks report malformed values. Do
+        # not produce a secondary taxonomy error when the eligible bin set is
+        # not known reliably.
+        return
+
+    bin_quality = binSubmission.get_bin_quality(config, silent=True)
+    eligible_bins = set()
+    for bin_id, quality in bin_quality.items():
+        try:
+            completeness = float(quality.get('completeness'))
+            contamination = float(quality.get('contamination'))
+        except (TypeError, ValueError):
+            msg = f"\nERROR: Invalid format for quality values for bin '{bin_id}':"
+            msg += f" completeness='{quality.get('completeness')}', "
+            msg += f"contamination='{quality.get('contamination')}'. Please check the "
+            msg += f"quality file '{bin_data.get('QUALITY_FILE')}'."
+            loggingC.message(msg, threshold=-1)
+            sys.exit(1)
+        if completeness >= min_completeness and contamination <= max_contamination:
+            eligible_bins.add(bin_id)
+
+    unclassified_taxonomies = taxQuery.get_unclassified_bin_taxonomies(config)
+    unclassified_bins = [
+        (bin_id, taxonomy)
+        for bin_id, taxonomy in unclassified_taxonomies.items()
+        if bin_id in eligible_bins
+    ]
+
+    if len(unclassified_bins) == 0:
+        return
+
+    unclassified_bins.sort(key=lambda item: item[0])
+    err = (
+        "\nERROR: Found bins whose complete taxonomy string is exactly "
+        "'unclassified' (case-insensitive). These bins cannot be classified "
+        "automatically or submitted to ENA. Affected bins:"
+    )
+    loggingC.message(err, threshold=-1)
+    for bin_id, taxonomy in unclassified_bins:
+        loggingC.message(f"\t{bin_id}: {taxonomy}", threshold=-1)
+    msg = (
+        "Please provide a valid taxonomy for these bins, use the "
+        "--exclude-unclassified argument, or enable the corresponding GUI "
+        "option to discard all of these bins."
+    )
+    loggingC.message(msg, threshold=-1)
+    checks_failed = True
+
+
 def __check_fields(items: list,
                    mandatory_fields: list,
                    optional: bool = False,
@@ -66,13 +145,32 @@ def __check_fields(items: list,
             Only used for error messages. Defaults to "item".
     """
     global checks_failed
-    if not isinstance(items, list):
+    repeated_section = isinstance(items, list)
+    if not repeated_section:
         items = [items]
-    for item in items:
+    for item_number, item in enumerate(items, start=1):
         for field, field_type in mandatory_fields:
             if field not in item.keys():
                 if not optional:
-                    err = f"\nERROR: A '{field}' field is missing in the {category_name} section (or one of the items in this section)."
+                    err = (
+                        "ERROR: A required configuration field is missing.\n\n"
+                        f"Configuration section:\n  {category_name}\n"
+                    )
+                    if repeated_section:
+                        identifier = next(
+                            (key for key in ('NAME', 'TITLE', 'Bin_id') if item.get(key)),
+                            'NAME'
+                        )
+                        identifier_value = item.get(identifier, '<not provided>')
+                        err += (
+                            "\nItem in section:\n"
+                            f"  {identifier}: {identifier_value} (item #{item_number})\n"
+                        )
+                    err += (
+                        f"\nMissing field:\n  {field}\n\n"
+                        "Recommended action:\n"
+                        f"  Add {field} to this item and rerun the preflight checks"
+                    )
                     loggingC.message(err, threshold=-1)
                     checks_failed = True
             elif item[field] is None or item[field] == '':
@@ -163,6 +261,42 @@ def __check_study(config: dict,
             checks_failed = True
 
 
+def __check_sample_accessions(config: dict,
+                              testmode: bool):
+    """Check top-level SAMPLE_ACCESSIONS on the target ENA service."""
+    global checks_failed
+    if 'SAMPLE_ACCESSIONS' not in config:
+        return
+
+    sample_accessions = utility.from_config(config, 'SAMPLE_ACCESSIONS')
+    if not isinstance(sample_accessions, list):
+        sample_accessions = [sample_accessions]
+
+    for sample_accession in sample_accessions:
+        sample_exists = enaSearching.sample_accession_exists(sample_accession,
+                                                             False)
+        if not sample_exists and testmode:
+            sample_exists = enaSearching.sample_accession_exists(
+                sample_accession, True
+            )
+        if not sample_exists:
+            server = "production or development" if testmode else "production"
+            err = (
+                f"\nERROR: The sample accession '{sample_accession}' from "
+                "the SAMPLE_ACCESSIONS field could not be found on the ENA "
+                f"{server} server."
+            )
+            if not testmode:
+                err += (
+                    " Recently submitted samples may not yet be available "
+                    "through the ENA search API due to an indexing delay. If "
+                    "you are certain the accession exists, consider using "
+                    "--skip-checks."
+                )
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
+
+
 def __check_samples(arguments: dict,
                     config: dict):
     """
@@ -233,11 +367,13 @@ def __check_read_type(paired: bool,
         loggingC.message(err, threshold=-1)
         sys.exit(1)
     mandatory_fields = [('NAME', str),
+                        ('SEQUENCING_INSTRUMENT', str),
                         ('LIBRARY_SOURCE', str),
                         ('LIBRARY_SELECTION', str),
                         ('LIBRARY_STRATEGY', str),]
     if paired:
-        mandatory_fields.extend([('FASTQ1_FILE', str),
+        mandatory_fields.extend([('INSERT_SIZE', str),
+                                 ('FASTQ1_FILE', str),
                                  ('FASTQ2_FILE', str),])
     else:
         mandatory_fields.append(('FASTQ_FILE',  str))
@@ -247,11 +383,30 @@ def __check_read_type(paired: bool,
         mandatory_fields.append(('RELATED_SAMPLE_ACCESSION',  str),)
 
     read_aliases = []
+
+    def check_fastq_read_names(fastq_filepath: str):
+        if arguments.get('truncate_read_names', False):
+            return
+        violation = utility.check_fastq_read_names(fastq_filepath)
+        if violation is None:
+            return
+        read_number, header_length = violation
+        err = (
+            f"\nERROR: The FASTQ file '{fastq_filepath}' contains a read "
+            f"name with {header_length} characters. The ENA limit is "
+            f"{staticConfig.max_fastq_read_name_length} characters. Use "
+            "--truncate-read-names to truncate read names during staging."
+        )
+        loggingC.message(err, threshold=-1)
+        global checks_failed
+        checks_failed = True
+
+    section_name = 'PAIRED_END_READS' if paired else 'SINGLE_READS'
+    __check_fields(read_items,
+                   mandatory_fields,
+                   category_name=section_name)
+
     for s in read_items:
-        # Check if all fields are present and not empty
-        __check_fields(read_items,
-                       mandatory_fields,
-                       category_name=read_type)
         # Check if the read name already exists as aliases in ENA
         read_alias = s['NAME']
         read_aliases.append(read_alias)
@@ -282,7 +437,16 @@ def __check_read_type(paired: bool,
                         loggingC.message(wrn, threshold=-1)
                         checks_failed = True
                     else:
-                        err = f"\nERROR: The sample accession '{sample_accession}' was provided in the reads section but does not exist on the ENA server."
+                        err = (
+                            f"\nERROR: The sample accession "
+                            f"'{sample_accession}' was provided in the reads "
+                            "section but does not exist on the ENA server. "
+                            "If you submitted the sample very recently, "
+                            "it might not yet be available through the "
+                            "ENA search API due to indexing delays. "
+                            "If you are certain the accession exists, "
+                            "you can wait for a while or use --skip-checks."
+                        )
                         loggingC.message(err, threshold=-1)
                         checks_failed = True
             # Is it the same samples from the sample_accessions field
@@ -305,11 +469,14 @@ def __check_read_type(paired: bool,
         if paired:
             fastq1_filepath = os.path.abspath(s['FASTQ1_FILE'])
             utility.check_fastq(fastq1_filepath)
+            check_fastq_read_names(fastq1_filepath)
             fastq2_filepath = os.path.abspath(s['FASTQ2_FILE'])
             utility.check_fastq(fastq2_filepath)
+            check_fastq_read_names(fastq2_filepath)
         else:
             fastq_filepath = os.path.abspath(s['FASTQ_FILE'])
             utility.check_fastq(fastq_filepath)
+            check_fastq_read_names(fastq_filepath)
 
 
 def __check_reads(arguments: dict,
@@ -382,6 +549,15 @@ def __check_misc(arguments: dict,
             err = f"\nERROR: METAGENOME_SCIENTIFIC_NAME was specified as \
                       '{metagenome_scientific_name}' but could not be mapped \
                         to an NCBI tax id."
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
+        elif str(ena_taxid).strip() != str(metagenome_taxid).strip():
+            err = (
+                f"\nERROR: METAGENOME_TAXID '{metagenome_taxid}' does not "
+                f"match the ENA tax id '{ena_taxid}' resolved for "
+                f"METAGENOME_SCIENTIFIC_NAME "
+                f"'{metagenome_scientific_name}'."
+            )
             loggingC.message(err, threshold=-1)
             checks_failed = True
         else:
@@ -484,27 +660,20 @@ def __check_assembly(arguments: dict,
         if resulting_accession is None and 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data:
             sample_accessions = utility.optional_from_config(config, 'ASSEMBLY', 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION')
             if not sample_accessions is None or sample_accessions == '':
-                if not enaSearching.sample_accession_exists(sample_accessions, False):
-                    if not enaSearching.sample_accession_exists(sample_accessions, testmode):
-                        if testmode:
-                            wrn = f"\nWARNING: The co-assembly sample " \
-                                   "accession '{sample_accessions}' cannot " \
-                                   "be found on the ENA server. This might be " \
-                                   "okay if you just created it on the " \
-                                   "development server. Consider using " \
-                                   "--skip-checks"
-                            loggingC.message(wrn, threshold=-1)
-                            checks_failed = True
-                        else:
-                            err = f"\nERROR: The co-assembly sample accession '{sample_accessions}' could not be found on the {servertype} ENA server."
-                            loggingC.message(err, threshold=-1)
-                            checks_failed = True
-                else:
+                sample_exists = enaSearching.sample_accession_exists(sample_accessions, False)
+                if not sample_exists and testmode:
+                    sample_exists = enaSearching.sample_accession_exists(sample_accessions, True)
+
+                if sample_exists:
                     resulting_accession = sample_accessions
                     if len(biological_sample_accessions) < 2:
                         err = f"\nERROR: When providing an existing co-assembly sample accession, you need to provide at least two biological sample accessions in the SAMPLE_ACCESSIONS field."
                         loggingC.message(err, threshold=-1)
                         checks_failed = True
+                else:
+                    err = f"\nERROR: The co-assembly sample accession '{sample_accessions}' could not be found on the {servertype} ENA server."
+                    loggingC.message(err, threshold=-1)
+                    checks_failed = True
             else:
                 resulting_accession = None
         if (not 'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION' in assembly_data) and (not 'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION' in assembly_data):
@@ -589,6 +758,7 @@ def __check_bins(arguments: dict,
 
     # Check if at least one NCBI_TAXONOMY_FILE or MANUAL_TAXONOMY_FILE exists
     tax_files = []
+    ncbi_tax_files = []
     if 'NCBI_TAXONOMY_FILES' in bin_data.keys():
         ncbi_tax_files = bin_data['NCBI_TAXONOMY_FILES']
         if ncbi_tax_files is None:
@@ -659,6 +829,10 @@ def __check_bins(arguments: dict,
         loggingC.message(err, threshold=-1)
         checks_failed = True
 
+    __check_unclassified_taxonomies(arguments,
+                                    bin_data,
+                                    config)
+
     # Check if the required arguments in ASSEMBLY section are present
     assembly_data = utility.from_config(config, 'ASSEMBLY')
     mandatory_fields = [('ASSEMBLY_SOFTWARE', str),
@@ -680,6 +854,8 @@ def __check_mags(arguments: dict,
         config:       The config file as a dictionary.
         testmode:     Whether or not to use the ENA development server.
     """
+    global checks_failed
+
     if not arguments['submit_mags']:
         return
     
@@ -701,6 +877,18 @@ def __check_mags(arguments: dict,
         for column in cols:
             if column not in header:
                 return
+
+        sample_derived_from_present = 'Sample_derived_from' in header
+        sample_derived_from_values = []
+        if arguments['submit_bins'] and sample_derived_from_present:
+            err = (
+                f"\nERROR: The MAG metadata file '{metadata_file}' contains "
+                "a 'Sample_derived_from' column, but this column is only "
+                "allowed when submitting MAGs without bins."
+            )
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
+
         for row in reader:
             bin_id = row['Bin_id'].strip()
             all_mag_bins.add(bin_id)
@@ -718,6 +906,53 @@ def __check_mags(arguments: dict,
                     err = f"\nERROR: Error reading '{metadata_file}' at Bin_id {bin_id}. If you provide an Unlocalised_path, you need to provide a Chromosomes_path as well."
                     loggingC.message(err, threshold=-1)
                     sys.exit(1)
+
+            if sample_derived_from_present and not arguments['submit_bins']:
+                sample_derived_from_values.append(
+                    (bin_id, (row.get('Sample_derived_from') or '').strip())
+                )
+
+    if sample_derived_from_values:
+        populated = [bool(value) for _, value in sample_derived_from_values]
+        if any(populated) and not all(populated):
+            err = (
+                f"\nERROR: The 'Sample_derived_from' column in "
+                f"'{metadata_file}' is only partially populated. Fill it "
+                "for every MAG or leave the entire column empty."
+            )
+            loggingC.message(err, threshold=-1)
+            checks_failed = True
+        elif all(populated):
+            accessions_to_check = set()
+            malformed = False
+            for bin_id, value in sample_derived_from_values:
+                accessions = [
+                    accession.strip() for accession in value.split(',')
+                ]
+                if any(not accession for accession in accessions):
+                    err = (
+                        f"\nERROR: The 'Sample_derived_from' value for MAG "
+                        f"'{bin_id}' contains an empty accession."
+                    )
+                    loggingC.message(err, threshold=-1)
+                    checks_failed = True
+                    malformed = True
+                else:
+                    accessions_to_check.update(accessions)
+
+            if not malformed:
+                for accession in sorted(accessions_to_check):
+                    if not enaSearching.sample_accession_exists(accession,
+                                                                 testmode):
+                        server = "development" if testmode else "production"
+                        err = (
+                            f"\nERROR: The sample accession '{accession}' "
+                            "from the MAG metadata 'Sample_derived_from' "
+                            f"column could not be found on the ENA {server} "
+                            "server."
+                        )
+                        loggingC.message(err, threshold=-1)
+                        checks_failed = True
 
     # Check if all MAGs bins pass the filtering that is being applied to bins
     bin_quality = binSubmission.get_bin_quality(config, silent=True)
@@ -809,6 +1044,7 @@ def __check_coverage(arguments: dict,
             bam_files = [bam_files]
         if len(bam_files) > 0:
             coverage_bams = True
+            utility.check_bam_basenames(bam_files)
             # Check if the BAM files exist and have valid extensions
             for bam_file in bam_files:
                 if not os.path.isfile(bam_file):
@@ -823,7 +1059,23 @@ def __check_coverage(arguments: dict,
 
     # Check if we have at least one coverage source
     if not coverage_values and not coverage_bams:
-        err = f"\nERROR: You chose to submit an assembly, bins or MAGs. You need to provide either .BAM files or a known coverage (for assembly AND bins)."
+        required_coverage = []
+        direct_coverage_fields = []
+        if arguments['submit_assembly']:
+            required_coverage.append("  - Assembly coverage")
+            direct_coverage_fields.append("ASSEMBLY.COVERAGE_VALUE")
+        if arguments['submit_bins'] or arguments['submit_mags']:
+            required_coverage.append("  - Bin coverage")
+            direct_coverage_fields.append("BINS.COVERAGE_FILE")
+        required_coverage_text = '\n'.join(required_coverage)
+        err = (
+            "ERROR: Coverage information is missing.\n\n"
+            "Required for this submission:\n"
+            f"{required_coverage_text}\n\n"
+            "Provide one of:\n"
+            "  - BAM_FILES from which subMG can calculate coverage\n"
+            f"  - {' and '.join(direct_coverage_fields)}"
+        )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
     if coverage_values and coverage_bams:
@@ -853,6 +1105,32 @@ def __check_windows_pysam(config: dict):
             checks_failed = True
 
 
+def __check_ascp():
+    """Check that the Aspera ``ascp`` executable is available and runnable."""
+    global checks_failed
+    ascp_path = shutil.which('ascp')
+    if ascp_path is None:
+        err = ("\nERROR: --ascp was specified, but the 'ascp' executable "
+               "cannot be found on PATH. Please install IBM Aspera CLI and "
+               "ensure that 'ascp' is on PATH.")
+        loggingC.message(err, threshold=-1)
+        checks_failed = True
+        return
+
+    try:
+        subprocess.run([ascp_path, '-A'],
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE,
+                       text=True,
+                       timeout=10,
+                       check=True)
+    except (OSError, subprocess.SubprocessError) as exc:
+        err = (f"\nERROR: The 'ascp' executable found at '{ascp_path}' could "
+               f"not be run successfully with 'ascp -A': {exc}")
+        loggingC.message(err, threshold=-1)
+        checks_failed = True
+
+
 def preflight_checks(arguments: dict) -> None:
     """
     Check if everything looks like we can start.
@@ -876,11 +1154,17 @@ def preflight_checks(arguments: dict) -> None:
     loggingC.message(f">Checking if webin-cli can be found", threshold=1)
     find_webin_cli_jar()
 
+    if arguments.get('ascp', False):
+        loggingC.message(f">Checking if ascp can be found", threshold=1)
+        __check_ascp()
+
     # Check for login data
     utility.get_login()
 
     # Skip checks if requested
     if arguments['skip_checks'] == True:
+        if checks_failed:
+            sys.exit(1)
         message = f"WARNING: Skipping ALL preflight checks."
         delay = 3
         time.sleep(delay)
@@ -894,6 +1178,7 @@ def preflight_checks(arguments: dict) -> None:
     testmode = arguments['development_service']
     __check_windows_pysam(config)
     __check_study(config, testmode)
+    __check_sample_accessions(config, testmode)
     __check_misc(arguments, config)
     __check_samples(arguments, config)
     __check_reads(arguments, config, testmode)

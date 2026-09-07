@@ -1,5 +1,7 @@
 # monitor.py
 import os
+import signal
+import subprocess
 import traceback
 os.environ['XMODIFIERS'] = "@im=none"
 import customtkinter as ctk
@@ -12,10 +14,14 @@ from submg.core import submit_through_gui
 
 def submission_wrapper(config_path, output_dir, development_service, verbosity,
                       submit_samples, submit_reads, submit_assembly,
-                      submit_bins, submit_mags, username, password, log_queue):
+                      submit_bins, submit_mags, exclude_unclassified,
+                      truncate_read_names, ascp, username, password, log_queue):
     """
     Wrapper function to run submit_through_gui and send log messages to a queue.
     """
+    if os.name != 'nt':
+        os.setsid()  # Keep Webin and its children in the worker's process group.
+
     def listener(message):
         log_queue.put(message)
     
@@ -31,6 +37,9 @@ def submission_wrapper(config_path, output_dir, development_service, verbosity,
             submit_assembly=submit_assembly,
             submit_bins=submit_bins,
             submit_mags=submit_mags,
+            exclude_unclassified=exclude_unclassified,
+            truncate_read_names=truncate_read_names,
+            ascp=ascp,
             username=username,
             password=password
         )
@@ -131,7 +140,9 @@ class MonitorPage(BasePage):
         input_frame.grid_rowconfigure(0, weight=0)  # Username and Password
         input_frame.grid_rowconfigure(1, weight=0)  # Mode Switch
         input_frame.grid_rowconfigure(2, weight=1)  # Spacer
-        input_frame.grid_rowconfigure(3, weight=0)  # Buttons Frame
+        input_frame.grid_rowconfigure(3, weight=0)  # Optional read/bin options
+        input_frame.grid_rowconfigure(4, weight=0)  # Aspera option
+        input_frame.grid_rowconfigure(5, weight=0)  # Buttons Frame
         input_frame.grid_columnconfigure(0, weight=1)
         input_frame.grid_columnconfigure(1, weight=1)
         input_frame.grid_columnconfigure(2, weight=1)
@@ -160,9 +171,35 @@ class MonitorPage(BasePage):
         )
         self.mode_switch.grid(row=1, column=0, columnspan=4, padx=10, pady=10, sticky="w")
 
+        self.exclude_unclassified_checkbox = ctk.CTkCheckBox(
+            input_frame,
+            text="Exclude exact unclassified bins",
+            font=("Arial", 14),
+            variable=self.controller.exclude_unclassified
+        )
+        self.exclude_unclassified_checkbox.grid(row=2, column=0, columnspan=4, padx=10, pady=10, sticky="w")
+        self.exclude_unclassified_checkbox.grid_remove()
+
+        self.truncate_read_names_checkbox = ctk.CTkCheckBox(
+            input_frame,
+            text="Truncate FASTQ read names",
+            font=("Arial", 14),
+            variable=self.controller.truncate_read_names
+        )
+        self.truncate_read_names_checkbox.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="w")
+        self.truncate_read_names_checkbox.grid_remove()
+
+        self.ascp_checkbox = ctk.CTkCheckBox(
+            input_frame,
+            text="Use Aspera instead of FTP",
+            font=("Arial", 14),
+            variable=self.controller.ascp
+        )
+        self.ascp_checkbox.grid(row=4, column=0, columnspan=4, padx=10, pady=10, sticky="w")
+
         # Buttons Frame
         input_button_frame = ctk.CTkFrame(input_frame, fg_color="transparent")
-        input_button_frame.grid(row=3, column=0, columnspan=4, padx=0, pady=0, sticky="ew")
+        input_button_frame.grid(row=5, column=0, columnspan=4, padx=0, pady=0, sticky="ew")
         # Configure grid columns to distribute space equally
         for i in range(4):
             input_button_frame.grid_columnconfigure(i, weight=1)
@@ -279,6 +316,9 @@ class MonitorPage(BasePage):
                 self.controller.submission_items.get("assembly", False),
                 self.controller.submission_items.get("bins", False),
                 self.controller.submission_items.get("mags", False),
+                self.controller.exclude_unclassified.get(),
+                self.controller.truncate_read_names.get(),
+                self.controller.ascp.get(),
                 self.username_entry.get(),
                 self.password_entry.get(),
                 self.log_queue
@@ -336,12 +376,28 @@ class MonitorPage(BasePage):
             )
 
 
+    def terminate_submission(self):
+        """Stop the worker and its upload subprocesses."""
+        process = self.submission_process
+        if os.name == 'nt':
+            subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'],
+                           check=True, capture_output=True)
+            process.join()
+        else:
+            # Stop the worker first so it cannot spawn children during cleanup,
+            # even if Stop was clicked before it called setsid().
+            process.kill()
+            process.join()
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass  # No subprocesses remain (or the worker had not started).
+
     def stop_submission(self):
         """Stop the submission process, update UI accordingly, inform the user."""
         if self.submission_process and self.submission_process.is_alive():
             self.log_message("Stopping submission...")
-            self.submission_process.terminate()
-            self.submission_process.join()
+            self.terminate_submission()
             self.log_message("Submission stopped.")
             self.submission_running = False
             self.submission_process = None
@@ -366,6 +422,9 @@ class MonitorPage(BasePage):
         self.username_entry.configure(state="disabled")
         self.password_entry.configure(state="disabled")
         self.mode_switch.configure(state="disabled")
+        self.ascp_checkbox.configure(state="disabled")
+        self.exclude_unclassified_checkbox.configure(state="disabled")
+        self.truncate_read_names_checkbox.configure(state="disabled")
         self.start_button.configure(state="disabled")
         self.stop_button.configure(state="normal")
         self.edit_config_button.configure(state="disabled")
@@ -378,11 +437,31 @@ class MonitorPage(BasePage):
         self.username_entry.configure(state="normal")
         self.password_entry.configure(state="normal")
         self.mode_switch.configure(state="normal")
+        self.ascp_checkbox.configure(state="normal")
+        self.exclude_unclassified_checkbox.configure(state="normal")
+        self.truncate_read_names_checkbox.configure(state="normal")
+        self.update_exclude_unclassified_visibility()
+        self.update_truncate_read_names_visibility()
         self.start_button.configure(state="normal")
         self.stop_button.configure(state="disabled")
         self.edit_config_button.configure(state="normal")
         self.edit_outline_button.configure(state="normal")
         self.enable_header_buttons()
+
+    def update_exclude_unclassified_visibility(self):
+        """Show the option only for submissions that include bins or MAGs."""
+        if (self.controller.submission_items.get("bins", False) or
+                self.controller.submission_items.get("mags", False)):
+            self.exclude_unclassified_checkbox.grid()
+        else:
+            self.exclude_unclassified_checkbox.grid_remove()
+
+    def update_truncate_read_names_visibility(self):
+        """Show the option only for submissions that include reads."""
+        if self.controller.submission_items.get("reads", False):
+            self.truncate_read_names_checkbox.grid()
+        else:
+            self.truncate_read_names_checkbox.grid_remove()
 
     def log_message(self, message):
         """Append a message to the log monitor."""
@@ -395,6 +474,11 @@ class MonitorPage(BasePage):
     def initialize(self):
         """Called whenever monitor renders the page"""
         self.update_summary()
+        self.ascp_checkbox.configure(variable=self.controller.ascp, state="normal")
+        self.exclude_unclassified_checkbox.configure(state="normal")
+        self.truncate_read_names_checkbox.configure(state="normal")
+        self.update_exclude_unclassified_visibility()
+        self.update_truncate_read_names_visibility()
         if not self.submission_running:
             self.log_message("Ready to submit.\n")
 

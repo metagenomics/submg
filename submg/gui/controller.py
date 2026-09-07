@@ -96,8 +96,7 @@ class MyApp(ctk.CTk):
             if (monitor_page.submission_process is not None and
                     monitor_page.submission_process.is_alive()):
                 try:
-                    monitor_page.submission_process.terminate()
-                    monitor_page.submission_process.join()
+                    monitor_page.terminate_submission()
                 except Exception:
                     # If termination fails for some reason, we still proceed with exit
                     pass
@@ -117,6 +116,9 @@ class MyApp(ctk.CTk):
         self.file_path = None
         self.staging_dir_path = None
         self.submission_mode = ctk.StringVar(value="1")
+        self.ascp = ctk.BooleanVar(value=False)
+        self.exclude_unclassified = ctk.BooleanVar(value=False)
+        self.truncate_read_names = ctk.BooleanVar(value=False)
         self.submission_items = {
             "samples": False,
             "reads": False,

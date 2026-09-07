@@ -1,5 +1,6 @@
 import os
 import csv
+import gzip
 import yaml
 import sys
 try:
@@ -95,9 +96,46 @@ def set_up_staging(staging_dir: str,
 
     return stamped_staging_dir
 
+
+def check_bam_basenames(bam_files):
+    """
+    Stop if multiple BAM files would produce the same depth-file basename.
+
+    Args:
+        bam_files: A BAM file path or a list of BAM file paths.
+    """
+    if not isinstance(bam_files, list):
+        bam_files = [bam_files]
+
+    basenames = {}
+    for bam_file in bam_files:
+        basename = os.path.basename(bam_file)
+        basenames.setdefault(basename, []).append(bam_file)
+
+    duplicate_basenames = {
+        basename: paths
+        for basename, paths in basenames.items()
+        if len(paths) > 1
+    }
+    if not duplicate_basenames:
+        return
+
+    collisions = "\n".join(
+        f"\t{basename}: {', '.join(paths)}"
+        for basename, paths in sorted(duplicate_basenames.items())
+    )
+    err = (
+        "\nERROR: BAM files must have unique basenames because. "
+        "The following basenames are used "
+        f"by multiple files:\n{collisions}"
+    )
+    loggingC.message(err, threshold=-1)
+    sys.exit(1)
+
+
 def construct_depth_files(staging_dir: str,
                           threads: int,
-                          bam_files: list) -> dict:
+                          bam_files: list) -> list:
     """
     Construct depth files from bam files.
 
@@ -106,6 +144,10 @@ def construct_depth_files(staging_dir: str,
         threads: The total number of threads to use.
         bam_files: The list of bam files.
     """
+    if not isinstance(bam_files, list):
+        bam_files = [bam_files]
+    check_bam_basenames(bam_files)
+
     loggingC.message(">Constructing depth files from bam files. This might take a while.", threshold=0)
     
     depth_directory = os.path.join(staging_dir, 'depth')
@@ -165,32 +207,76 @@ def build_sample_submission_xml(outpath: str,
     loggingC.message(f"\t...written to {os.path.abspath(outpath)}", threshold=0)
 
 
-def api_response_check(response: requests.Response):
+def format_receipt_failure(root, receipt_path, submission_name):
+    """Format an ENA rejection and include errors recorded in its receipt."""
+    receipt_path = os.path.abspath(receipt_path)
+    ena_errors = [
+        ''.join(error.itertext()).strip()
+        for error in root.iter('ERROR')
+        if ''.join(error.itertext()).strip()
+    ]
+    ena_report = '\n'.join(f"  - {error}" for error in ena_errors)
+    if not ena_report:
+        ena_report = "  <no detailed error message in receipt>"
+
+    return (
+        f"ERROR: ENA rejected the {submission_name} submission.\n\n"
+        f"Receipt:\n  {receipt_path}\n\n"
+        f"ENA reported:\n{ena_report}\n\n"
+        "Likely cause:\n"
+        "  The submitted metadata did not satisfy ENA requirements\n\n"
+        "How to proceed:\n"
+        "  - Review the ENA messages above\n"
+        f"  - Check the complete receipt at {receipt_path}\n"
+        "  - Correct the metadata and retry"
+    )
+
+
+def api_response_check(response: requests.Response, submission_xml=None):
     if response.status_code == 403:
-        err = """\nERROR: Submission failed. ENA API returned status code 403.
-                    This indicates incorrect ENA login credentials. Please test your credentials
-                    by logging in to the ENA submission web interface. Make sure the environment variables
-                    ENA_USER and ENA_PASSWORD contain these credentials."""
+        err = (
+            "ERROR: ENA authentication failed.\n\n"
+            f"Endpoint:\n  {response.url}\n\n"
+            f"HTTP status:\n  {response.status_code} {response.reason}\n\n"
+            "Likely cause:\n"
+            "  ENA rejected the supplied Webin credentials\n\n"
+            "Recommended actions:\n"
+            "  - Verify that ENA_USER contains your Webin account name\n"
+            "  - Verify that ENA_PASSWORD contains the corresponding password\n"
+            "  - Confirm the credentials by signing in to the ENA Webin portal\n"
+            "  - Check whether you are using the intended development or production service"
+        )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
 
-    if response.status_code == 400:
-        err = "\nERROR: Submission failed. ENA API returned status code 400. This indicates a bad request."
-        loggingC.message(err, threshold=-1)
-        sys.exit(1)
+    if response.status_code != 200 or not response.text:
+        response_text = response.text.strip() or '<empty>'
+        response_text = response_text.replace('\n', '\n  ')
+        if response.status_code == 400:
+            likely_cause = "ENA rejected the submitted metadata or XML"
+        elif response.status_code == 408:
+            likely_cause = "The request to ENA timed out"
+        elif response.status_code >= 500:
+            likely_cause = "The ENA service encountered a temporary server error"
+        elif not response.text:
+            likely_cause = "ENA returned an empty response"
+        else:
+            likely_cause = "unknown"
 
-    if response.status_code == 408:
-        err = "\nERROR: Submission failed. ENA API returned status code 408. This indicates a timeout."
-        loggingC.message(err, threshold=-1)
-        sys.exit(1)
-
-    if response.status_code != 200:
-        err = f"\nERROR: Submission failed. ENA API returned status code {response.status_code}."
-        loggingC.message(err, threshold=-1)
-        sys.exit(1)
-
-    if response.text == "":
-        err = "\nERROR: Submission failed, received an empty response from API endpoint."
+        err = (
+            "ERROR: ENA API request failed.\n\n"
+            f"Endpoint:\n  {response.url}\n\n"
+            f"HTTP status:\n  {response.status_code} {response.reason}\n\n"
+            f"ENA response:\n  {response_text}\n\n"
+            f"Likely cause:\n  {likely_cause}\n\n"
+            "How to proceed:\n"
+            "  - Review the ENA response above"
+        )
+        if submission_xml is not None:
+            err += (
+                "\n  - Check the generated submission XML at "
+                f"{os.path.abspath(submission_xml)}"
+            )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
 
@@ -265,19 +351,80 @@ def read_yaml(file_path, convert_file_paths=True):
                 return os.path.abspath(os.path.join(base_path, data))
         return data
 
+    config_path = os.path.abspath(file_path)
     try:
-        with open(file_path, 'r') as yaml_file:
+        with open(config_path, 'r') as yaml_file:
             data = yaml.safe_load(yaml_file)
             if convert_file_paths:
-                base_path = os.path.dirname(os.path.abspath(file_path))
+                base_path = os.path.dirname(config_path)
                 data = convert_paths(data, base_path)
             return data
     except FileNotFoundError:
-        err = f"\nERROR: YAML file not found at: {file_path}"
+        err = (
+            "ERROR: Configuration file not found.\n\n"
+            f"Configuration file:\n  {config_path}\n\n"
+            "Likely cause:\n"
+            "  The configured path does not point to an existing file\n\n"
+            "How to proceed:\n"
+            "  - Check the configuration-file path and try again"
+        )
+        loggingC.message(err, threshold=-1)
+        sys.exit(1)
+    except PermissionError as e:
+        err = (
+            "ERROR: Cannot read the configuration file.\n\n"
+            f"Configuration file:\n  {config_path}\n\n"
+            f"System error:\n  {e}\n\n"
+            "Likely cause:\n"
+            "  Permission to read the configuration file was denied\n\n"
+            "How to proceed:\n"
+            "  - Check the file permissions and try again"
+        )
+        loggingC.message(err, threshold=-1)
+        sys.exit(1)
+    except yaml.YAMLError as e:
+        parser_message = getattr(e, 'problem', None) or str(e)
+        parser_message = parser_message.replace('\n', '\n  ')
+        mark = getattr(e, 'problem_mark', None)
+        location = ''
+        location_hint = ''
+        if mark is not None:
+            line = mark.line + 1
+            column = mark.column + 1
+            location = f"\nLocation:\n  line {line}, column {column}\n"
+            location_hint = f" near line {line}"
+        err = (
+            "ERROR: Could not parse the configuration file.\n\n"
+            f"Configuration file:\n  {config_path}\n\n"
+            f"Parser message:\n  {parser_message}\n"
+            f"{location}\n"
+            "Likely cause:\n"
+            "  The YAML structure or indentation is invalid\n\n"
+            "How to proceed:\n"
+            f"  - Inspect the configuration{location_hint}\n"
+            "  - Check indentation, colons, quotes, and list markers\n"
+            "  - Correct the YAML and try again"
+        )
+        loggingC.message(err, threshold=-1)
+        sys.exit(1)
+    except OSError as e:
+        err = (
+            "ERROR: Could not read the configuration file.\n\n"
+            f"Configuration file:\n  {config_path}\n\n"
+            f"System error:\n  {e}\n\n"
+            "Likely cause:\n"
+            "  The operating system could not read the file\n\n"
+            "How to proceed:\n"
+            "  - Check that the path is a readable regular file and try again"
+        )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
     except Exception as e:
-        err = f"\nERROR: An error occurred while reading {file_path}, error is:\n{e}"
+        err = (
+            "ERROR: Unexpected error while processing the configuration file.\n\n"
+            f"Configuration file:\n  {config_path}\n\n"
+            f"Error:\n  {type(e).__name__}: {e}"
+        )
         loggingC.message(err, threshold=-1)
         sys.exit(1)
 
@@ -471,6 +618,62 @@ def check_fastq(fastq_filepath: str):
         sys.exit(1)
 
 
+def open_fastq(fastq_filepath: str, mode: str = 'rb'):
+    """
+    Open a plain or gzip-compressed FASTQ file.
+
+    Args:
+        fastq_filepath (str): The path to the FASTQ file.
+        mode (str): The file-open mode.
+
+    Returns:
+        A file object for the FASTQ file.
+    """
+    if fastq_filepath.lower().endswith('.gz'):
+        return gzip.open(fastq_filepath, mode)
+    return open(fastq_filepath, mode)
+
+
+def fastq_header_content(header_line: bytes) -> bytes:
+    """
+    Return a FASTQ header without its line ending.
+
+    Args:
+        header_line (bytes): The first line of a FASTQ record.
+
+    Returns:
+        The header content without trailing carriage-return or newline bytes.
+    """
+    return header_line.rstrip(b'\r\n')
+
+
+def check_fastq_read_names(fastq_filepath: str,
+                           read_count: int = staticConfig.fastq_preflight_read_count):
+    """
+    Check the first ``read_count`` FASTQ records for long read names.
+
+    Args:
+        fastq_filepath (str): The path to the FASTQ file.
+        read_count (int): The maximum number of records to inspect.
+
+    Returns:
+        A tuple containing the 1-based read number and header length for the
+        first violation, or None if no violation is found.
+    """
+    lines_to_check = read_count * 4
+    with open_fastq(fastq_filepath, 'rb') as fastq_file:
+        for line_number in range(lines_to_check):
+            line = fastq_file.readline()
+            if not line:
+                break
+            if line_number % 4 == 0:
+                header_length = len(fastq_header_content(line))
+                if header_length > staticConfig.max_fastq_read_name_length:
+                    read_number = (line_number // 4) + 1
+                    return read_number, header_length
+    return None
+
+
 def is_fasta(filepath, extensions=staticConfig.fasta_extensions.split(';')) -> str:
     """
     Checks if the file at filepath is a FASTA file. Return the basename if it is.
@@ -637,7 +840,7 @@ def make_depth_file(bam_file, outdir, num_threads=4):
     sorted_bam_file = check_bam(bam_file, num_threads=num_threads)
     filename = os.path.basename(sorted_bam_file) + '.depth'
     outfile = os.path.join(outdir, filename)
-    pysam.depth("-@", str(num_threads), "-a", sorted_bam_file, "-o", outfile)
+    pysam.depth("-@", str(num_threads), "-aa", sorted_bam_file, "-o", outfile)
     return outfile
 
 
@@ -668,70 +871,166 @@ def contigs_coverage(depth_file):
     return contig_coverage, contig_length
 
 
-def calculate_coverage(depth_files: list,
-                       target_contigs: set = None,
-                       threads=4,
-                       outfile=None,
-                       silent=False):
+def _read_depth_files(depth_files: list,
+                      threads: int) -> tuple:
     """
-    Calculate the average coverage of an assembly based on multiple depth files using parallel processing.
+    Read depth files once and sum depth per contig across all files.
 
     Args:
-    depth_files (list of str): List of file paths to depth files.
-    target_contigs (set of str): Set of contigs to calculate coverage for.
+        depth_files: Paths to depth files.
+        threads: Maximum number of concurrent workers.
 
     Returns:
-    float: Average depth of coverage of the assembly.
+        Tuple containing summed contig depths and one length per contig.
     """
-    total_coverage = 0.0
-    total_length = 0.0
-
     def process_file(depth_file):
-        """
-        Process a single depth file and calculate coverage and length.
-        """
         with open(depth_file, 'r') as depth:
-            local_coverage = 0
-            local_length = 0
-            contig_coverage, contig_length = contigs_coverage(depth)
-            for contig in contig_coverage:
-                if target_contigs is not None:
-                    if not contig in target_contigs:
-                        continue
-                local_coverage += contig_coverage[contig]
-                local_length += contig_length[contig]
-            return local_coverage, local_length
+            return contigs_coverage(depth)
 
-    if silent:
-        threshold = 3
-    else:
-        threshold = 0
-    loggingC.message(">Calculating coverage from depth files. This might take a while.", threshold)
-    msg = f">The coverage value will be written to {outfile} in case you " \
-            " want to provide a KNOWN_COVERAGE in the ASSEMBLY section " \
-            " in the config for subsequent submission attempts."
-    if outfile:
-        loggingC.message(msg, threshold=0)
-
-    inuse = min(threads, len(depth_files))
+    loggingC.message(">Calculating coverage from depth files. This might take a while.", threshold=0)
+    inuse = min(max(1, threads), len(depth_files))
     with yaspin(text=f"Processing with {inuse} threads...\t", color="yellow") as spinner:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=inuse) as executor:
             results = executor.map(process_file, depth_files)
 
-        for coverage, length in results:
-            total_coverage += coverage
-            total_length += length
+        total_depth = {}
+        contig_lengths = {}
+        for contig_depth, contig_length in results:
+            for contig, depth in contig_depth.items():
+                total_depth[contig] = total_depth.get(contig, 0) + depth
+            for contig, length in contig_length.items():
+                if contig not in contig_lengths:
+                    contig_lengths[contig] = length
 
-        average_coverage = total_coverage / total_length if total_length > 0 else 0
+    return total_depth, contig_lengths
 
-    if not silent:
-        loggingC.message(f"\t...coverage is {str(average_coverage)}", threshold=0)
 
-    if outfile:
-        with open(outfile, 'w') as f:
-            f.write(str(average_coverage))
+def _coverage_from_contigs(total_depth: dict,
+                           contig_lengths: dict,
+                           target_contigs=None) -> float:
+    """Calculate coverage from already-summed per-contig depths."""
+    if target_contigs is None:
+        target_contigs = contig_lengths.keys()
+    depth = sum(total_depth.get(contig, 0) for contig in target_contigs)
+    length = sum(contig_lengths.get(contig, 0) for contig in target_contigs)
+    coverage = depth / length if length > 0 else 0.0
+    return round(coverage, 1)
 
-    return average_coverage
+
+def _bin_contigs(config: dict,
+                 filtered_bins: list) -> dict:
+    """Read the contig names for each filtered bin."""
+    bins_directory = from_config(config, 'BINS', 'BINS_DIRECTORY')
+    filtered_bins = set(filtered_bins)
+    bin_contigs = {}
+
+    for filename in os.listdir(bins_directory):
+        fasta = os.path.join(bins_directory, filename)
+        bin_name = is_fasta(fasta)
+        if bin_name not in filtered_bins:
+            continue
+
+        fasta_handle = gzip.open(fasta, 'rt') if fasta.lower().endswith('.gz') else open(fasta, 'r')
+        with fasta_handle as handle:
+            bin_contigs[bin_name] = {
+                line.strip().split(' ')[0][1:]
+                for line in handle
+                if line.startswith('>')
+            }
+
+    return bin_contigs
+
+
+def _write_bin_coverage(outfile: str,
+                        filtered_bins: list,
+                        bin_coverages: dict) -> None:
+    """Write bin coverage values in the configured TSV format."""
+    with open(outfile, 'w') as f:
+        writer = csv.writer(f, delimiter='\t')
+        writer.writerow(['Bin_id', 'Coverage'])
+        for bin_name in filtered_bins:
+            writer.writerow([bin_name, bin_coverages[bin_name]])
+
+
+def resolve_coverage(config: dict,
+                     submit_assembly: bool,
+                     submit_bins: bool,
+                     submit_mags: bool,
+                     filtered_bins: list,
+                     staging_dir: str,
+                     logging_dir: str,
+                     threads: int,
+                     minitest: bool,
+                     keep_depth_files: bool) -> tuple:
+    """Resolve all coverage needed by the requested submissions once."""
+    assembly_required = submit_assembly
+    bins_required = submit_bins or submit_mags
+
+    assembly_coverage = None
+    if assembly_required and 'COVERAGE_VALUE' in config.get('ASSEMBLY', {}):
+        assembly_coverage = float(config['ASSEMBLY']['COVERAGE_VALUE'])
+
+    bin_coverage_file = None
+    if bins_required and 'COVERAGE_FILE' in config.get('BINS', {}):
+        bin_coverage_file = config['BINS']['COVERAGE_FILE']
+
+    assembly_missing = assembly_required and assembly_coverage is None
+    bins_missing = bins_required and bin_coverage_file is None
+    assembly_outfile = os.path.join(logging_dir, 'assembly_coverage.txt')
+    bin_outfile = os.path.join(logging_dir, 'bin_coverages.tsv')
+
+    if minitest:
+        if assembly_missing:
+            assembly_coverage = 1.0
+        if bins_missing:
+            mock_coverages = {bin_name: 1.0 for bin_name in filtered_bins}
+            _write_bin_coverage(bin_outfile, filtered_bins, mock_coverages)
+            bin_coverage_file = bin_outfile
+        return assembly_coverage, bin_coverage_file
+
+    depth_files = []
+    try:
+        if assembly_missing or bins_missing:
+            bam_files = from_config(config, 'BAM_FILES')
+            if not isinstance(bam_files, list):
+                bam_files = [bam_files]
+            depth_files = construct_depth_files(staging_dir, threads, bam_files)
+            total_depth, contig_lengths = _read_depth_files(depth_files, threads)
+
+            if assembly_missing:
+                assembly_coverage = _coverage_from_contigs(total_depth,
+                                                           contig_lengths)
+
+            if bins_missing:
+                contigs_by_bin = _bin_contigs(config, filtered_bins)
+                bin_coverages = {
+                    bin_name: _coverage_from_contigs(total_depth,
+                                                     contig_lengths,
+                                                     contigs_by_bin[bin_name])
+                    for bin_name in filtered_bins
+                }
+                _write_bin_coverage(bin_outfile, filtered_bins, bin_coverages)
+                bin_coverage_file = bin_outfile
+    finally:
+        if depth_files and not keep_depth_files:
+            loggingC.message(">Deleting depth files to free up disk space. "
+                             "To keep them in a future run use the "
+                             "--keep-depth-files option.", threshold=0)
+            for depth_file in depth_files:
+                os.remove(depth_file)
+
+    if assembly_missing:
+        with open(assembly_outfile, 'w') as f:
+            f.write(str(assembly_coverage))
+        loggingC.message(f">Assembly coverage is {assembly_coverage}", threshold=0)
+        loggingC.message(">Assembly coverage has been written to "
+                         f"{os.path.abspath(assembly_outfile)}", threshold=0)
+
+    if bins_required:
+        loggingC.message(">Bin coverage file: "
+                         f"{os.path.abspath(bin_coverage_file)}", threshold=0)
+
+    return assembly_coverage, bin_coverage_file
 
 
 def read_receipt(receipt_path: str) -> str:
@@ -748,7 +1047,7 @@ def read_receipt(receipt_path: str) -> str:
     success = root.attrib['success']
 
     if success != 'true':
-        err = f"\nERROR: Submission failed. Please consult the receipt file at {os.path.abspath(receipt_path)} for more information."
+        err = format_receipt_failure(root, receipt_path, "sample")
         loggingC.message(err, threshold=-1)
         sys.exit(1)
 

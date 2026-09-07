@@ -49,7 +49,7 @@ def __prep_coassembly_samplesheet(config: dict,
     attributes_data = [
         ("collection date", (from_config(config, 'ASSEMBLY', 'collection date'))),
         ("geographic location (country and/or sea)", from_config(config, 'ASSEMBLY', 'geographic location (country and/or sea)')),
-        ("sample composed of", ','.join(origin_samples)),
+        ("sample derived from", ','.join(origin_samples)),
     ]
 
     assembly_dict = from_config(config, 'ASSEMBLY')
@@ -105,9 +105,10 @@ def __submit_coassembly_samplesheet(sample_xml: str,
                 files={
                     'SUBMISSION': open(submission_xml, "rb"),
                     'SAMPLE': open(sample_xml, "rb"),
-                }, auth=HTTPBasicAuth(usr, pwd))
+                }, auth=HTTPBasicAuth(usr, pwd),
+                timeout=staticConfig.http_timeout)
     loggingC.message("\tHTTP status: "+str(response.status_code), threshold=1)
-    utility.api_response_check(response)
+    utility.api_response_check(response, submission_xml)
 
     with open(receipt_path, 'w') as f:
         f.write(response.text)
@@ -117,37 +118,25 @@ def __submit_coassembly_samplesheet(sample_xml: str,
 
 
 def __prep_assembly_manifest(config: dict,
-                             logging_dir: str,
                              outdir: str,
-                             depth_files,
+                             coverage: float,
                              run_accessions,
                              sample_accession: str,
-                             fasta_path: str,
-                             threads=4) -> str:
+                             fasta_path: str) -> str:
     """
     Prepares the assembly manifest.
 
     Args:
         config (dict): The configuration dictionary.
         outdir (str): The directory where the manifest will be written.
-        depth_files (str): The path to the depth files.
+        coverage (float): The resolved assembly coverage.
         sample_accession (str): The accession number of the sample.
         fasta_path (str): The path to the fasta file.
-        threads (int, optional): The number of threads to use. Defaults to 4.
         
     Returns:
         Tuple[str, str]: The upload directory and the path to the manifest file.
     """
     loggingC.message(f">Preparing assembly manifest file", threshold=0)
-    
-    # Determine coverage
-    if depth_files is None:
-        COVERAGE = utility.from_config(config, 'ASSEMBLY', 'COVERAGE_VALUE')
-    else:
-        coverage_outfile = os.path.join(logging_dir, "assembly_coverage.txt")
-        COVERAGE = utility.calculate_coverage(depth_files,
-                                              outfile=coverage_outfile,
-                                              threads=threads)
 
     # Write manifest
     PLATFORM = utility.from_config(config, 'SEQUENCING_PLATFORMS')
@@ -162,7 +151,7 @@ def __prep_assembly_manifest(config: dict,
         [ 'SAMPLE', sample_accession ],
         [ 'ASSEMBLYNAME', utility.stamped_from_config(config, 'ASSEMBLY','ASSEMBLY_NAME') ],
         [ 'ASSEMBLY_TYPE', staticConfig.sequence_assembly_type ],
-        [ 'COVERAGE', COVERAGE ],
+        [ 'COVERAGE', coverage ],
         [ 'PROGRAM', utility.from_config(config, 'ASSEMBLY','ASSEMBLY_SOFTWARE') ],
         [ 'PLATFORM', PLATFORM ],
         [ 'MOLECULETYPE', staticConfig.assembly_molecule_type],
@@ -187,13 +176,13 @@ def __prep_assembly_manifest(config: dict,
 def submit_assembly(config: dict,
                     staging_dir: str,
                     logging_dir: str,
-                    depth_files: str,
+                    coverage: float,
                     sample_accessions_data,
                     run_accessions,
-                    threads: int = 4,
                     test: bool = True,
                     submit: bool = True,
-                    staticConfig=staticConfig):
+                    staticConfig=staticConfig,
+                    ascp: bool = False):
     """
     Submits the assembly to ENA.
 
@@ -201,10 +190,9 @@ def submit_assembly(config: dict,
         config (dict): The configuration dictionary.
         staging_dir (str): The staging directory.
         logging_dir (str): The logging directory.
-        depth_files (str): The path to the depth files.
+        coverage (float): The resolved assembly coverage.
         sample_accessions_data (list): The sample accessions.
         run_accessions (list): The run accessions.
-        threads (int, optional): The number of threads to use. Defaults to 4.
         test (bool, optional): Whether to use the test server. Defaults to True.
         submit (bool, optional): Whether to submit the assembly. Defaults to
             True.
@@ -271,13 +259,11 @@ def submit_assembly(config: dict,
     os.makedirs(fasta_logging_dir, exist_ok=False)
     ## make a manifest and submit
     manifest_path = __prep_assembly_manifest(config,
-                                             logging_dir,
                                              fasta_submission_dir,
-                                             depth_files,
+                                             coverage,
                                              run_accessions,
                                              assembly_sample_accession,
-                                             gzipped_fasta_path,
-                                             threads=threads)
+                                             gzipped_fasta_path)
 
     loggingC.message(f">Using ENA Webin-CLI to submit assembly.", threshold=0)
     assembly_name = utility.stamped_from_config(config, 'ASSEMBLY','ASSEMBLY_NAME')
@@ -289,7 +275,8 @@ def submit_assembly(config: dict,
                                    password=pwd,
                                    subdir_name=assembly_name,
                                    submit=submit,
-                                   test=test)
+                                   test=test,
+                                   ascp=ascp)
     
     # Parse the receipt
     assembly_fasta_accession = utility.read_receipt(receipt)
@@ -302,5 +289,3 @@ def submit_assembly(config: dict,
     loggingC.message(msg, threshold=0)
 
     return assembly_sample_accession, assembly_fasta_accession
-
-

@@ -14,11 +14,12 @@ from submg.modules import enaSearching
 
 from submg.modules.statConf import staticConfig
 from submg.modules.utility import prepdir
+from submg.modules.webinWrapper import normalize_development_service
 from submg.modules.sampleSubmission import submit_samples
 from submg.modules.readSubmission import submit_reads
 from submg.modules.assemblySubmission import submit_assembly
 from submg.modules.binSubmission import submit_bins, get_bin_quality
-from submg.modules.magSubmission import submit_mags
+from submg.modules.magSubmission import get_mag_bin_ids, submit_mags
 
 
 def init_argparse():
@@ -83,6 +84,10 @@ def init_argparse():
                                help="Run a minimal test submission using just "
                                "a fraction of your dataset. Intended for quick "
                                "troubleshooting. [default false]")
+    parser_submit.add_argument("--ascp",
+                               action="store_true",
+                               help="Ask Webin-CLI to upload files using Aspera "
+                               "instead of FTP. [default false]")
     parser_submit.add_argument("-t",
                                "--threads",
                                type=int,
@@ -128,6 +133,16 @@ def init_argparse():
                                action="store_true",
                                default=False,
                                help="Skip preflight checks. Use with caution.")
+    parser_submit.add_argument("--truncate-read-names",
+                               action="store_true",
+                               default=False,
+                               help="Truncate FASTQ read names to the 256 "
+                               "character limit imposed by ENA.")
+    parser_submit.add_argument("--exclude-unclassified",
+                               action="store_true",
+                               default=False,
+                               help="Discard bins whose complete taxonomy is "
+                               "exactly the string 'unclassified' (ignoring case).")
     parser_submit.add_argument("-z", "--timestamps",
                                type=int,
                                choices=[0, 1],
@@ -313,7 +328,10 @@ def submit_through_gui(config_path,
                        submit_bins,
                        submit_mags,
                        username,
-                       password):
+                       password,
+                       exclude_unclassified=False,
+                       truncate_read_names=False,
+                       ascp=False):
     """
     Submit data to the ENA after user started the process through the GUI.
 
@@ -330,6 +348,11 @@ def submit_through_gui(config_path,
         submit_assembly (bool): Whether to submit an assembly.
         submit_bins (bool): Whether to submit bins.
         submit_mags (bool): Whether to submit MAGs.
+        exclude_unclassified (bool): Whether to discard bins whose complete
+                                     taxonomy is exactly "unclassified".
+        truncate_read_names (bool): Whether to truncate FASTQ read names while
+                                    staging.
+        ascp (bool): Whether Webin-CLI should use Aspera for file uploads.
         username (str): ENA username.
         password (str): ENA password.
     """
@@ -343,8 +366,11 @@ def submit_through_gui(config_path,
     args.staging_dir = staging_dir
     args.logging_dir = logging_dir
     args.verbosity = verbosity
-    args.development_service = development_service
+    args.development_service = normalize_development_service(development_service)
     args.skip_checks = False
+    args.ascp = ascp
+    args.truncate_read_names = truncate_read_names
+    args.exclude_unclassified = exclude_unclassified
     args.timestamps = 1
     args.threads = 4
     args.keep_depth_files = False
@@ -371,6 +397,10 @@ def submit(args, listener=None, gui=False):
         listener (function): A function that can receive log messages.
         gui (bool): Whether the function was called from the GUI.
     """
+    args.development_service = normalize_development_service(
+        args.development_service
+    )
+    ascp = getattr(args, 'ascp', False)
 
     staging_base = os.path.realpath(os.path.abspath(os.path.expanduser(args.staging_dir)))
     logging_base = os.path.realpath(os.path.abspath(os.path.expanduser(args.logging_dir)))
@@ -394,16 +424,17 @@ def submit(args, listener=None, gui=False):
         sys.exit(1)
         
 
+    if args.minitest and not args.development_service:
+        loggingC.message("ERROR: The --minitest mode cannot be used for a submission to the ENA production server.",
+                         threshold=-1)
+        sys.exit(1)
+
     staging_subdir = utility.set_up_staging(args.staging_dir,
                                             full_timestamp)
     
     
     if args.timestamps or (args.timestamps is None and args.development_service):
         utility.set_up_timestamps(vars(args))
-
-    if args.minitest and not args.development_service:
-        loggingC.message("ERROR: The --minitest mode cannot be used for a submission to the ENA production server.",
-                         threshold=-1)
         
     try:
         sver = staticConfig.submg_version
@@ -436,6 +467,10 @@ def submit(args, listener=None, gui=False):
                                                 args.submit_assembly,
                                                 args.submit_bins,
                                                 args.submit_mags)
+        if ascp:
+            msg += (">Aspera upload requested. Webin-CLI may still fall back "
+                    "to FTP, for example if Aspera is unavailable or blocked "
+                    "by a firewall.\n")
         loggingC.message(msg, threshold=0)
 
         config = preflight.preflight_checks(vars(args))
@@ -443,10 +478,57 @@ def submit(args, listener=None, gui=False):
         # If we are submitting bins, get the quality scores and the
         # taxonomic information.
         # We do this early so we notice issues before we start staging files.
+        selected_mag_ids = None
+        filtered_bins = []
         if args.submit_bins or args.submit_mags:
             bin_quality = get_bin_quality(config, silent=True)
             # If there are quality cutoffs, make a list of bins to submit
             filtered_bins = utility.quality_filter_bins(bin_quality, config)
+            if args.exclude_unclassified:
+                unclassified_taxonomies = taxQuery.get_unclassified_bin_taxonomies(
+                    config
+                )
+                excluded_bins = [
+                    (bin_id, unclassified_taxonomies[bin_id])
+                    for bin_id in filtered_bins
+                    if bin_id in unclassified_taxonomies
+                ]
+                if excluded_bins:
+                    loggingC.message(
+                        ">WARNING: Excluding bins with an exact "
+                        "'unclassified' taxonomy:",
+                        threshold=0
+                    )
+                    for bin_id, taxonomy in excluded_bins:
+                        loggingC.message(
+                            f"\t{bin_id}: {taxonomy}",
+                            threshold=0
+                        )
+                    excluded_ids = {bin_id for bin_id, _ in excluded_bins}
+                    filtered_bins = [
+                        bin_id for bin_id in filtered_bins
+                        if bin_id not in excluded_ids
+                    ]
+                    if not filtered_bins:
+                        err = (
+                            "\nERROR: No bins remain after excluding bins "
+                            "with an exact 'unclassified' taxonomy."
+                        )
+                        loggingC.message(err, threshold=-1)
+                        sys.exit(1)
+                    if args.submit_mags:
+                        filtered_bin_ids = set(filtered_bins)
+                        selected_mag_ids = [
+                            bin_id for bin_id in get_mag_bin_ids(config)
+                            if bin_id in filtered_bin_ids
+                        ]
+                        if not selected_mag_ids:
+                            err = (
+                                "\nERROR: No MAGs remain after excluding bins "
+                                "with an exact 'unclassified' taxonomy."
+                            )
+                            loggingC.message(err, threshold=-1)
+                            sys.exit(1)
             # Test if there are bins which are too contaminated
             for name in filtered_bins:
                 contamination = bin_quality[name]['contamination']
@@ -466,30 +548,52 @@ def submit(args, listener=None, gui=False):
             # Query the taxonomy of bins
             bin_taxonomy = taxQuery.get_bin_taxonomy(filtered_bins, config)
             if args.minitest:
-                msg = f">Minitest: Discarding every bin except {filtered_bins[0]}"
+                if args.submit_mags:
+                    mag_bin_ids = get_mag_bin_ids(config)
+                    filtered_bin_set = set(filtered_bins)
+                    eligible_mag_ids = [
+                        bin_id for bin_id in mag_bin_ids
+                        if bin_id in filtered_bin_set
+                    ]
+                    if not eligible_mag_ids:
+                        err = (
+                            "\nERROR: Minitest could not find a MAG in the "
+                            "MAG metadata file that passes the bin quality "
+                            "filters."
+                        )
+                        loggingC.message(err, threshold=-1)
+                        sys.exit(1)
+                    selected_mag_ids = eligible_mag_ids[0:1]
+                    filtered_bins = selected_mag_ids
+                    selected_id = selected_mag_ids[0]
+                    if args.submit_bins:
+                        msg = (
+                            ">Minitest: Submitting only matching bin/MAG "
+                            f"{selected_id}"
+                        )
+                    else:
+                        msg = f">Minitest: Submitting only MAG {selected_id}"
+                else:
+                    filtered_bins = filtered_bins[0:1]
+                    msg = (
+                        ">Minitest: Submitting only bin "
+                        f"{filtered_bins[0]}"
+                    )
                 loggingC.message(msg, threshold=0)
-                filtered_bins = filtered_bins[0:1]
-            
-        # Construct depth files if there are .bam files in the config
-        if 'BAM_FILES' in config.keys():
-            bam_files = utility.from_config(config, 'BAM_FILES')
 
-            if not isinstance(bam_files, list):
-                bam_files = [bam_files]
-            if args.minitest:
-                msg = f">Minitest: Ignoring bam files except for {bam_files[0]}"
-                loggingC.message(msg, threshold=0)
-                bam_files = bam_files[0:1]
-            depth_files = utility.construct_depth_files(staging_subdir,
-                                                        args.threads,
-                                                        bam_files)
-            bin_coverage_file = None
-        else:
-            if args.submit_bins or args.submit_mags:
-                bin_coverage_file = utility.from_config(config,
-                                                        'BINS',
-                                                        'COVERAGE_FILE')
-            depth_files = None
+        if args.submit_assembly or args.submit_bins or args.submit_mags:
+            assembly_coverage, bin_coverage_file = utility.resolve_coverage(
+                config=config,
+                submit_assembly=args.submit_assembly,
+                submit_bins=args.submit_bins,
+                submit_mags=args.submit_mags,
+                filtered_bins=filtered_bins,
+                staging_dir=staging_subdir,
+                logging_dir=logging_subdir,
+                threads=args.threads,
+                minitest=args.minitest,
+                keep_depth_files=args.keep_depth_files,
+            )
 
         if args.submit_samples:
             sample_accession_data = submit_samples(config,
@@ -521,7 +625,10 @@ def submit(args, listener=None, gui=False):
                                           prepdir(staging_subdir, 'reads'),
                                           prepdir(logging_subdir, 'reads'),
                                           test=args.development_service,
-                                          minitest=args.minitest)
+                                          minitest=args.minitest,
+                                          skip_checks=args.skip_checks,
+                                          truncate_read_names=args.truncate_read_names,
+                                          ascp=ascp)
         else:
             if args.submit_bins or args.submit_mags or args.submit_assembly:
                 run_accessions = utility.from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS')
@@ -532,11 +639,11 @@ def submit(args, listener=None, gui=False):
             assembly_sample_accession, assembly_fasta_accession = submit_assembly(config,
                                                                                   staging_subdir,
                                                                                   logging_subdir,
-                                                                                  depth_files,
+                                                                                  assembly_coverage,
                                                                                   sample_accession_data,
                                                                                   run_accessions,
-                                                                                  threads=args.threads,
-                                                                                  test=args.development_service)
+                                                                                  test=args.development_service,
+                                                                                  ascp=ascp)
             # Assembly sample accession will be either the accession of the
             # co-assembly virtual sample or the accession of the single sample
             # which the assembly is based on
@@ -557,18 +664,18 @@ def submit(args, listener=None, gui=False):
                                                                                                     args.development_service)
 
         # Bin submision
+        bin_sample_accessions = None
         if args.submit_bins:
-            submit_bins(filtered_bins,
-                        config,
-                        bin_taxonomy,
-                        sample_accession_data,
-                        run_accessions,
-                        prepdir(staging_subdir, 'bins'),
-                        prepdir(logging_subdir, 'bins'),
-                        depth_files,
-                        bin_coverage_file,
-                        threads=args.threads,
-                        test=args.development_service)
+            bin_sample_accessions = submit_bins(filtered_bins,
+                                                config,
+                                                bin_taxonomy,
+                                                sample_accession_data,
+                                                run_accessions,
+                                                prepdir(staging_subdir, 'bins'),
+                                                prepdir(logging_subdir, 'bins'),
+                                                bin_coverage_file,
+                                                test=args.development_service,
+                                                ascp=ascp)
 
 
         # MAG submission
@@ -594,10 +701,11 @@ def submit(args, listener=None, gui=False):
                         bin_taxonomy,
                         prepdir(staging_subdir, 'mags'),
                         prepdir(logging_subdir, 'mags'),
-                        depth_files,
                         bin_coverage_file,
-                        threads=args.threads,
-                        test=args.development_service)
+                        bin_sample_accessions=bin_sample_accessions,
+                        selected_mag_ids=selected_mag_ids,
+                        test=args.development_service,
+                        ascp=ascp)
 
         msg = "\n>All submissions completed."
         if args.development_service:
@@ -625,14 +733,6 @@ def submit(args, listener=None, gui=False):
         )
         loggingC.message(msg, threshold=0)
 
-        # Cleanup: depth files
-        if not args.keep_depth_files and depth_files is not None:
-            loggingC.message(">Deleting depth files to free up disk space. "
-                             "To keep them in a future run use the, "
-                             "--keep-depth-files option.", threshold=0)
-            for depth_file in depth_files:
-                os.remove(depth_file)
-
         # Cleanup: warn about staging directory
         if os.path.exists(staging_subdir):
             wrn = (">Reminder: The staging directory "
@@ -646,5 +746,3 @@ def submit(args, listener=None, gui=False):
         exc_info = traceback.format_exc()
         loggingC.message(exc_info, threshold=-1)
         sys.exit(1)
-
-

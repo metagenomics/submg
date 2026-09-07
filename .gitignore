@@ -11,6 +11,11 @@ examples/data/mapping/*tmp.sorted.bam.bai
 examples/data/mapping/*unindexed.bam.bai
 examples/loghere/*
 examples/stagehere/*
+temp/*
+test/*
+tests/*
+known-bugs.md
+solved-bugs.md
 venv_*
 old*
 

@@ -39,8 +39,8 @@ subMG was developed within the German [NFDI4Microbiota consortium](https://nfdi4
   <img alt="subMG gui screenshot" src="submg/resources/gui_screenshot.png" height=400>
   <br>
   <em>Graphic User Interface</em>
+  <em>Graphical User Interface</em>
 </p>
-
 
 
 &nbsp;
@@ -77,6 +77,7 @@ Please Note
   - [The Config File](#the-config-file)
   - [Submission Modes](#submission-modes)
   - [Input Overview](#input-overview)
+  - [Aspera Uploads](#aspera-uploads)
 - [Taxonomy Assignment](#taxonomy-assignment)
   - [GTDB-Toolkit (GTDB-Tk) Taxonomy](#gtdb-toolkit-gtdb-tk-taxonomy)
   - [NCBI-Taxonomy](#ncbi-taxonomy)
@@ -137,6 +138,8 @@ ENA provides a [development service](https://ena-docs.readthedocs.io/en/latest/s
 ## The Config File
 A lot of (meta)data is required for a submission. To use subMG, you need to provide metadata and the locations of your files in a YAML document. Which information is required depends on the type of your submission. You can use the `submg-cli makecfg` command to create a template for your config file. It will contain only the fields necessary for your specific submission, along with explanations and examples. Additionally, the `examples` directory contains examples of config files and the associated data. If you are unsure of how to fill out certain fields, please feel free to ask on the [GitHub discussions page](https://github.com/metagenomics/submg/discussions) of this project.
 
+Relative paths in the YAML configuration are resolved relative to the directory containing the YAML file, rather than relative to the directory from which the command is run. Paths in the `MAG_METADATA_FILE` table are resolved relative to the directory containing that table. Use absolute paths if you want to avoid ambiguity, especially when running subMG from a different working directory.
+
 ## Submission Modes
 Not all combinations of items can be submitted to ENA. For example, it is not possible to submit only samples and a co-assembly without also submitting the corresponding reads. The figure below illustrates all possible combinations:
 <picture>
@@ -155,13 +158,21 @@ This list details the kinds of files subMG ingests (depending on what items are 
 	- `fasta` or gzipped `fasta` files
 	- (optional) `BAM` files for coverage calculation
 - Binned contig submission
-	- directory with `fasta` or gzipped `fasta` files, one for each contig
+	- directory with `fasta` or gzipped `fasta` files, one for each bin
 	- (optional) `BAM` files for coverage calculation
 	- taxonomic information: e.g. `gtdb_to_ncbi_majority_vote.py` output, see section [Taxonomy Assignment](#taxonomy-assignment)
 	- quality information: e.g. [CheckM](https://github.com/Ecogenomics/CheckM) output, see section [Quality Data](#quality-data)
 - MAG submission (see [MAG submission](#mag-submission) section for details)
 	- `fasta` or gzipped `fasta` or [EMBL-Flatfile](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html)
 	-  tab separated table with [MAG details](#mag-metadata)
+
+## Aspera Uploads
+By default, files like reads are uploaded via FTP. To request an [Aspera upload through Webin-CLI](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/webin-cli.html#using-aspera-instead-of-ftp-to-upload-files),
+use `submg-cli submit --ascp <other options>` or select **Use Aspera instead of
+FTP** in the GUI.
+
+This requires that the [IBM Aspera CLI](https://github.com/IBM/aspera-cli#install) is available as `ascp` on `PATH`. Webin-CLI may automatically fall back to FTP if Aspera is unavailable. For transfer problems,
+see the [ENA upload documentation](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/upload.html).
 
 # Taxonomy Assignment
 Assemblies and bins need a valid NCBI taxonomy (scientific name and taxonomic identifier) for submission. For metagenome submissions, [environmental organism-level taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) is required.
@@ -186,28 +197,28 @@ You can provide one or more tables with NCBI taxonomy information for your bins 
 
 These tables can be provided under the `NCBI_TAXONOMY_FILES` keyword in the configuration form.
 
-The values in the `bin_id` field have to match the basenames of the bin fasta files (e.g. there needs to be a `bin1.fasta`, `bin1.fna` or similar in your `BINS_DIRECTORY`)
+The values in the `Bin_id` field have to match the basenames of the bin fasta files (e.g. there needs to be a `bin1.fasta`, `bin1.fna` or similar in your `BINS_DIRECTORY`)
 
 The string in the 'NCBI_taxonomy' column has to adhere to the format shown in the above example: Taxonomic ranks are separated by semicolons. On each rank, a letter indicating the rank is followed by two underscores and the classification at that rank. The ranks have to be in the order 'domain', 'phylum', 'class', 'order', 'family', 'genus', 'species'. If a classification at a certain rank is unavailable, the rank itself still needs to be present in the string (e.g. "s__" where the species taxonomy is unknown).
 
 ## Taxonomy Assignment Failure
-In some cases, subMG will be unable to assign a valid taxonomy to a bin. The submission will be aborted and you will be informed which bins are causing problems. In such cases, you must determine the correct scientific name and taxid for the bin and specify it in a [manual taxonomy file](#manually-specified-taxonomy). This file then has to be referenced in the `MANUAL_TAXONOMY` field of your config. Remember to use [environmental organism-level taxonomies](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) when manually defining the taxonomy for your bin.
+In some cases, subMG will be unable to assign a valid taxonomy to a bin. The submission will be aborted and you will be informed which bins are causing problems. In such cases, you must determine the correct scientific name and taxid for the bin and specify it in a [manual taxonomy file](#manual-taxonomy-file). This file then has to be referenced in the `MANUAL_TAXONOMY_FILE` field of your config. Remember to use [environmental organism-level taxonomies](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) when manually defining the taxonomy for your bin.
 
 A possible reason for a failed taxonomic assignment is that no proper [environmental organism-level taxonomies](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) exist yet (this happens more often than one might expect). You can [create a taxon request](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy_requests.html) in the ENA Webin Portal to register the taxon.
 
 ## Manual Taxonomy File
-In cases where subMG is unable to assign a valid taxonomy based on the NCBI taxonomy file, you can provide taxonomies for some of your bins as a tab-separated table. The table has to be referenced under the keyword `MANUAL_TAXONOMY` in the configuration form. The table matches each `Bin_id` to a `Scientific_name` and a `Tax_id`. If a bin is present in this document, the taxonomic data from other sources will be ignored. Each `Bin_id` has to match the basename of binned contigs fasta file.
+In cases where subMG is unable to assign a valid taxonomy based on the NCBI taxonomy file, you can provide taxonomies for some of your bins as a tab-separated table. The table has to be referenced under the keyword `MANUAL_TAXONOMY_FILE` in the configuration form. The table matches each `Bin_id` to a `Scientific_name` and a `Tax_id`. If a bin is present in this document, the taxonomic data from other sources will be ignored. Each `Bin_id` has to match the basename of binned contigs fasta file.
 |Bin_id|Scientific_name|Tax_id|
 |---|---|---|
 |bin3|uncultured Paracoccus sp.|189685|
 
-An example of such a document can be found in `./examples/data/taxonomy/manual_taxonomy_3bins.tsv`. Again, values in the `bin_id` field have to match the basenames of the bin fasta files (e.g. there needs to be a `bin1.fasta`, `bin1.fna` or similar matching `bin1` of your table).
+An example of such a document can be found in `./examples/data/taxonomy/manual_taxonomy_3bins.tsv`. Again, values in the `Bin_id` field have to match the basenames of the bin fasta files (e.g. there needs to be a `bin1.fasta`, `bin1.fna` or similar matching `bin1` of your table).
 
 ENA provides a [guideline for choosing taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html). You can query ENA's [suggest-for-submission-endpoint](https://ena-docs.readthedocs.io/en/latest/retrieval/programmatic-access/taxon-api.html) to find the correct taxid for a bin programmatically or directly through the browser (e.g. by navigating to https://www.ebi.ac.uk/ena/taxonomy/rest/suggest-for-submission/escherichia).
 
 # Quality Data
-Binned contigs and MAGs need to be submitted with quality data (contamination and completeness of each bin/MAG). In the `QUALITY_FILE` field of the configuration form you need to provide either the output of [CheckM](https://github.com/Ecogenomics/CheckM) / [CheckM2](https://github.com/chklovski/CheckM2) or a table with the columns `Bin_id`, `Completeness`, `Contamination`. `Completeness` and `Contamination` values represent percentages (e.g. `93.2` means 93.2%). Each `Bin_id` has to correspond to the basename of a MAG or binned contigs fasta file. Fields have to be tab-separated. An example of a valid table is seen below.
-|Bin_id|some_other_column|Contamination|Completeness|
+Binned contigs and MAGs need to be submitted with quality data (contamination and completeness of each bin/MAG). In the `QUALITY_FILE` field of the configuration form you need to provide either the output of [CheckM](https://github.com/Ecogenomics/CheckM) / [CheckM2](https://github.com/chklovski/CheckM2) or a table with the columns `Bin Id`, `Completeness`, `Contamination`. `Completeness` and `Contamination` values represent percentages (e.g. `93.2` means 93.2%). Each `Bin Id` has to correspond to the basename of a MAG or binned contigs fasta file. Fields have to be tab-separated. An example of a valid table is seen below.
+|Bin Id|some_other_column|Contamination|Completeness|
 |------|-----------------|-------------|------------|
 |bin15 | other data      | 3.14        | 92.91      |
 |bin17 | other data      | 14.29       | 44.32      |
@@ -221,12 +232,26 @@ If you have assembled high-quality bins from your metagenome, you can [submit th
 A MAG assembly can be submitted either as a 'Contig Assembly' or a 'Chromosome Assembly'. Please consult [the ENA documentation for further information](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#stage-2-prepare-the-files). You will need to provide additional data for a Chromosome Assembly submission (see below).
 
 ## MAG metadata
-If you are submitting MAGs, you need to provide a .tsv file and specify it in the `MAGS_METADATA_FILE` field of your config file. The file needs to have the columns `Bin_id`, `Sample_id`, `Quality_category`, `Flatfile_path` and `Unlocalised_path`. An example of a `MAGS_METADATA_FILE` can be found in `./examples/data/mags/mags_metadata.tsv`.
-Depending on your submission, not all columns have to be filled out.
-- `Bin_id`: Identifier of the bin. Has to be identical to the identifier used in the name of the fasta file, the taxonomy .tsv files etc.
+If you are submitting MAGs, you need to provide a .tsv file and specify it in the `MAG_METADATA_FILE` field of your config file. The file needs to have the columns `Bin_id`, `Quality_category`, `Flatfile_path`, `Chromosomes_path` and `Unlocalised_path`. An example of a `MAG_METADATA_FILE` can be found in `./examples/data/mag_metadata/mag_metadata.tsv`.
+Depending on your submission, not all columns have to be filled out. Additionally, the `Sample_derived_from` column must only be present if you are running subMG to submit MAGs and nothing else.
+
+- `Sample_derived_from`: Optional and only allowed when submitting MAGs without bins in the same subMG run. Each value may contain one sample accession or a comma-separated list of sample accessions. These can identify existing bin virtual samples, environmental samples or a virtual assembly sample. subMG verifies the accessions against the selected ENA service.
+- `Bin_id`: Only needed when submitting bins and MAGs in the same subMG run. Identifier of the related bin. Has to be identical to the identifier used in the name of the fasta file, the taxonomy .tsv files etc.
 - `Quality_category`: 'finished', 'high' or 'medium' as defined by ENA [here](https://ena-docs.readthedocs.io/en/latest/faq/metagenomes.html) (note the requirements regarding RNA sequences for the 'high' and 'finished' categories).
-- `Flatfile_path`: For chromosome assemblies only. Either a `.fasta` file or an [EMBL-Flatfile](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html) can be [used for MAG submission](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#flat-file). If you leave the field empty, the `.fasta` file of the corresponding bin will be used. If you want to provide annotation data, you need to provide a path to a flatfile. [EMBLmyGFF3](https://github.com/NBISweden/EMBLmyGFF3) provides a convenient way to create flatfiles based on your annotation data.
-- `Unlocalised_path`: For chromosome assemblies only. Optional. [Path to a .txt file containing the unlocalised contigs of the bin](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#unlocalised-list-file).
+- `Flatfile_path`: Optional for any MAG assembly. Either a `.fasta` file or an [EMBL-Flatfile](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html) can be [used for MAG submission](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#flat-file). If you leave the field empty, the `.fasta` file of the corresponding bin will be used. Provide a flatfile when you want to submit a custom sequence file or annotation data. [EMBLmyGFF3](https://github.com/NBISweden/EMBLmyGFF3) provides a convenient way to create flatfiles based on your annotation data.
+- `Chromosomes_path`: Required for chromosome assemblies. Path to a tab-separated file describing the chromosomes.
+- `Unlocalised_path`: Optional for chromosome assemblies. It may only be provided together with `Chromosomes_path`. See the ENA documentation for the [unlocalised contig list](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#unlocalised-list-file).
+
+
+The value written to the ENA `sample derived from` attribute is selected as follows:
+
+| Submission | `Sample_derived_from` column | Result |
+|---|---|---|
+| Bins and MAGs together | Absent | Each MAG uses the virtual sample accession of its matching newly submitted bin. |
+| MAGs only | Absent or empty for every row | Every MAG uses the list of environmental samples from `SAMPLE_ACCESSIONS`. |
+| MAGs only | Filled for every row | Each MAG uses its own value from the metadata table. |
+
+When using comma-separated accessions, whitespace around each accession is removed while their order is preserved. Empty entries are rejected.
 
 Using the table below, MAG `m1` will be submitted as a medium quality contig assembly without annotation. `m2` will be submitted as a high quality contig assembly and include annotation. MAG `m3` will be submitted as a finished chromosome assembly, including annotation. 
 |Bin_id|Quality_category|Flatfile_path|Chromosomes_path|Unlocalised_path|
@@ -241,7 +266,9 @@ A submission can take several hours to complete. We recommend using [nohup](http
 # Edge Cases
 
 ## Dereplication
-If your bins are the result of dereplicating data from a single assembly, you can use subMG as described above. If your bins are the result of dereplicating data from multiple different assemblies, you need to split them based on which assembly they belong to. You then run subMG separately for each assembly (together with the corresponding set of bins).
+For an ENA submission, each bin needs to be associated with exactly one assembly.
+If your bins are the result of dereplicating data from a single assembly, you can use subMG as described above.
+If your bins are the result of dereplicating data from multiple different assemblies, you need to split them based on which assembly they belong to. You then run subMG separately for each assembly (together with the corresponding set of bins).
 
 ## Bin Contamination above 100 percent
 When calculating completeness and contamination of a bin with tools like [CheckM](https://github.com/Ecogenomics/CheckM), contamination values above 100% can occur. [Usually, this is not an error](https://github.com/Ecogenomics/CheckM/issues/107). However, the ENA API will refuse to accept bins with contamination values above 100%. subMG will automatically exclude bins with contamination values above 100% from the submission.
@@ -251,4 +278,10 @@ If you absolutely need to submit such (presumably low-quality) bins, you need to
 subMG is being actively developed. Please use the GitHub [issue tracker](https://github.com/metagenomics/submg/issues) to report problems. A [discussions page](https://github.com/metagenomics/submg/discussions) is available for questions, comments and suggestions. 
 
 # Citation
-When using subMG in your work, please cite https://doi.org/10.1186/s13040-025-00453-wd
+If you use subMG in published work, please cite https://doi.org/10.1186/s13040-025-00453-w
+```text
+Tubbesing, T., Schlüter, A., & Sczyrba, A. (2025).
+subMG automates data submission for metagenomics studies.
+BioData Mining, 18, 38.
+https://doi.org/10.1186/s13040-025-00453-w
+```
