@@ -1,5 +1,7 @@
 # monitor.py
 import os
+import signal
+import subprocess
 import traceback
 os.environ['XMODIFIERS'] = "@im=none"
 import customtkinter as ctk
@@ -17,6 +19,9 @@ def submission_wrapper(config_path, output_dir, development_service, verbosity,
     """
     Wrapper function to run submit_through_gui and send log messages to a queue.
     """
+    if os.name != 'nt':
+        os.setsid()  # Keep Webin and its children in the worker's process group.
+
     def listener(message):
         log_queue.put(message)
     
@@ -371,12 +376,28 @@ class MonitorPage(BasePage):
             )
 
 
+    def terminate_submission(self):
+        """Stop the worker and its upload subprocesses."""
+        process = self.submission_process
+        if os.name == 'nt':
+            subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'],
+                           check=True, capture_output=True)
+            process.join()
+        else:
+            # Stop the worker first so it cannot spawn children during cleanup,
+            # even if Stop was clicked before it called setsid().
+            process.kill()
+            process.join()
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass  # No subprocesses remain (or the worker had not started).
+
     def stop_submission(self):
         """Stop the submission process, update UI accordingly, inform the user."""
         if self.submission_process and self.submission_process.is_alive():
             self.log_message("Stopping submission...")
-            self.submission_process.terminate()
-            self.submission_process.join()
+            self.terminate_submission()
             self.log_message("Submission stopped.")
             self.submission_running = False
             self.submission_process = None

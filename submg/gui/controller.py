@@ -96,8 +96,7 @@ class MyApp(ctk.CTk):
             if (monitor_page.submission_process is not None and
                     monitor_page.submission_process.is_alive()):
                 try:
-                    monitor_page.submission_process.terminate()
-                    monitor_page.submission_process.join()
+                    monitor_page.terminate_submission()
                 except Exception:
                     # If termination fails for some reason, we still proceed with exit
                     pass
