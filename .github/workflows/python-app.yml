@@ -224,3 +224,46 @@ jobs:
           --staging-dir example12/staging \
           --logging-dir example12/logging \
           --submit-mags
+    - name: Example 13
+      env:
+        ENA_USER: ${{ secrets.ENA_USER }}
+        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
+      run: |
+        cd examples
+        CFG=13_samples.yaml
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
+        submg-cli submit \
+          --config $CFG \
+          --staging-dir example13/staging \
+          --logging-dir example13/logging \
+          --submit-samples
+    - name: Example 14
+      env:
+        ENA_USER: ${{ secrets.ENA_USER }}
+        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
+      run: |
+        cd examples
+        CFG=14_reads.yaml
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
+        submg-cli submit \
+          --config $CFG \
+          --staging-dir example14/staging \
+          --logging-dir example14/logging \
+          --submit-reads
+    - name: Example 15
+      env:
+        ENA_USER: ${{ secrets.ENA_USER }}
+        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
+      run: |
+        cd examples
+        CFG=15_samples_reads.yaml
+        RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5 2>/dev/null)
+        sed -i "s/idx00/${RANDOM_STR}/g" "$CFG"
+        submg-cli submit \
+          --config $CFG \
+          --staging-dir example15/staging \
+          --logging-dir example15/logging \
+          --submit-samples \
+          --submit-reads
