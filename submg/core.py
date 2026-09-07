@@ -516,6 +516,19 @@ def submit(args, listener=None, gui=False):
                         )
                         loggingC.message(err, threshold=-1)
                         sys.exit(1)
+                    if args.submit_mags:
+                        filtered_bin_ids = set(filtered_bins)
+                        selected_mag_ids = [
+                            bin_id for bin_id in get_mag_bin_ids(config)
+                            if bin_id in filtered_bin_ids
+                        ]
+                        if not selected_mag_ids:
+                            err = (
+                                "\nERROR: No MAGs remain after excluding bins "
+                                "with an exact 'unclassified' taxonomy."
+                            )
+                            loggingC.message(err, threshold=-1)
+                            sys.exit(1)
             # Test if there are bins which are too contaminated
             for name in filtered_bins:
                 contamination = bin_quality[name]['contamination']
