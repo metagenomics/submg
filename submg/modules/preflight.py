@@ -202,7 +202,7 @@ def __check_date(date: str):
         "%Y-%m-%dT%H:%M",       # Year-month-day hour:minute
         "%Y-%m-%dT%H:%M:%S",    # Year-month-day hour:minute:second
     ]
-    valid = date in staticConfig.valid_missing_value_terms.split(';')
+    valid = date in staticConfig.valid_missing_value_terms
     for fmt in valid_formats:
         try:
             # Try parsing with the current format
@@ -225,6 +225,7 @@ def __check_country_sea_location(location: str):
     """
     global checks_failed
     valid_locations = staticConfig.valid_locations.split(';')
+    valid_locations.extend(staticConfig.valid_missing_value_terms)
     if not location in valid_locations:
         err = f"\nERROR: The location '{location}' is not a valid country or sea name. Please check your config file."
         loggingC.message(err, threshold=-1)
