@@ -244,7 +244,7 @@ Depending on your submission, not all columns have to be filled out. Additionall
 - `Sample_derived_from`: Optional and only allowed when submitting MAGs without bins in the same subMG run. Each value may contain one sample accession or a comma-separated list of sample accessions. These can identify existing bin virtual samples, environmental samples or a virtual assembly sample. subMG verifies the accessions against the selected ENA service.
 - `Bin_id`: Only needed when submitting bins and MAGs in the same subMG run. Identifier of the related bin. Has to be identical to the identifier used in the name of the fasta file, the taxonomy .tsv files etc.
 - `Quality_category`: 'finished', 'high' or 'medium' as defined by ENA [here](https://ena-docs.readthedocs.io/en/latest/faq/metagenomes.html) (note the requirements regarding RNA sequences for the 'high' and 'finished' categories).
-- `Flatfile_path`: Optional for any MAG assembly. Either a `.fasta` file or an [EMBL-Flatfile](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html) can be [used for MAG submission](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#flat-file). If you leave the field empty, the `.fasta` file of the corresponding bin will be used. Provide a flatfile when you want to submit a custom sequence file or annotation data. [EMBLmyGFF3](https://github.com/NBISweden/EMBLmyGFF3) provides a convenient way to create flatfiles based on your annotation data.
+- `Flatfile_path`: Optional for any MAG assembly. Either a `.fasta` file or an [EMBL-Flatfile](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html) can be [used for MAG submission](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#flat-file). If you leave the field empty, the `.fasta` file of the corresponding bin will be used. Provide a flatfile when you want to submit a custom sequence file or annotation data. [EMBLmyGFF3](https://github.com/NBISweden/EMBLmyGFF3) provides a convenient way to create flatfiles based on your annotation data. A flatfile with annotation data requires a [locus tag prefix](#locus-tag-prefix) registered for your study.
 - `Chromosomes_path`: Required for chromosome assemblies. Path to a tab-separated file describing the chromosomes.
 - `Unlocalised_path`: Optional for chromosome assemblies. It may only be provided together with `Chromosomes_path`. See the ENA documentation for the [unlocalised contig list](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#unlocalised-list-file).
 
@@ -263,8 +263,8 @@ Using the table below, MAG `m1` will be submitted as a medium quality contig ass
 |Bin_id|Quality_category|Flatfile_path|Chromosomes_path|Unlocalised_path|
 |---|---|---|---|---|
 |m1|medium||||
-|m2|high|/path/to/m2_flatfile.tsv|||
-|m3|finished|/path/to/m3_flatfile.tsv|/path/to/m3_chromosome.txt|/path/to/m3_unlocalised.txt|
+|m2|high|/path/to/m2_flatfile.embl|||
+|m3|finished|/path/to/m3_flatfile.embl|/path/to/m3_chromosome.txt|/path/to/m3_unlocalised.txt|
 
 # Preventing Process Interruption
 A submission can take several hours to complete. We recommend using [nohup](https://en.wikipedia.org/wiki/Nohup), [tmux](https://github.com/tmux/tmux/wiki) or similar to prevent the submission process from being interrupted. 
