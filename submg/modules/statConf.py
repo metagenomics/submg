@@ -44,7 +44,7 @@ class staticConfig:
     mag_qstring_high: str = 'Multiple fragments where gaps span repetitive regions. Presence of the 23S, 16S and 5S rRNA genes and at least 18 tRNAs.'
     mag_qstring_medium: str = 'Many fragments with little to no review of assembly other than reporting of standard assembly statistics.'
     max_assembly_name_length: int = 50 - len('webin-genome-' + '_SAMEA________')
-    timestamp_length: int = 4
+    timestamp_length: int = 6
     ena_rest_rate_limit: int = 50 # requests per second
     submission_modes_message: str = """
         The following modes of submission are supported:
@@ -73,7 +73,7 @@ YAMLCOMMENTS = {
     'PROJECT_NAME': 'Name of the project within which the sequencing was organized.',
     'TITLE': 'A unique title for your sample.',
     'METAGENOME_SCIENTIFIC_NAME': "Taxonomic identifier of the metagenome. Check the ENA metagenome taxonomy tree to find a taxonomy ID and species name fitting your sample.",
-    'METAGENOME_TAXID': "Taxonomic identifier of the assembly. Must match SPECIES_SCIENTIFIC_NAME.",
+    'METAGENOME_TAXID': "Taxonomic identifier of the assembly. Must match METAGENOME_SCIENTIFIC_NAME.",
     'SEQUENCING_PLATFORMS': "One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#platform",
     'NEW_SAMPLES': "These samples will be created in ENA according to the data entered below. Your assembly MUST BE BASED ON ALL OF THESE.",
     'collection date': "Any ISO compliant time. Can be truncated from the right (e.g. '2023-12-27T16:07' or '2023-12').",
@@ -141,7 +141,7 @@ YAMLEXAMPLES = {
     'FASTQ2_FILE': '\"/mnt/data/reads_R2.fastq.gz\"',
     'RELATED_SAMPLE_TITLE': '\"Bioreactor_2_sample\"',
     'RELATED_SAMPLE_ACCESSION': '\"ERS15898933\"',
-    'ASSEMBLY_NAME': '\"Swiss biogas digester metagenome\"',
+    'ASSEMBLY_NAME': '\"Bavarian BGP MG\"',
     'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION': '\"GCA_012552665\"',
     'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION': '\"ERZ21942150\"',
     'ASSEMBLY_SOFTWARE': '\"MEGAHIT\"',
@@ -187,7 +187,7 @@ GUIEXAMPLES = {
     'FASTQ2_FILE': '/mnt/data/reads_R2.fastq.gz',
     'RELATED_SAMPLE_TITLE': 'Bioreactor_2_sample',
     'RELATED_SAMPLE_ACCESSION': 'ERS15898933',
-    'ASSEMBLY_NAME': 'Northern Germany biogas digester metagenome',
+    'ASSEMBLY_NAME': 'swiss bgps 2',
     'EXISTING_ASSEMBLY_ANALYSIS_ACCESSION': 'GCA_012552665',
     'EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION': 'ERZ21942150',
     'ASSEMBLY_SOFTWARE': 'MEGAHIT',
