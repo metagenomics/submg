@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 class staticConfig:
     submg_version: str = '1.1.1'
     java_version: str = '17'
-    webin_cli_version: str = '9.0.3'
+    webin_cli_version: str = '10.0.0'
     ena_dropbox_url: str = 'https://www.ebi.ac.uk/ena/submit/drop-box/submit/'
     ena_test_dropbox_url: str = 'https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/'
     ena_search_url: str = 'https://www.ebi.ac.uk/ena/portal/api/search'
