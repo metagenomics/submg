@@ -15,7 +15,7 @@ In this tutorial, you will
 **Important**: You will need an ENA account for this tutorial. Newly created accounts cannot perform test submissions (submissions to the development service) right away. Submitting to the development service only works the after ENA development server's database has been synced, which occurs sometime after midnight GMT. If you plan on doing this tutorial and do not have an ENA account yet, you will need to create one and wait for the synchronization to happen before proceeding.
 
 ## Installation
-Please refer to the [Installation](https://github.com/metagenomics/submg/#installation) section of the subMG README for instructions on how to install subMG on your operating system. For this tutorial, you need to install the CLI version of the tool. Make sure to activate your python virtual environment if you installed the tool in a venv.
+Please refer to the [Installation](https://github.com/metagenomics/submg/#installation) section of the subMG README for instructions on how to install subMG on your operating system. For this tutorial, the simplest option is "Installing from source".
 
 ## The ENA Development Service
 ENA provides a development service to trial your submission before uploading your data to the production server. It is best practice to submit to the production service only after a test submission with identical parameters was successfully completed using the development service. For this tutorial, we will only be submitting data to the development service.
@@ -139,7 +139,7 @@ PAIRED_END_READS:
   ADDITIONAL_MANIFEST_FIELDS:
 ```
 ### Co-Assembly
-The assembly needs a name which just serves as an identifier within your project.
+The assembly needs a name (17 characters max) which serves as an identifier within your project.
 
 The assembly software field specifies which tool was used to generate the assembly (e.g. "MEGAHIT").
 
@@ -215,7 +215,9 @@ For the submission, you will need two directories: One where subMG will stage al
 submg-cli submit --config <path_to_your_config_form> --staging-dir <path_to_your_staging_directory> --logging-dir <path_to_your_logging_directory> --submit-samples --submit-reads --submit-assembly --submit-bins
 ```
 
-Most likely you will receive an error because the accession of your study only exists on the development server. Add the `--skip-checks` flag to your command to circumvent this.
+Before submitting anything, subMG runs checks to validate your input data. These checks might fail with a warning if your study only exists on the development server.
+
+You can get past this with the `--skip-checks` flag. Be aware that it turns off all preflight checks, not only the study lookup. A mistake in your form would then only show up during the submission, possibly after part of your data has been submitted. So first fix every other problem the checks report. If the study warning is the only one left, add the flag to your command:
 ```
 submg-cli submit --config <path_to_your_config_form> --staging-dir <path_to_your_staging_directory> --logging-dir <path_to_your_logging_directory> --submit-samples --submit-reads --submit-assembly --submit-bins --skip-checks
 ```
