@@ -2,13 +2,6 @@
 title: subMG Tutorial
 ---
 
-<style>
-  /* Hide the big header link that appears at the top */
-  h1:first-of-type {
-    display: none;
-  }
-</style>
-
 # subMG Tutorial
 This short tutorial will show you how to submit a toy metagenomics dataset using the command line interface of subMG.
 A graphical user interface for subMG is available, but will not be covered in this tutorial.
@@ -66,7 +59,7 @@ Enter the study identifier that we generated in the [Creating a Study](#creating
 STUDY: "PRJEB71644" # Do not copy, put in your own study accession instead!
 ```
 ### Metagenome Taxonomy
-Enter a valid taxonomic identifier for your metagenome. You can browse the [NCBI metagenome taxonomies](https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=408169) to find a good fit. You will also need the corresponding taxid.
+Enter a valid taxonomic identifier for your metagenome. You can browse the [NCBI metagenome taxonomies](https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?command=show&mode=tree&id=408169&lvl=3) to find a good fit. You will also need the corresponding taxid.
 For our mock submission, we will be submitting an [ant fungus garden metagenome](https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=797283&lvl=3&lin=f&keep=1&srchmode=1&unlock).
 ```
 METAGENOME_SCIENTIFIC_NAME: "ant fungus garden metagenome"
