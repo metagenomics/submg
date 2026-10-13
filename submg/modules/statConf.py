@@ -39,7 +39,7 @@ class staticConfig:
     manual_taxonomy_columns: str = 'Bin_id;Scientific_name;Tax_id'
     gtdb_majority_vote_columns: str = 'Genome ID;GTDB classification;Majority vote NCBI classification'
     bin_coverage_columns: str = 'Bin_id;Coverage'
-    bin_quality_columns = 'Bin Id;Completeness;Contamination'
+    bin_quality_columns = 'Bin Id|Bin_id;Completeness;Contamination'  # 'A|B': either column name is accepted
     mag_qstring_finished: str = 'Single contiguous sequence without gaps or ambiguities with a consensus error rate equivalent to Q50 or better.'
     mag_qstring_high: str = 'Multiple fragments where gaps span repetitive regions. Presence of the 23S, 16S and 5S rRNA genes and at least 18 tRNAs.'
     mag_qstring_medium: str = 'Many fragments with little to no review of assembly other than reporting of standard assembly statistics.'

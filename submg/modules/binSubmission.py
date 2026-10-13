@@ -43,7 +43,7 @@ def get_bin_quality(config, silent=False) -> dict:
         reader = csv.DictReader(f, delimiter='\t')
         headers = reader.fieldnames
         for row in reader:
-            bin_id = row['Bin Id']
+            bin_id = row['Bin Id'] if 'Bin Id' in row else row['Bin_id']
             completeness = float(row['Completeness'])
             contamination = float(row['Contamination'])
             result[bin_id] = {

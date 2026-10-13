@@ -35,7 +35,7 @@ def __check_tsv(tsvfile: str,
     with open(tsvfile, 'r') as f:
         header = f.readline().strip().split('\t')
     for col in required_columns:
-        if col not in header:
+        if not any(name in header for name in col.split('|')):
             err = f"\nERROR: The .tsv file '{tsvfile}' is missing the column '{col}'."
             loggingC.message(err, threshold=-1)
             checks_failed = True
