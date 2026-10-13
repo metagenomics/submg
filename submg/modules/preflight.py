@@ -202,7 +202,7 @@ def __check_date(date: str):
         "%Y-%m-%dT%H:%M",       # Year-month-day hour:minute
         "%Y-%m-%dT%H:%M:%S",    # Year-month-day hour:minute:second
     ]
-    valid = False
+    valid = date in staticConfig.valid_missing_value_terms.split(';')
     for fmt in valid_formats:
         try:
             # Try parsing with the current format

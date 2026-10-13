@@ -230,6 +230,7 @@ For the form below to work, you need to
 STUDY: "YOURSTUDY"
 METAGENOME_SCIENTIFIC_NAME: "ant fungus garden metagenome"
 METAGENOME_TAXID: "797283"   
+SEQUENCING_PLATFORMS: ["ILLUMINA"]
 NEW_SAMPLES:
 - TITLE: 'antfung_s01'
   collection date: '2023-08'
