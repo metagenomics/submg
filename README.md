@@ -38,7 +38,6 @@ subMG was developed within the German [NFDI4Microbiota consortium](https://nfdi4
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/gui_screenshot.png">
   <img alt="subMG gui screenshot" src="submg/resources/gui_screenshot.png" height=400>
   <br>
-  <em>Graphic User Interface</em>
   <em>Graphical User Interface</em>
 </p>
 
