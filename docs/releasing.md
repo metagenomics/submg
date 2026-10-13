@@ -56,18 +56,3 @@ For example, version 1.1.0 produces:
 dist\submg-gui-windows-v1.1.0.exe
 dist\submg-gui-windows-v1.1.0.exe.sha256
 ```
-
-## Test and publish
-
-Test each executable on its own operating system before publishing it. At minimum:
-
-1. Start the executable and check that the home screen and images load.
-2. Open or create a configuration.
-3. Check Java/Webin-CLI detection and download.
-4. Exercise the workflows changed in this release.
-5. Optionally verify the checksum:
-
-   - Ubuntu: `cd dist && sha256sum -c submg-gui-linux-vX.Y.Z.sha256`
-   - Windows PowerShell: `Get-FileHash dist\submg-gui-windows-vX.Y.Z.exe -Algorithm SHA256`
-
-Upload the two executables to the GitHub release for the matching `vX.Y.Z` tag. The checksum files are small and should be uploaded too.
