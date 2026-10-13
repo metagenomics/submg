@@ -74,6 +74,7 @@ Please Note
   - [CLI Tutorial](#cli-tutorial)
   - [ENA Development Service](#ena-development-service)
   - [Study Object](#study-object)
+  - [Locus Tag Prefix](#locus-tag-prefix)
   - [The Config File](#the-config-file)
   - [Submission Modes](#submission-modes)
   - [Input Overview](#input-overview)
@@ -133,7 +134,12 @@ If you'd like to use the subMG CLI, consider following [the tutorial](https://me
 ENA provides a [development service](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/interactive.html) to trial your submission before uploading your data to the production server. We strongly suggest submitting to the production server only after a test submission with identical parameters was successful. Otherwise, you might end up with incomplete or incorrect submissions, with no ability to correct or remove them. Unless `--development-service 0` is specified, subMG will always submit to the test server.
 
 ## Study Object
-`Study` is used synonymously with `project` here. Before you can submit data using subMG, you need to have a `Study` object (= a project) in your ENA account. If you intend to submit annotation data, you will also need a [locus tag prefix](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/locus-tags.html). You can create both through the ENA webin portal on the [production server](https://www.ebi.ac.uk/ena/submit/webin/login) or the [development server](https://wwwdev.ebi.ac.uk/ena/submit/webin/login). Be aware that if you create the `Study` object on the production server, it can take up to 24 hours until it is available on the development server. This can cause test submissions to fail.
+`Study` is used synonymously with `project` here. Before you can submit data using subMG, you need to have a `Study` object (= a project) in your ENA account. If you intend to submit annotation data, you will also need a locus tag prefix (see [below](#locus-tag-prefix)). You can create both through the ENA webin portal on the [production server](https://www.ebi.ac.uk/ena/submit/webin/login) or the [development server](https://wwwdev.ebi.ac.uk/ena/submit/webin/login). Be aware that if you create the `Study` object on the production server, it can take up to 24 hours until it is available on the development server. This can cause test submissions to fail.
+
+## Locus Tag Prefix
+You only need a [locus tag prefix](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/locus-tags.html) if you submit MAGs that have gene annotation data (see [MAG metadata](#mag-metadata)).
+
+Every `/locus_tag` in your [flatfile](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html) has to use a locus tag prefix registered for the study you specify in the `STUDY` field of your config. For more information on locus tags, where to find them, and how to register them, please see the [ENA documentation](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/locus-tags.html).
 
 ## The Config File
 A lot of (meta)data is required for a submission. To use subMG, you need to provide metadata and the locations of your files in a YAML document. Which information is required depends on the type of your submission. You can use the `submg-cli makecfg` command to create a template for your config file. It will contain only the fields necessary for your specific submission, along with explanations and examples. Additionally, the `examples` directory contains examples of config files and the associated data. If you are unsure of how to fill out certain fields, please feel free to ask on the [GitHub discussions page](https://github.com/metagenomics/submg/discussions) of this project.
