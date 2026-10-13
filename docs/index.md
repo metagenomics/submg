@@ -12,7 +12,7 @@ In this tutorial, you will
 - fill the form with all the (meta)data needed for submission
 - use subMG to upload the toy dataset to the ENA development service.
 
-**Important**: You will need an ENA account fort his tutorial. Newly created accounts cannot perform test submissions (submissions to the development service) right away. Submitting to the development service only works the after ENA development server's database has been synced, which occurs sometime after midnight GMT. If you plan on doing this tutorial and do not have an ENA account yet, you will need to create one and wait for the synchronization to happen before proceeding.
+**Important**: You will need an ENA account for this tutorial. Newly created accounts cannot perform test submissions (submissions to the development service) right away. Submitting to the development service only works the after ENA development server's database has been synced, which occurs sometime after midnight GMT. If you plan on doing this tutorial and do not have an ENA account yet, you will need to create one and wait for the synchronization to happen before proceeding.
 
 ## Installation
 Please refer to the [Installation](https://github.com/metagenomics/submg/#installation) section of the subMG README for instructions on how to install subMG on your operating system. For this tutorial, you need to install the CLI version of the tool. Make sure to activate your python virtual environment if you installed the tool in a venv.
@@ -48,11 +48,12 @@ We provide the data & metadata of our study to subMG by filling out a configurat
 ```
 submg-cli makecfg --submit-samples 2 --submit-paired-end-reads 2 --submit-assembly --submit-bins --known-coverage --outfile <path_to_your_new_config.yaml>
 ```
-For samples and read sets it is neccessary to specify how many of these items you intend to submit. The empty form will be created at `<path_to_your_new_config.yaml>` specified by the `--outfile` argument.
+For samples and read sets it is necessary to specify how many of these items you intend to submit. The empty form will be created at `<path_to_your_new_config.yaml>` specified by the `--outfile` argument.
 The `--known-coverage` argument indicates that we have coverage information for our metagenome assembly and metagenomic bins already, so subMG will not have to derive this information from `.bam` files.
 
 ## Filling Your Configuration Form
-Open the `yaml` form we just created with a text editor of your choice. Every field not starting with `ADDITIONAL` is _mandatory_, meaning it has to be filled out for ENA to accept your submission.
+Open the `yaml` form we just created with a text editor of your choice.
+
 ### Study
 Enter the study identifier that we generated in the [Creating a Study](#creating-a-study) section.
 ```
@@ -80,7 +81,7 @@ The collection date of the sample has to follow the ISO 8601 time format. While 
 
 Furthermore, we need to specify a country or sea as a sampling location. You can refer to the options in the 'geographic location (country and/or sea)' field in ENA's [sample checklist 11](https://www.ebi.ac.uk/ena/browser/view/ERC000011) to see a list of all valid choices.
 
-Under `ADDITIONAL_SAMPLESHEET_FIELDS` you can add any additonal information you'd have as key-value-pairs. This is not mandatory, but good practice.
+Under `ADDITIONAL_SAMPLESHEET_FIELDS` you can add any additional information you'd have as key-value-pairs. This is not mandatory, but good practice.
 
 For our toy dataset, we will specify two samples with different names and some additional metadata.
 ```
@@ -138,7 +139,7 @@ PAIRED_END_READS:
   ADDITIONAL_MANIFEST_FIELDS:
 ```
 ### Co-Assembly
-The assembly needs a name which just servers as an identifier within your project.
+The assembly needs a name which just serves as an identifier within your project.
 
 The assembly software field specifies which tool was used to generate the assembly (e.g. "MEGAHIT").
 
@@ -170,7 +171,7 @@ We don't provide a list of individual files for binned contigs, but instead spec
 
 For binned contigs, it is mandatory to provide information about the quality of the resulting metagenomic bins. The completeness software field should indicate which software was used to compute this. Furthermore, we need to supply a `.tsv` table with quality information for all bins. It needs to contain the columns `Bin_id`, `Completeness` and `Contamination`. The bin ids have to correspond to the basenames of files in the binned contigs directory. [CheckM](https://github.com/Ecogenomics/CheckM) uses this format by default for the tabular output. For the tutorial we can use the file at `examples/data/checkm_quality_2bins.tsv`
 
-We need to submit [valid taxonomic information](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html) for our metagenomic bins. We can provide this information to subMG as a `.tsv` table with the columns 'Bin_id', 'Tax_id' and 'Scientific_name' in the `MANUAL_TAXONOMY_FILE` field. The easier option is usally to provide one ore more tables with NCBI taxonomy data in the `NCBI_TAXONOMY_FILES` field. The output of [GTDB-Tk's](https://github.com/Ecogenomics/GTDBTk) `gtdb_to_ncbi_majority_vote.py` script can be used here. subMG will then derive the correct taxonomy for submission automatically. For more information about the topic, consult the [Taxonomy section of the subMG README](https://github.com/metagenomics/submg/#taxonomy-assignment). For our toy dataset, we can use the two taxonomy files located at `examples/data/taxonomy/archaea_taxonomy.tsv` and `examples/data/taxonomy/bacteria_taxonomy.tsv`.
+We need to submit [valid taxonomic information](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html) for our metagenomic bins. We can provide this information to subMG as a `.tsv` table with the columns 'Bin_id', 'Tax_id' and 'Scientific_name' in the `MANUAL_TAXONOMY_FILE` field. The easier option is usaully to provide one or more tables with NCBI taxonomy data in the `NCBI_TAXONOMY_FILES` field. The output of [GTDB-Tk's](https://github.com/Ecogenomics/GTDBTk) `gtdb_to_ncbi_majority_vote.py` script can be used here. subMG will then derive the correct taxonomy for submission automatically. For more information about the topic, consult the [Taxonomy section of the subMG README](https://github.com/metagenomics/submg/#taxonomy-assignment). For our toy dataset, we can use the two taxonomy files located at `examples/data/taxonomy/archaea_taxonomy.tsv` and `examples/data/taxonomy/bacteria_taxonomy.tsv`.
 
 The software that was used for the binning of contigs needs to be named (e.g. "VAMB" or "maxbin2").
 
