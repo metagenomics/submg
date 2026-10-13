@@ -10,7 +10,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/nfdi4microbiota_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/nfdi4microbiota_light.png">
-  <img align="right" alt="submg Logo" src="submg/resources/nfdi4microbiota_light.png" height=108>
+  <img align="right" alt="nfdi4microbiotaLogo" src="submg/resources/nfdi4microbiota_light.png" height=108>
 </picture>
 
 
