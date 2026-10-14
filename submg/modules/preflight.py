@@ -338,7 +338,7 @@ def __check_samples(arguments: dict,
             err = f"\nERROR: The sample title '{title}' was provided in the samples section but already exists on the ENA server as a sample title."
             loggingC.message(err, threshold=-1)
             checks_failed = True
-        if enaSearching.sample_alias_accession(title, study, False) or enaSearching.sample_title_accession(title, study, testmode):
+        if enaSearching.sample_alias_accession(title, study, False) or enaSearching.sample_alias_accession(title, study, testmode):
             err = f"\nERROR: The sample title '{title}' was provided in the samples section but already exists on the ENA server as a sample alias."
             loggingC.message(err, threshold=-1)
             checks_failed = True
