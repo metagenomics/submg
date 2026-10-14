@@ -193,7 +193,7 @@ def build_sample_submission_xml(outpath: str,
     add = ET.SubElement(action, "ADD")
     action2 = ET.SubElement(actions, "ACTION")
     if hold_until_date is None:
-        add = ET.SubElement(action2, "RELEASE")
+        add = ET.SubElement(action2, "HOLD")
     else:
         add = ET.SubElement(action2, "HOLD", HoldUntilDate=hold_until_date)
 
