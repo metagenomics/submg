@@ -35,7 +35,7 @@ def __check_tsv(tsvfile: str,
     with open(tsvfile, 'r') as f:
         header = f.readline().strip().split('\t')
     for col in required_columns:
-        if col not in header:
+        if not any(name in header for name in col.split('|')):
             err = f"\nERROR: The .tsv file '{tsvfile}' is missing the column '{col}'."
             loggingC.message(err, threshold=-1)
             checks_failed = True
@@ -202,7 +202,7 @@ def __check_date(date: str):
         "%Y-%m-%dT%H:%M",       # Year-month-day hour:minute
         "%Y-%m-%dT%H:%M:%S",    # Year-month-day hour:minute:second
     ]
-    valid = False
+    valid = date in staticConfig.valid_missing_value_terms
     for fmt in valid_formats:
         try:
             # Try parsing with the current format
@@ -225,6 +225,7 @@ def __check_country_sea_location(location: str):
     """
     global checks_failed
     valid_locations = staticConfig.valid_locations.split(';')
+    valid_locations.extend(staticConfig.valid_missing_value_terms)
     if not location in valid_locations:
         err = f"\nERROR: The location '{location}' is not a valid country or sea name. Please check your config file."
         loggingC.message(err, threshold=-1)

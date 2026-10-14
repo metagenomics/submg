@@ -379,6 +379,13 @@ def webin_cli(manifest,
                     "  - Retry the submission later (in our experience, the ENA server is just\n"
                     "    overwhelmed sometimes)"
                 )
+            elif 'incomplete access and benefit sharing' in diagnostic_text:
+                err += (
+                    "  Incomplete Access and Benefit Sharing (ABS) acknowledgement\n\n"
+                    "Recommended action:\n"
+                    "  - Log in to the Webin Submissions Portal and complete the acknowledgement:\n"
+                    "    https://www.ebi.ac.uk/ena/submit/webin/"
+                )
             else:
                 err += (
                     "  unknown\n\n"

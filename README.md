@@ -10,7 +10,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="submg/resources/nfdi4microbiota_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/nfdi4microbiota_light.png">
-  <img align="right" alt="submg Logo" src="submg/resources/nfdi4microbiota_light.png" height=108>
+  <img align="right" alt="nfdi4microbiotaLogo" src="submg/resources/nfdi4microbiota_light.png" height=108>
 </picture>
 
 
@@ -22,7 +22,7 @@ A command line interface (CLI) is available as well as a graphical user interfac
 
 You can use subMG to continue a submission process if some levels of data already exist in ENA (e.g. submitting samples and reads through the ENA web interface, then using subMG to submit the assembly and bins).
 
-subMG was developed within the German [NFDI4Microbiota consortium](https://nfdi4microbiota.de/) with the objective of simplifying [FAIR](https://www.go-fair.org/fair-principles/) data sharing in metagenomics and assisting microbiologists with the submission process.
+subMG was developed within the German [NFDI4Microbiota consortium](https://nfdi4microbiota.de/) with the objective of simplifying [FAIR](https://www.gofair.foundation/fair-principles) data sharing in metagenomics and assisting microbiologists with the submission process.
 
 
 <p align="center">
@@ -38,7 +38,6 @@ subMG was developed within the German [NFDI4Microbiota consortium](https://nfdi4
   <source media="(prefers-color-scheme: light)" srcset="submg/resources/gui_screenshot.png">
   <img alt="subMG gui screenshot" src="submg/resources/gui_screenshot.png" height=400>
   <br>
-  <em>Graphic User Interface</em>
   <em>Graphical User Interface</em>
 </p>
 
@@ -74,6 +73,7 @@ Please Note
   - [CLI Tutorial](#cli-tutorial)
   - [ENA Development Service](#ena-development-service)
   - [Study Object](#study-object)
+  - [Locus Tag Prefix](#locus-tag-prefix)
   - [The Config File](#the-config-file)
   - [Submission Modes](#submission-modes)
   - [Input Overview](#input-overview)
@@ -120,7 +120,7 @@ There are three options for using subMG:
 You can now use `submg-cli` to run the command-line interface or `submg-gui` to run the graphical user interface.
 
 ## GUI executable
-subMG requires Java 17 or higher for data submission. On Windows, you can use free options like [Eclipse/Adoptium](https://adoptopenjdk.net/) or [Amazon/Corretto](https://aws.amazon.com/de/corretto/). On Debian-family Linux, you can install via `sudo apt install openjdk-21-jre-headless`.
+subMG requires Java 17 or higher for data submission. On Windows, you can use free options like [Eclipse/Adoptium](https://adoptium.net/) or [Amazon/Corretto](https://aws.amazon.com/de/corretto/). On Debian-family Linux, you can install via `sudo apt install openjdk-21-jre-headless`.
 Please reach out if you have trouble running the executable on your operating system.
 
 # Usage
@@ -133,7 +133,12 @@ If you'd like to use the subMG CLI, consider following [the tutorial](https://me
 ENA provides a [development service](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/interactive.html) to trial your submission before uploading your data to the production server. We strongly suggest submitting to the production server only after a test submission with identical parameters was successful. Otherwise, you might end up with incomplete or incorrect submissions, with no ability to correct or remove them. Unless `--development-service 0` is specified, subMG will always submit to the test server.
 
 ## Study Object
-`Study` is used synonymously with `project` here. Before you can submit data using subMG, you need to have a `Study` object (= a project) in your ENA account. If you intend to submit annotation data, you will also need a [locus tag prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html). You can create both through the ENA webin portal on the [production server](https://www.ebi.ac.uk/ena/submit/webin/login) or the [development server](https://wwwdev.ebi.ac.uk/ena/submit/webin/login). Be aware that if you create the `Study` object on the production server, it can take up to 24 hours until it is available on the development server. This can cause test submissions to fail.
+`Study` is used synonymously with `project` here. Before you can submit data using subMG, you need to have a `Study` object (= a project) in your ENA account. If you intend to submit annotation data, you will also need a locus tag prefix (see [below](#locus-tag-prefix)). You can create both through the ENA webin portal on the [production server](https://www.ebi.ac.uk/ena/submit/webin/login) or the [development server](https://wwwdev.ebi.ac.uk/ena/submit/webin/login). Be aware that if you create the `Study` object on the production server, it can take up to 24 hours until it is available on the development server. This can cause test submissions to fail.
+
+## Locus Tag Prefix
+You only need a [locus tag prefix](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/locus-tags.html) if you submit MAGs that have gene annotation data (see [MAG metadata](#mag-metadata)).
+
+Every `/locus_tag` in your [flatfile](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html) has to use a locus tag prefix registered for the study you specify in the `STUDY` field of your config. For more information on locus tags, where to find them, and how to register them, please see the [ENA documentation](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/locus-tags.html).
 
 ## The Config File
 A lot of (meta)data is required for a submission. To use subMG, you need to provide metadata and the locations of your files in a YAML document. Which information is required depends on the type of your submission. You can use the `submg-cli makecfg` command to create a template for your config file. It will contain only the fields necessary for your specific submission, along with explanations and examples. Additionally, the `examples` directory contains examples of config files and the associated data. If you are unsure of how to fill out certain fields, please feel free to ask on the [GitHub discussions page](https://github.com/metagenomics/submg/discussions) of this project.
@@ -175,7 +180,7 @@ This requires that the [IBM Aspera CLI](https://github.com/IBM/aspera-cli#instal
 see the [ENA upload documentation](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/upload.html).
 
 # Taxonomy Assignment
-Assemblies and bins need a valid NCBI taxonomy (scientific name and taxonomic identifier) for submission. For metagenome submissions, [environmental organism-level taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) is required.
+Assemblies and bins need a valid NCBI taxonomy (scientific name and taxonomic identifier) for submission. For metagenome submissions, [environmental organism-level taxonomy](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#organism-level-taxonomy) is required.
 
 For example, consider a bin that was classified only on the class level and was determined to belong to class `Clostridia`. The taxonomy id of the class `Clostridia` is `186801`. However, the correct environmental organism-level taxonomy for the bin is `uncultured Clostridia bacterium` with the taxid `244328`.
 
@@ -202,9 +207,9 @@ The values in the `Bin_id` field have to match the basenames of the bin fasta fi
 The string in the 'NCBI_taxonomy' column has to adhere to the format shown in the above example: Taxonomic ranks are separated by semicolons. On each rank, a letter indicating the rank is followed by two underscores and the classification at that rank. The ranks have to be in the order 'domain', 'phylum', 'class', 'order', 'family', 'genus', 'species'. If a classification at a certain rank is unavailable, the rank itself still needs to be present in the string (e.g. "s__" where the species taxonomy is unknown).
 
 ## Taxonomy Assignment Failure
-In some cases, subMG will be unable to assign a valid taxonomy to a bin. The submission will be aborted and you will be informed which bins are causing problems. In such cases, you must determine the correct scientific name and taxid for the bin and specify it in a [manual taxonomy file](#manual-taxonomy-file). This file then has to be referenced in the `MANUAL_TAXONOMY_FILE` field of your config. Remember to use [environmental organism-level taxonomies](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) when manually defining the taxonomy for your bin.
+In some cases, subMG will be unable to assign a valid taxonomy to a bin. The submission will be aborted and you will be informed which bins are causing problems. In such cases, you must determine the correct scientific name and taxid for the bin and specify it in a [manual taxonomy file](#manual-taxonomy-file). This file then has to be referenced in the `MANUAL_TAXONOMY_FILE` field of your config. Remember to use [environmental organism-level taxonomies](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#organism-level-taxonomy) when manually defining the taxonomy for your bin.
 
-A possible reason for a failed taxonomic assignment is that no proper [environmental organism-level taxonomies](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#environmental-organism-level-taxonomy) exist yet (this happens more often than one might expect). You can [create a taxon request](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy_requests.html) in the ENA Webin Portal to register the taxon.
+A possible reason for a failed taxonomic assignment is that no proper [environmental organism-level taxonomies](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#organism-level-taxonomy) exist yet (this happens more often than one might expect). You can [create a taxon request](https://ena-docs.readthedocs.io/en/latest/faq/taxonomy.html#how-do-i-request-a-new-taxon-name) in the ENA Webin Portal to register the taxon.
 
 ## Manual Taxonomy File
 In cases where subMG is unable to assign a valid taxonomy based on the NCBI taxonomy file, you can provide taxonomies for some of your bins as a tab-separated table. The table has to be referenced under the keyword `MANUAL_TAXONOMY_FILE` in the configuration form. The table matches each `Bin_id` to a `Scientific_name` and a `Tax_id`. If a bin is present in this document, the taxonomic data from other sources will be ignored. Each `Bin_id` has to match the basename of binned contigs fasta file.
@@ -226,7 +231,7 @@ Binned contigs and MAGs need to be submitted with quality data (contamination an
 Please consult the [Edge Cases](#edge-cases) section for bins with more than 100% contamination.
 
 # MAG Submission
-If you have assembled high-quality bins from your metagenome, you can [submit them as MAGs](https://ena-docs.readthedocs.io/en/latest/faq/metagenomes.html#) (after submitting them as bins). Some additional metadata is needed for a MAG submission.
+If you have assembled high-quality bins from your metagenome, you can [submit them as MAGs](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html) (after submitting them as bins). Some additional metadata is needed for a MAG submission.
 
 ## Contig- and Chromosome-MAG-Assemblies
 A MAG assembly can be submitted either as a 'Contig Assembly' or a 'Chromosome Assembly'. Please consult [the ENA documentation for further information](https://ena-docs.readthedocs.io/en/latest/submit/assembly/metagenome/mag.html#stage-2-prepare-the-files). You will need to provide additional data for a Chromosome Assembly submission (see below).
@@ -237,8 +242,8 @@ Depending on your submission, not all columns have to be filled out. Additionall
 
 - `Sample_derived_from`: Optional and only allowed when submitting MAGs without bins in the same subMG run. Each value may contain one sample accession or a comma-separated list of sample accessions. These can identify existing bin virtual samples, environmental samples or a virtual assembly sample. subMG verifies the accessions against the selected ENA service.
 - `Bin_id`: Only needed when submitting bins and MAGs in the same subMG run. Identifier of the related bin. Has to be identical to the identifier used in the name of the fasta file, the taxonomy .tsv files etc.
-- `Quality_category`: 'finished', 'high' or 'medium' as defined by ENA [here](https://ena-docs.readthedocs.io/en/latest/faq/metagenomes.html) (note the requirements regarding RNA sequences for the 'high' and 'finished' categories).
-- `Flatfile_path`: Optional for any MAG assembly. Either a `.fasta` file or an [EMBL-Flatfile](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html) can be [used for MAG submission](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#flat-file). If you leave the field empty, the `.fasta` file of the corresponding bin will be used. Provide a flatfile when you want to submit a custom sequence file or annotation data. [EMBLmyGFF3](https://github.com/NBISweden/EMBLmyGFF3) provides a convenient way to create flatfiles based on your annotation data.
+- `Quality_category`: 'finished', 'high' or 'medium' as defined by ENA [here](https://ena-docs.readthedocs.io/en/latest/faq/assemblies-analyses.html#how-is-the-quality-of-a-metagenomic-assembly-defined) (note the requirements regarding RNA sequences for the 'high' and 'finished' categories).
+- `Flatfile_path`: Optional for any MAG assembly. Either a `.fasta` file or an [EMBL-Flatfile](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html) can be [used for MAG submission](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#flat-file). If you leave the field empty, the `.fasta` file of the corresponding bin will be used. Provide a flatfile when you want to submit a custom sequence file or annotation data. [EMBLmyGFF3](https://github.com/NBISweden/EMBLmyGFF3) provides a convenient way to create flatfiles based on your annotation data. A flatfile with annotation data requires a [locus tag prefix](#locus-tag-prefix) registered for your study.
 - `Chromosomes_path`: Required for chromosome assemblies. Path to a tab-separated file describing the chromosomes.
 - `Unlocalised_path`: Optional for chromosome assemblies. It may only be provided together with `Chromosomes_path`. See the ENA documentation for the [unlocalised contig list](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#unlocalised-list-file).
 
@@ -257,8 +262,8 @@ Using the table below, MAG `m1` will be submitted as a medium quality contig ass
 |Bin_id|Quality_category|Flatfile_path|Chromosomes_path|Unlocalised_path|
 |---|---|---|---|---|
 |m1|medium||||
-|m2|high|/path/to/m2_flatfile.tsv|||
-|m3|finished|/path/to/m3_flatfile.tsv|/path/to/m3_chromosome.txt|/path/to/m3_unlocalised.txt|
+|m2|high|/path/to/m2_flatfile.embl|||
+|m3|finished|/path/to/m3_flatfile.embl|/path/to/m3_chromosome.txt|/path/to/m3_unlocalised.txt|
 
 # Preventing Process Interruption
 A submission can take several hours to complete. We recommend using [nohup](https://en.wikipedia.org/wiki/Nohup), [tmux](https://github.com/tmux/tmux/wiki) or similar to prevent the submission process from being interrupted. 

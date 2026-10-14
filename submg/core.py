@@ -59,12 +59,12 @@ def init_argparse():
                                "--staging-dir",
                                required=True,
                                help="Directory where files will be staged for "
-                               "upload. Must be empty. May use up a lot of "
+                               "upload. May use up a lot of "
                                "disk space. Mandatory.")
     parser_submit.add_argument("-l", "--logging-dir",
                                required=True,
                                help="Directory where log files will be "
-                               "stored. Must be empty. Mandatory.")
+                               "stored. Mandatory.")
     parser_submit.add_argument("-y", "--verbosity",
                                type=int,
                                choices=[0, 1, 2],
@@ -221,7 +221,7 @@ def init_argparse():
     coverage_group.add_argument("--known-coverage",
                                 action="store_true",
                                 help="Coverages are already known and you "
-                                "provide them as a .bam file.")
+                                "provide them in the config file.")
 
     return parser
 
@@ -405,8 +405,6 @@ def submit(args, listener=None, gui=False):
     staging_base = os.path.realpath(os.path.abspath(os.path.expanduser(args.staging_dir)))
     logging_base = os.path.realpath(os.path.abspath(os.path.expanduser(args.logging_dir)))
 
-    print("my staging base:", staging_base)
-    print("my logging base:", logging_base)
 
     full_timestamp = utility.full_timestamp()
     logging_subdir = loggingC.set_up_logging(args.logging_dir,

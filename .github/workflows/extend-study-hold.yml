@@ -1,0 +1,45 @@
+# Keeps the private ENA test study private.
+#
+# We need a private study to test how the tool behaves with non-public data.
+# When creating a study, we cannot embargo it for more than 2 years.
+# Because of this, we need to run this script periodically to keep the study private.
+#
+# Github disables scheduled workflows in public repos after 60 days without
+# repo activity. You can re-enable it in the Actions tab.
+
+name: Extend ENA test study hold date
+
+on:
+  schedule:
+    - cron: "17 6 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  STUDY: PRJEB128405
+  ENA_URL: https://www.ebi.ac.uk/ena/submit/drop-box/submit/
+
+jobs:
+  extend-hold:
+    if: github.repository == 'metagenomics/submg'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Move the release date
+      env:
+        ENA_USER: ${{ secrets.ENA_USER }}
+        ENA_PASSWORD: ${{ secrets.ENA_PASSWORD }}
+      run: |
+        HOLD_UNTIL=$(date -u -d "+700 days" +%F)
+        printf '<SUBMISSION><ACTIONS><ACTION><HOLD target="%s" HoldUntilDate="%s"/></ACTION></ACTIONS></SUBMISSION>\n' "$STUDY" "$HOLD_UNTIL" > submission.xml
+        curl --silent --show-error --max-time 120 \
+          -u "$ENA_USER:$ENA_PASSWORD" \
+          -F "SUBMISSION=@submission.xml" \
+          "$ENA_URL" | tee receipt.xml
+        # ENA answers HTTP 200 even when it rejects a submission.
+        if ! grep -q 'success="true"' receipt.xml; then
+          echo "::error::ENA did not accept the release date $HOLD_UNTIL for $STUDY."
+          exit 1
+        fi
