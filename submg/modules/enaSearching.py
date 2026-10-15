@@ -5,12 +5,13 @@ import re
 import sys
 import tempfile
 import traceback
+from urllib.parse import quote
 
 import requests
 from requests.exceptions import ConnectionError, ConnectTimeout, HTTPError, RequestException
 
 
-from submg.modules import loggingC
+from submg.modules import loggingC, utility
 from submg.modules.statConf import staticConfig
 
 
@@ -97,6 +98,58 @@ def _search_request(url: str, params: dict):
     return response
 
 
+def _reports_request(resource: str, identifier: str, devserver: bool = False) -> list:
+    """Return report dictionaries for an identifier; only a valid [] is a miss.
+
+    This is a fallback for when public search did not return a match.
+    Uses ENA credentials to search the Reports API in case the item exists
+    in an embargoed study owned by the user.
+
+    Args:
+        resource (str): The ENA resource type ("studies", "samples", "runs", "analyses").
+        identifier (str): The ENA identifier (e.g., accession or alias).
+        devserver (bool): Whether to use the test server.
+
+    Returns:
+        list: A list of report dictionaries.
+    """
+    base_url = (staticConfig.ena_test_report_url if devserver
+                else staticConfig.ena_report_url)
+    url = f"{base_url}/{quote(resource, safe='')}/{quote(identifier, safe='')}"
+    credentials = utility.get_login()
+    try:
+        response = requests.get(url, auth=credentials,
+                                timeout=staticConfig.http_timeout,
+                                allow_redirects=False)
+    except RequestException as error:
+        _report_connection_failure(url, type(error).__name__,
+                                   "Authenticated Reports request failed.")
+
+    if response.status_code != 200:
+        hint = (" Check your ENA credentials and account access."
+                if response.status_code in (401, 403) else "")
+        loggingC.message(
+            f"ERROR: ENA Reports returned HTTP {response.status_code} at {url}."
+            f"{hint}", threshold=-1)
+        sys.exit(1)
+
+    try:
+        data = response.json()
+    except ValueError:
+        data = None
+    if not isinstance(data, list) or any(
+        not isinstance(item, dict)
+        or not isinstance(item.get('report'), dict)
+        or not isinstance(item['report'].get('id'), str)
+        or not item['report']['id'].strip()
+        for item in data
+    ):
+        loggingC.message(f"ERROR: Malformed ENA Reports response at {url}.",
+                         threshold=-1)
+        sys.exit(1)
+    return [item['report'] for item in data]
+
+
 def _log_unexpected_response(resource: str,
                              accession: str,
                              response):
@@ -166,12 +219,15 @@ def study_exists(study_accession: str,
     response = _search_request(url, params)
 
     data = response.text.split('\n')
-    if (len(data) < 2) or (data[0] != 'study_accession') or (data[1] not in [study_accession, '']):
+    if ((response.status_code != 200)
+            or (len(data) < 2)
+            or (data[0] != 'study_accession')
+            or (data[1] not in [study_accession, ''])):
         # There are some weird issues when querying the development server API
         # So if the query fails we try to find the study on the production
         # server. This _might_ lead to issues when the study is not yet
         # available on dev.
-        if devserver:
+        if devserver and response.status_code == 200:
             if _standalone_diagnostic_mode:
                 print("Automatic fallback canceled since this is debug mode")
             else:
@@ -180,7 +236,7 @@ def study_exists(study_accession: str,
         sys.exit(1)
     if data[1] == study_accession:
         return True
-    return False
+    return bool(_reports_request('studies', study_accession, devserver))
 
 
 def _sample_accession_query_field(sample_accession: str) -> str:
@@ -219,7 +275,8 @@ def sample_accession_exists(sample_accession: str,
 
     data = response.text.split('\n')
     returned_accession = data[1] if len(data) > 1 else ''
-    if ((len(data) < 2)
+    if ((response.status_code != 200)
+            or (len(data) < 2)
             or (data[0] != 'sample_accession')
             or (returned_accession
                 and re.fullmatch(
@@ -229,7 +286,9 @@ def sample_accession_exists(sample_accession: str,
                 and returned_accession not in [sample_accession, ''])):
         _log_unexpected_response("sample", sample_accession, response)
         sys.exit(1)
-    return returned_accession != ''
+    if returned_accession:
+        return True
+    return bool(_reports_request('samples', sample_accession, devserver))
 
 
 def sample_alias_accession(sample_alias: str,
@@ -238,6 +297,7 @@ def sample_alias_accession(sample_alias: str,
     """
     Check if a sample with the input alias exists in ENA. Return the accession
     if it does or None if it does not.
+    Authenticated alias matches are account-wide, regardless of study.
 
     Args:
         sample_alias (str):     The sample alias.
@@ -256,13 +316,26 @@ def sample_alias_accession(sample_alias: str,
         "fields": "sample_accession"
     }
     response = _search_request(url, params)
-    try:
-        data = response.text.split('\n')[1]
-    except:
-        data = None
-    if data == '':
-        data = None
-    return data
+    data = response.text.split('\n')
+    if ((response.status_code != 200)
+            or (len(data) < 2)
+            or (data[0] != 'sample_accession')
+            or any(row.lstrip().upper().startswith('ERROR')
+                   for row in data[1:])):
+        _log_unexpected_response("sample alias", sample_alias, response)
+        sys.exit(1)
+    if data[1]:
+        return data[1]
+    reports = _reports_request('samples', sample_alias, devserver)
+    if not reports:
+        return None
+    accession = reports[0].get('secondaryId')
+    if not isinstance(accession, str) or not accession.strip():
+        loggingC.message(
+            f"ERROR: ENA Reports sample alias {sample_alias!r} has no BioSample accession.",
+            threshold=-1)
+        sys.exit(1)
+    return accession
 
 
 def sample_title_accession(sample_title: str,
@@ -305,6 +378,7 @@ def run_alias_accession(run_alias: str,
     """
     Check if a run with the input name exists in ENA. Return the accession
     if it does or None if it does not.
+    Authenticated alias matches are account-wide, regardless of study.
 
     Args:
         run_alias (str):        The run name.
@@ -331,10 +405,10 @@ def run_alias_accession(run_alias: str,
                    for row in data[1:])):
         _log_unexpected_response("run alias", run_alias, response)
         sys.exit(1)
-    data = data[1]
-    if data == '':
-        data = None
-    return data
+    if data[1]:
+        return data[1]
+    reports = _reports_request('runs', run_alias, devserver)
+    return reports[0]['id'] if reports else None
 
 
 def search_samples_by_assembly_analysis(assembly_analysis_accession: str,
