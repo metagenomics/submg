@@ -139,10 +139,9 @@ class MonitorPage(BasePage):
         input_frame.grid(row=0, column=1, sticky="nsew", padx=(5, 10), pady=0)
         input_frame.grid_rowconfigure(0, weight=0)  # Username and Password
         input_frame.grid_rowconfigure(1, weight=0)  # Mode Switch
-        input_frame.grid_rowconfigure(2, weight=1)  # Spacer
-        input_frame.grid_rowconfigure(3, weight=0)  # Optional read/bin options
-        input_frame.grid_rowconfigure(4, weight=0)  # Aspera option
-        input_frame.grid_rowconfigure(5, weight=0)  # Buttons Frame
+        input_frame.grid_rowconfigure(2, weight=0)  # Verbose logging and bin options
+        input_frame.grid_rowconfigure(3, weight=0)  # Aspera and read options
+        input_frame.grid_rowconfigure(4, weight=0)  # Buttons Frame
         input_frame.grid_columnconfigure(0, weight=1)
         input_frame.grid_columnconfigure(1, weight=1)
         input_frame.grid_columnconfigure(2, weight=1)
@@ -173,11 +172,11 @@ class MonitorPage(BasePage):
 
         self.exclude_unclassified_checkbox = ctk.CTkCheckBox(
             input_frame,
-            text="Exclude exact unclassified bins",
+            text="Exclude unclassified bins",
             font=("Arial", 14),
             variable=self.controller.exclude_unclassified
         )
-        self.exclude_unclassified_checkbox.grid(row=2, column=0, columnspan=4, padx=10, pady=10, sticky="w")
+        self.exclude_unclassified_checkbox.grid(row=2, column=2, columnspan=2, padx=10, pady=10, sticky="w")
         self.exclude_unclassified_checkbox.grid_remove()
 
         self.truncate_read_names_checkbox = ctk.CTkCheckBox(
@@ -186,7 +185,7 @@ class MonitorPage(BasePage):
             font=("Arial", 14),
             variable=self.controller.truncate_read_names
         )
-        self.truncate_read_names_checkbox.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="w")
+        self.truncate_read_names_checkbox.grid(row=3, column=2, columnspan=2, padx=10, pady=10, sticky="w")
         self.truncate_read_names_checkbox.grid_remove()
 
         self.ascp_checkbox = ctk.CTkCheckBox(
@@ -195,11 +194,20 @@ class MonitorPage(BasePage):
             font=("Arial", 14),
             variable=self.controller.ascp
         )
-        self.ascp_checkbox.grid(row=4, column=0, columnspan=4, padx=10, pady=10, sticky="w")
+        self.ascp_checkbox.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+
+        self.verbose_log_checkbox = ctk.CTkCheckBox(
+            input_frame,
+            text="Verbose Log",
+            font=("Arial", 14),
+            onvalue=2,
+            offvalue=1
+        )
+        self.verbose_log_checkbox.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky="w")
 
         # Buttons Frame
         input_button_frame = ctk.CTkFrame(input_frame, fg_color="transparent")
-        input_button_frame.grid(row=5, column=0, columnspan=4, padx=0, pady=0, sticky="ew")
+        input_button_frame.grid(row=4, column=0, columnspan=4, padx=0, pady=0, sticky="ew")
         # Configure grid columns to distribute space equally
         for i in range(4):
             input_button_frame.grid_columnconfigure(i, weight=1)
@@ -310,7 +318,7 @@ class MonitorPage(BasePage):
                 self.controller.file_path,
                 self.controller.staging_dir_path,
                 self.controller.submission_mode.get(),
-                1,  # verbosity
+                self.verbose_log_checkbox.get(),
                 self.controller.submission_items.get("samples", False),
                 self.controller.submission_items.get("reads", False),
                 self.controller.submission_items.get("assembly", False),
@@ -423,6 +431,7 @@ class MonitorPage(BasePage):
         self.password_entry.configure(state="disabled")
         self.mode_switch.configure(state="disabled")
         self.ascp_checkbox.configure(state="disabled")
+        self.verbose_log_checkbox.configure(state="disabled")
         self.exclude_unclassified_checkbox.configure(state="disabled")
         self.truncate_read_names_checkbox.configure(state="disabled")
         self.start_button.configure(state="disabled")
@@ -438,6 +447,7 @@ class MonitorPage(BasePage):
         self.password_entry.configure(state="normal")
         self.mode_switch.configure(state="normal")
         self.ascp_checkbox.configure(state="normal")
+        self.verbose_log_checkbox.configure(state="normal")
         self.exclude_unclassified_checkbox.configure(state="normal")
         self.truncate_read_names_checkbox.configure(state="normal")
         self.update_exclude_unclassified_visibility()
