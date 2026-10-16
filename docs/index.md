@@ -75,7 +75,7 @@ SEQUENCING_PLATFORMS: ["ILLUMINA"]
 For a multi-item list, entries need to be comma-separated (e.g. `SEQUENCING_PLATFORMS: ["ILLUMINA", "OXFORD_NANOPORE"]`)
 
 ### Samples
-We need to set metadata for our two biological samples. The sample title can be chosen freely, it just has to be unique for each sample in our study.
+We need to set metadata for our two biological samples. Sample titles can be choosen freely, but have to be unique to your account.
 
 The collection date of the sample has to follow the ISO 8601 time format. While a granular timestamp like `2023-12-27T16:07` is valid, just putting `2023` will also work.
 
@@ -217,7 +217,7 @@ submg-cli submit --config <path_to_your_config_form> --staging-dir <path_to_your
 
 Before submitting anything, subMG validates your input, including references to private studies and samples accessible with your ENA credentials. Public records are checked first; private records are looked up automatically when needed. You do not need `--skip-checks` just because your study or samples are private.
 
-If a lookup fails, check the accession, credentials, and selected ENA service. Newly submitted records may need time to become available. Authentication and service errors stop the operation rather than being treated as missing records. Sample and run alias checks include private records; sample-title checks cover public records only.
+If a lookup fails, check the accession, credentials, and selected ENA service. Newly submitted records may need time to become available. Authentication and service errors stop the operation rather than being treated as missing records. Sample and run alias checks include private records. Sample titles must be unique within your config; existing ENA titles are not checked.
 
 It is recommended to always submit to the test server before starting an actual submission. As such, submitting to the test server is the default behaviour in subMG. If you want to submit to the production service, add `--development-service 0` to your command.
 
