@@ -660,6 +660,11 @@ def submit(args, listener=None, gui=False):
                         assembly_analysis_accession = assembly_dict['EXISTING_ASSEMBLY_ANALYSIS_ACCESSION']
                         assembly_sample_accession = enaSearching.search_samples_by_assembly_analysis(assembly_analysis_accession,
                                                                                                     args.development_service)
+                        if assembly_sample_accession is None:
+                            loggingC.message(
+                                f"ERROR: No sample found for assembly analysis {assembly_analysis_accession}.",
+                                threshold=-1)
+                            sys.exit(1)
 
         # Bin submision
         bin_sample_accessions = None
@@ -681,17 +686,8 @@ def submit(args, listener=None, gui=False):
             if args.submit_assembly:
                 metagenome_scientific_name = utility.from_config(config, 'METAGENOME_SCIENTIFIC_NAME')
             else:
-                try:
-                    metagenome_scientific_name = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
-                                                                                                args.development_service)
-                except:  
-                    # This is a workaround for times where the ENA development
-                    # API does not work. If the sample is registered on the 
-                    # production server we can still continue submitting.
-                    # Included because the situation came up multiple times
-                    # during development.
-                    metagenome_scientific_name = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
-                                                                                                False)
+                metagenome_scientific_name = enaSearching.search_scientific_name_by_sample(assembly_sample_accession,
+                                                                                            args.development_service)
             submit_mags(config,
                         metagenome_scientific_name,
                         sample_accession_data,

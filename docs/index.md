@@ -75,7 +75,7 @@ SEQUENCING_PLATFORMS: ["ILLUMINA"]
 For a multi-item list, entries need to be comma-separated (e.g. `SEQUENCING_PLATFORMS: ["ILLUMINA", "OXFORD_NANOPORE"]`)
 
 ### Samples
-We need to set metadata for our two biological samples. The sample title can be chosen freely, it just has to be unique for each sample in our study.
+We need to set metadata for our two biological samples. Sample titles can be choosen freely, but have to be unique to your account.
 
 The collection date of the sample has to follow the ISO 8601 time format. While a granular timestamp like `2023-12-27T16:07` is valid, just putting `2023` will also work.
 
@@ -193,7 +193,7 @@ BINS:
 This was our last section and we are done filling out our config. Save the config file before continuing.
 
 ## Login Data
-subMG requires our ENA credentials to submit data. You must set them as environment variables in your terminal session.
+subMG uses your ENA credentials to submit data and look up private records. Set them as environment variables in your terminal session.
 
 In the linux terminal:
 ```
@@ -215,12 +215,9 @@ For the submission, you will need two directories: One where subMG will stage al
 submg-cli submit --config <path_to_your_config_form> --staging-dir <path_to_your_staging_directory> --logging-dir <path_to_your_logging_directory> --submit-samples --submit-reads --submit-assembly --submit-bins
 ```
 
-Before submitting anything, subMG runs checks to validate your input data. These checks might fail with a warning if your study only exists on the development server.
+Before submitting anything, subMG validates your input, including references to private studies and samples accessible with your ENA credentials. Public records are checked first; private records are looked up automatically when needed. You do not need `--skip-checks` just because your study or samples are private.
 
-You can get past this with the `--skip-checks` flag. Be aware that it turns off all preflight checks, not only the study lookup. A mistake in your form would then only show up during the submission, possibly after part of your data has been submitted. So first fix every other problem the checks report. If the study warning is the only one left, add the flag to your command:
-```
-submg-cli submit --config <path_to_your_config_form> --staging-dir <path_to_your_staging_directory> --logging-dir <path_to_your_logging_directory> --submit-samples --submit-reads --submit-assembly --submit-bins --skip-checks
-```
+If a lookup fails, check the accession, credentials, and selected ENA service. Newly submitted records may need time to become available. Authentication and service errors stop the operation rather than being treated as missing records. Sample and run alias checks include private records. Sample titles must be unique within your config; existing ENA titles are not checked.
 
 It is recommended to always submit to the test server before starting an actual submission. As such, submitting to the test server is the default behaviour in subMG. If you want to submit to the production service, add `--development-service 0` to your command.
 
