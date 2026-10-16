@@ -4,7 +4,9 @@ import sys
 
 from submg.modules import utility
 
-from submg.modules.statConf import YAMLCOMMENTS, YAMLEXAMPLES, staticConfig
+from submg.modules.statConf import (
+    YAMLCOMMENTS, YAMLEXAMPLES, ISOLATE_YAMLCOMMENTS, ISOLATE_YAMLEXAMPLES,
+)
 
 
 def write_gui_yaml(data: dict,
@@ -83,7 +85,9 @@ def __check_parameters(outpath: str,
                        submit_assembly: bool,
                        submit_bins: bool,
                        submit_mags: bool,
-                       quality_cutoffs: bool) -> None:
+                       quality_cutoffs: bool,
+                       isolate: bool = False,
+                       annotated: bool = False) -> None:
     """
     Check if the parameters in their combination are valid. If not, fail
     gracefully.
@@ -104,6 +108,17 @@ def __check_parameters(outpath: str,
     if not os.path.exists(output_directory):
         print(f"\nERROR: The directory '{output_directory}' where '{outpath}' should be written does not exist.")
         sys.exit(1)
+
+    if annotated and not (isolate and submit_assembly):
+        print("\nERROR: --annotated requires --isolate and --submit-assembly.")
+        sys.exit(1)
+    if isolate:
+        if submit_samples not in (0, 1):
+            print("\nERROR: --isolate supports at most one sample.")
+            sys.exit(1)
+        if submit_bins or submit_mags or quality_cutoffs:
+            print("\nERROR: --isolate is incompatible with bin or MAG submission.")
+            sys.exit(1)
 
     # Are we submitting any reads?
     if submit_unpaired_reads or submit_paired_end_reads:
@@ -140,7 +155,9 @@ def __make_config_dict(submit_samples: int,
                        submit_assembly: bool,
                        submit_bins: bool,
                        submit_mags: bool,
-                       quality_cutoffs: bool) -> None:
+                       quality_cutoffs: bool,
+                       isolate: bool = False,
+                       annotated: bool = False) -> dict:
     """
     Create the config dictionary.
 
@@ -164,7 +181,11 @@ def __make_config_dict(submit_samples: int,
     # Metagenome taxonomy
     # We need the scientific & taxid name for everything except reads
     # If the assembly was already submitted, we can derive the taxonomy from the assembly
-    if submit_assembly or submit_bins or submit_mags or submit_samples:
+    if isolate:
+        config['SUBMISSION_TYPE'] = 'isolate'
+        config['ISOLATE_SCIENTIFIC_NAME'] = None
+        config['ISOLATE_TAXID'] = None
+    elif submit_assembly or submit_bins or submit_mags or submit_samples:
         config['METAGENOME_SCIENTIFIC_NAME'] = None
         config['METAGENOME_TAXID'] = None
 
@@ -194,7 +215,7 @@ def __make_config_dict(submit_samples: int,
     if len(samples) > 0:
         config['NEW_SAMPLES'] = samples
     else:
-        if submit_assembly or submit_bins or submit_mags:
+        if isolate or submit_assembly or submit_bins or submit_mags:
             config['SAMPLE_ACCESSIONS'] = list()
 
     # Make the SINGLE READ section
@@ -238,6 +259,12 @@ def __make_config_dict(submit_samples: int,
     # If this is only a samples, reads, or reads+samples submission,
     # we can stop here
     if not submit_assembly and not submit_bins and not submit_mags:
+        if isolate:
+            config['submission_outline'] = []
+            if submit_samples:
+                config['submission_outline'].append('samples')
+            if submit_unpaired_reads or submit_paired_end_reads:
+                config['submission_outline'].append('reads')
         return config
 
     # Make the ASSEMBLY section
@@ -249,18 +276,21 @@ def __make_config_dict(submit_samples: int,
         assembly['EXISTING_CO_ASSEMBLY_SAMPLE_ACCESSION'] = None
     else:
         assembly['ASSEMBLY_SOFTWARE'] = None
-        assembly['ISOLATION_SOURCE'] = None
-        assembly['FASTA_FILE'] = None
+        if not isolate:
+            assembly['ISOLATION_SOURCE'] = None
+        assembly['EMBL_FILE' if annotated else 'FASTA_FILE'] = None
     if submit_bins or submit_mags or submit_assembly:
         assembly['ASSEMBLY_SOFTWARE'] = None
-        assembly['collection date'] = None
-        assembly['geographic location (country and/or sea)'] = None
-    if (submit_unpaired_reads + submit_paired_end_reads) == 0: # We need the accessions of the reads
+        if not isolate:
+            assembly['collection date'] = None
+            assembly['geographic location (country and/or sea)'] = None
+    if (isolate and not submit_samples) or (submit_unpaired_reads + submit_paired_end_reads) == 0:
         assembly['RUN_ACCESSIONS'] = list()
     if submit_assembly:
         if known_coverage:
             assembly['COVERAGE_VALUE'] = None
-        assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = None
+        if not isolate:
+            assembly['ADDITIONAL_SAMPLESHEET_FIELDS'] = None
         assembly['ADDITIONAL_MANIFEST_FIELDS'] = None
     if submit_mags: # Since we need this for MAGs, we might as well ask for it here
         assembly['ISOLATION_SOURCE'] = None
@@ -343,10 +373,15 @@ def make_config(outpath: str,
                 submit_bins: bool,
                 submit_mags: bool,
                 no_comments: bool,
-                quality_cutoffs: bool,) -> None:
+                quality_cutoffs: bool,
+                isolate: bool = False,
+                annotated: bool = False) -> None:
     """
     Write an empty YAML config file which holds the keys (but not the values)
     which the user needs.
+
+    Isolate templates describe one bacterial sample; annotated assemblies use
+    prepared EMBL input instead of FASTA. Both options default off for the GUI.
 
     Args:
         outpath (str): The path where the config should be written
@@ -369,7 +404,9 @@ def make_config(outpath: str,
                        submit_assembly,
                        submit_bins,
                        submit_mags,
-                       quality_cutoffs)
+                       quality_cutoffs,
+                       isolate,
+                       annotated)
 
     
     # Assemble all the fields we need
@@ -381,12 +418,16 @@ def make_config(outpath: str,
                                        submit_assembly,
                                        submit_bins,
                                        submit_mags,
-                                       quality_cutoffs,)
+                                       quality_cutoffs,
+                                       isolate,
+                                       annotated)
     
     # Write to file
     __write_yaml(config_fields,
                  outpath,
-                 no_comments)
+                 no_comments,
+                 comments={**YAMLCOMMENTS, **ISOLATE_YAMLCOMMENTS} if isolate else YAMLCOMMENTS,
+                 examples={**YAMLEXAMPLES, **ISOLATE_YAMLEXAMPLES} if isolate else YAMLEXAMPLES)
     
     if not submit_assembly and (submit_bins or submit_mags):
         print("""\nSince you chose not to submit an assembly, we assume that it is
@@ -398,4 +439,3 @@ def make_config(outpath: str,
             \tEXISTING_ASSEMBLY_ANALYSIS_ACCESSION
             in the config file.
             Only fill out one of these fields and leave the other empty.""")
-          

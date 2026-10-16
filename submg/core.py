@@ -168,6 +168,13 @@ def init_argparse():
                                 default=False,
                                 help="Do not include field descriptions in "
                                 "the config file.")
+    parser_makecfg.add_argument("--isolate",
+                                action="store_true",
+                                help="Submit bacterial isolate instead of metagenome.")
+    parser_makecfg.add_argument("--annotated",
+                                action="store_true",
+                                help="Submit an assembly with gene annotations"
+                                "Only applicable with --isolate and --submit-assembly.")
     parser_makecfg.add_argument("-s",
                                 "--submit-samples",
                                 type=int, default=0,
@@ -314,7 +321,9 @@ def makecfg(args):
                           submit_bins=args.submit_bins,
                           submit_mags=args.submit_mags,
                           no_comments=args.no_comments,
-                          quality_cutoffs=args.bin_quality_cutoffs)
+                          quality_cutoffs=args.bin_quality_cutoffs,
+                          isolate=args.isolate,
+                          annotated=args.annotated)
     
 
 def submit_through_gui(config_path,

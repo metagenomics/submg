@@ -184,6 +184,32 @@ YAMLEXAMPLES = {
     'MAX_CONTAMINATION': '\"5\"',
 }
 
+ISOLATE_YAMLCOMMENTS = {
+    'SUBMISSION_TYPE': 'Isolate configuration; omitting this field selects metagenomic behavior.',
+    'ISOLATE_SCIENTIFIC_NAME': 'Scientific name of the bacterial isolate; must match ISOLATE_TAXID.',
+    'ISOLATE_TAXID': 'ENA taxonomy ID matching ISOLATE_SCIENTIFIC_NAME.',
+    'NEW_SAMPLES': 'Register exactly one biological isolate sample for all selected reads and assembly.',
+    'SAMPLE_ACCESSIONS': 'Supply exactly one existing biological sample accession for all selected reads and assembly.',
+    'RELATED_SAMPLE_TITLE': 'Must match the TITLE of the one NEW_SAMPLES entry.',
+    'RELATED_SAMPLE_ACCESSION': 'Must match the one accession in SAMPLE_ACCESSIONS.',
+    'ASSEMBLY_NAME': 'Name of the contig-level isolate assembly.',
+    'FASTA_FILE': 'Path to unannotated contig sequences in FASTA format, plain or gzip-compressed.',
+    'EMBL_FILE': 'Path to prepared EMBL containing contig sequences and annotations, plain or gzip-compressed. Requires a registered, usable locus-tag prefix matching the annotations; wait 24 hours after registration.',
+    'RUN_ACCESSIONS': 'Existing supporting runs from the same sample and study. Required without new reads; optional alongside new reads, whose run accessions will be added. Existing runs are not resubmitted.',
+}
+
+ISOLATE_YAMLEXAMPLES = {
+    'ISOLATE_SCIENTIFIC_NAME': '"Escherichia coli"',
+    'ISOLATE_TAXID': '"562"',
+    'TITLE': '"Isolate_1"',
+    'SAMPLE_ACCESSIONS': '["ERS15898933"]',
+    'NAME': '"Isolate_1_reads"',
+    'RELATED_SAMPLE_TITLE': '"Isolate_1"',
+    'ASSEMBLY_NAME': '"Isolate_1_assembly"',
+    'ASSEMBLY_SOFTWARE': '"SPAdes"',
+    'EMBL_FILE': '"/mnt/data/assembly.embl.gz"',
+}
+
 GUIEXAMPLES = {
     'STUDY': 'PRJEB71644',
     'PROJECT_NAME': 'AgRFex 2 Biogas Survey',
