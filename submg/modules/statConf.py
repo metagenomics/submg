@@ -205,7 +205,7 @@ ISOLATE_YAMLEXAMPLES = {
     'SAMPLE_ACCESSIONS': '["ERS15898933"]',
     'NAME': '"Isolate_1_reads"',
     'RELATED_SAMPLE_TITLE': '"Isolate_1"',
-    'ASSEMBLY_NAME': '"Isolate_1_assembly"',
+    'ASSEMBLY_NAME': '"Isol_1_asm"',
     'ASSEMBLY_SOFTWARE': '"SPAdes"',
     'EMBL_FILE': '"/mnt/data/assembly.embl.gz"',
 }
