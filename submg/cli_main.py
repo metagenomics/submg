@@ -11,8 +11,13 @@ def main():
     if args.mode == 'download-webin':
         download_webin()
     elif args.mode == 'makecfg':
+        if min(args.submit_samples, args.submit_unpaired_reads,
+               args.submit_paired_end_reads) < 0:
+            parser.error("Sample and read counts must be non-negative.")
         makecfg(args)
     elif args.mode == 'submit':
+        if args.threads < 1:
+            parser.error("--threads must be at least 1.")
         submit(args)
     else:
         parser.print_help()
