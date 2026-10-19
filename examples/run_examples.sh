@@ -224,13 +224,6 @@ submg-cli submit \
 --submit-mags
 rm -rf $STAGING_DIR $LOGGING_DIR
 
-echo ""
-echo "##################################################################"
-echo "##################################################################"
-echo "All examples submitted"
-echo "##################################################################"
-echo "##################################################################"
-
 CFG=13_samples.yaml
 RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL

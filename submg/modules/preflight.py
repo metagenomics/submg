@@ -369,8 +369,7 @@ def __check_read_type(paired: bool,
                         ('LIBRARY_SELECTION', str),
                         ('LIBRARY_STRATEGY', str),]
     if paired:
-        mandatory_fields.extend([('INSERT_SIZE', str),
-                                 ('FASTQ1_FILE', str),
+        mandatory_fields.extend([('FASTQ1_FILE', str),
                                  ('FASTQ2_FILE', str),])
     else:
         mandatory_fields.append(('FASTQ_FILE',  str))
@@ -402,6 +401,9 @@ def __check_read_type(paired: bool,
     __check_fields(read_items,
                    mandatory_fields,
                    category_name=section_name)
+    if paired:
+        __check_fields(read_items, [('INSERT_SIZE', str)],
+                       optional=True, category_name=section_name)
 
     for s in read_items:
         # Check if the read name already exists as aliases in ENA
