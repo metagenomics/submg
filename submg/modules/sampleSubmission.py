@@ -24,8 +24,9 @@ def __prep_samplesheet(config: dict,
     tree_root = ET.Element('SAMPLE_SET')
     
     samples_data = from_config(config, 'NEW_SAMPLES')
-    metagenome_scientific_name = from_config(config, 'METAGENOME_SCIENTIFIC_NAME')
-    metagenome_taxid = from_config(config, 'METAGENOME_TAXID')
+    taxonomy_prefix = 'ISOLATE' if config.get('SUBMISSION_TYPE') == 'isolate' else 'METAGENOME'
+    scientific_name = from_config(config, f'{taxonomy_prefix}_SCIENTIFIC_NAME')
+    taxid = from_config(config, f'{taxonomy_prefix}_TAXID')
 
     for data in samples_data:
         tree_sample = ET.SubElement(tree_root, 'SAMPLE', alias=stamped_from_config(data, 'TITLE'))
@@ -34,8 +35,8 @@ def __prep_samplesheet(config: dict,
         tree_title.text = from_config(data, 'TITLE')
 
         tree_sample_name = ET.SubElement(tree_sample, 'SAMPLE_NAME')
-        ET.SubElement(tree_sample_name, 'TAXON_ID').text = metagenome_taxid
-        ET.SubElement(tree_sample_name, 'SCIENTIFIC_NAME').text = metagenome_scientific_name
+        ET.SubElement(tree_sample_name, 'TAXON_ID').text = taxid
+        ET.SubElement(tree_sample_name, 'SCIENTIFIC_NAME').text = scientific_name
 
         tree_sample_attributes = ET.SubElement(tree_sample, 'SAMPLE_ATTRIBUTES')
         tree_attribute = ET.SubElement(tree_sample_attributes, 'SAMPLE_ATTRIBUTE')

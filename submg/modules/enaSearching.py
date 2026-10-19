@@ -412,6 +412,72 @@ def run_alias_accession(run_alias: str,
     return reports[0]['id'] if reports else None
 
 
+def run_accession_links(run_accession: str, devserver: bool = False):
+    """Return study/sample accession sets for one run, or None if absent."""
+    url = staticConfig.ena_test_search_url if devserver else staticConfig.ena_search_url
+    patterns = {'study': r'(?:PRJ[EDN][A-Z]\d+|[EDS]RP\d+)',
+                'sample': r'(?:SAM[EDN][A-Z]?\d+|[EDS]RS\d+)'}
+
+    def fail(message):
+        loggingC.message(f"ERROR: Cannot establish links for run '{run_accession}': {message}", threshold=-1)
+        sys.exit(1)
+
+    def accessions(values, kind):
+        found = set()
+        for value in values:
+            if value is None or value == '':
+                continue
+            if not isinstance(value, str) or not re.fullmatch(patterns[kind], value.strip()):
+                fail(f"invalid {kind} accession {value!r}.")
+            found.add(value.strip())
+        if not found:
+            fail(f"missing {kind} accession.")
+        return found
+
+    def search(result, query, fields):
+        try:
+            response = _search_request(url, {'result': result, 'query': query, 'fields': ','.join(fields)})
+        except RequestException as error:
+            _report_connection_failure(url, type(error).__name__, str(error))
+        return {field: _search_value(response, field, run_accession) for field in fields}
+
+    ensure_server_online(url)
+    fields = ['run_accession', 'study_accession', 'secondary_study_accession',
+              'sample_accession', 'secondary_sample_accession']
+    public = search('read_run', f'run_accession={run_accession}', fields)
+    if public['run_accession'] is not None:
+        if public['run_accession'] != run_accession:
+            fail(f"ENA returned run {public['run_accession']!r}.")
+        return {kind: accessions([public[f'{kind}_accession'], public[f'secondary_{kind}_accession']], kind)
+                for kind in patterns}
+
+    reports = _reports_request('runs', run_accession, devserver)
+    if not reports:
+        return run_accession_links(run_accession, False) if devserver else None
+    if len(reports) != 1 or reports[0]['id'] != run_accession:
+        fail("expected exactly one matching run in ENA Reports.")
+
+    links = {}
+    for kind, resource in [('study', 'studies'), ('sample', 'samples')]:
+        identifier = reports[0].get(f'{kind}Id')
+        accessions([identifier], kind)
+        identifier = identifier.strip()
+        fields = [f'{kind}_accession', f'secondary_{kind}_accession']
+        query_field = fields[0] if identifier.startswith(('PRJ', 'SAM')) else fields[1]
+        linked = search(kind, f'{query_field}={identifier}', fields)
+        if all(value is None for value in linked.values()):
+            records = _reports_request(resource, identifier, devserver)
+            if len(records) != 1:
+                fail(f"expected exactly one {kind} record for '{identifier}'.")
+            values = [records[0]['id'], records[0].get('secondaryId')]
+        else:
+            values = linked.values()
+        links[kind] = accessions(values, kind)
+        if identifier not in links[kind]:
+            fail(f"{kind} lookup for '{identifier}' returned {sorted(links[kind])}.")
+    return links
+
+
 def _search_value(response, field: str, identifier: str):
     """
     Extract a named column from a single result returned by ENA's public search API.

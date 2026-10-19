@@ -320,6 +320,28 @@ def __check_isolate_taxonomy(arguments: dict, config: dict, testmode: bool):
             fail(f"Sample '{accession}' taxonomy '{sample_name}' ({sample_taxonomy['taxId']}) does not match configured isolate '{name}' ({taxid}).")
 
 
+def __check_isolate_runs(arguments: dict, config: dict, testmode: bool):
+    """Require existing assembly runs to belong to the selected study/sample."""
+    if not arguments['submit_assembly']:
+        return
+    runs = config.get('ASSEMBLY', {}).get('RUN_ACCESSIONS')
+    if not runs:
+        return
+    runs = runs if isinstance(runs, list) else [runs]
+    sample = utility.from_config(config, 'SAMPLE_ACCESSIONS')
+    sample = sample[0] if isinstance(sample, list) else sample
+    expected = {'study': utility.from_config(config, 'STUDY'), 'sample': sample}
+    for run in dict.fromkeys(runs):
+        links = enaSearching.run_accession_links(run, testmode)
+        if links is None:
+            loggingC.message(f"\nERROR: Supporting run '{run}' was not found in ENA; expected study '{expected['study']}' and sample '{sample}'.", threshold=-1)
+            sys.exit(1)
+        for kind, accession in expected.items():
+            if accession not in links[kind]:
+                loggingC.message(f"\nERROR: Supporting run '{run}' has {kind} accessions {sorted(links[kind])}; expected '{accession}'.", threshold=-1)
+                sys.exit(1)
+
+
 def __check_isolate_assembly_file(path: str):
     """Check readability and gzip integrity without parsing sequences or features."""
     try:
@@ -1345,6 +1367,7 @@ def preflight_checks(arguments: dict) -> None:
     __check_sample_accessions(config, testmode)
     if config.get('SUBMISSION_TYPE') == 'isolate':
         __check_isolate_taxonomy(arguments, config, testmode)
+        __check_isolate_runs(arguments, config, testmode)
     __check_misc(arguments, config)
     __check_samples(arguments, config)
     __check_reads(arguments, config, testmode)

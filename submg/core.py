@@ -642,6 +642,12 @@ def submit(args, listener=None, gui=False):
                 if not isinstance(run_accessions, list):
                     run_accessions = [run_accessions]
 
+        if config.get('SUBMISSION_TYPE') == 'isolate' and args.submit_assembly:
+            existing_runs = utility.optional_from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS') or []
+            if not isinstance(existing_runs, list):
+                existing_runs = [existing_runs]
+            run_accessions = list(dict.fromkeys(existing_runs + run_accessions))
+
         if args.submit_assembly:
             assembly_sample_accession, assembly_fasta_accession = submit_assembly(config,
                                                                                   staging_subdir,
