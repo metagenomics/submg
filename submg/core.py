@@ -442,7 +442,9 @@ def submit(args, listener=None, gui=False):
     
     if args.timestamps or (args.timestamps is None and args.development_service):
         utility.set_up_timestamps(vars(args))
-        
+
+    current_stage = 'preflight'
+    completed_stages = []
     try:
         sver = staticConfig.submg_version
         wver = staticConfig.webin_cli_version
@@ -481,6 +483,7 @@ def submit(args, listener=None, gui=False):
         loggingC.message(msg, threshold=0)
 
         config = preflight.preflight_checks(vars(args))
+        isolate = config.get('SUBMISSION_TYPE') == 'isolate'
 
         # If we are submitting bins, get the quality scores and the
         # taxonomic information.
@@ -488,6 +491,7 @@ def submit(args, listener=None, gui=False):
         selected_mag_ids = None
         filtered_bins = []
         if args.submit_bins or args.submit_mags:
+            current_stage = 'bin quality and taxonomy checks'
             bin_quality = get_bin_quality(config, silent=True)
             # If there are quality cutoffs, make a list of bins to submit
             filtered_bins = utility.quality_filter_bins(bin_quality, config)
@@ -589,6 +593,7 @@ def submit(args, listener=None, gui=False):
                 loggingC.message(msg, threshold=0)
 
         if args.submit_assembly or args.submit_bins or args.submit_mags:
+            current_stage = 'coverage'
             assembly_coverage, bin_coverage_file = utility.resolve_coverage(
                 config=config,
                 submit_assembly=args.submit_assembly,
@@ -603,12 +608,15 @@ def submit(args, listener=None, gui=False):
             )
 
         if args.submit_samples:
+            current_stage = 'sample registration'
             sample_accession_data = submit_samples(config,
                                                    staging_subdir,
                                                    logging_subdir,
                                                    test=args.development_service)
+            completed_stages.append('samples')
         else:
-            if args.submit_assembly or args.submit_bins or args.submit_mags:
+            current_stage = 'sample reuse'
+            if isolate or args.submit_assembly or args.submit_bins or args.submit_mags:
                 sample_accessions = utility.from_config(config,
                                                         'SAMPLE_ACCESSIONS')
             else:
@@ -627,6 +635,7 @@ def submit(args, listener=None, gui=False):
                 })
             
         if args.submit_reads:
+            current_stage = 'read submission'
             run_accessions = submit_reads(config,
                                           sample_accession_data,
                                           prepdir(staging_subdir, 'reads'),
@@ -636,19 +645,23 @@ def submit(args, listener=None, gui=False):
                                           skip_checks=args.skip_checks,
                                           truncate_read_names=args.truncate_read_names,
                                           ascp=ascp)
+            completed_stages.append('reads')
         else:
             if args.submit_bins or args.submit_mags or args.submit_assembly:
+                current_stage = 'collecting run accessions'
                 run_accessions = utility.from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS')
                 if not isinstance(run_accessions, list):
                     run_accessions = [run_accessions]
 
-        if config.get('SUBMISSION_TYPE') == 'isolate' and args.submit_assembly:
+        if isolate and args.submit_assembly:
+            current_stage = 'collecting run accessions'
             existing_runs = utility.optional_from_config(config, 'ASSEMBLY', 'RUN_ACCESSIONS') or []
             if not isinstance(existing_runs, list):
                 existing_runs = [existing_runs]
             run_accessions = list(dict.fromkeys(existing_runs + run_accessions))
 
         if args.submit_assembly:
+            current_stage = 'assembly submission'
             assembly_sample_accession, assembly_fasta_accession = submit_assembly(config,
                                                                                   staging_subdir,
                                                                                   logging_subdir,
@@ -657,11 +670,13 @@ def submit(args, listener=None, gui=False):
                                                                                   run_accessions,
                                                                                   test=args.development_service,
                                                                                   ascp=ascp)
+            completed_stages.append('assembly')
             # Assembly sample accession will be either the accession of the
             # co-assembly virtual sample or the accession of the single sample
             # which the assembly is based on
         else:
             if args.submit_bins or args.submit_mags:
+                current_stage = 'assembly sample lookup'
                 # In this case we need the submission of the sample that the
                 # assembly is based on. We can derive it from the assembly
                 # accession by querying ENA
@@ -684,6 +699,7 @@ def submit(args, listener=None, gui=False):
         # Bin submision
         bin_sample_accessions = None
         if args.submit_bins:
+            current_stage = 'bin submission'
             bin_sample_accessions = submit_bins(filtered_bins,
                                                 config,
                                                 bin_taxonomy,
@@ -694,10 +710,12 @@ def submit(args, listener=None, gui=False):
                                                 bin_coverage_file,
                                                 test=args.development_service,
                                                 ascp=ascp)
+            completed_stages.append('bins')
 
 
         # MAG submission
         if args.submit_mags:
+            current_stage = 'MAG submission'
             if args.submit_assembly:
                 metagenome_scientific_name = utility.from_config(config, 'METAGENOME_SCIENTIFIC_NAME')
             else:
@@ -715,7 +733,9 @@ def submit(args, listener=None, gui=False):
                         selected_mag_ids=selected_mag_ids,
                         test=args.development_service,
                         ascp=ascp)
+            completed_stages.append('MAGs')
 
+        current_stage = 'final reporting'
         msg = "\n>All submissions completed."
         if args.development_service:
             msg += (
@@ -749,7 +769,17 @@ def submit(args, listener=None, gui=False):
                    "still exists. It may use up a lot of disk space.")
             loggingC.message(wrn, threshold=-1)
 
-    except Exception:
+    except (Exception, SystemExit) as error:
+        if isinstance(error, SystemExit) and error.code in (None, 0):
+            raise
+        loggingC.message(
+            f"\nSubmission stopped during {current_stage}.\n"
+            f"Completed submission stages: {', '.join(completed_stages) or 'none'}.\n"
+            f"Receipts, accessions and logs: {os.path.abspath(logging_subdir)}\n"
+            "Any successful submissions remain registered, including submissions from a partially completed stage. "
+            "Check the receipts and accession files before retrying.", threshold=-1)
+        if isinstance(error, SystemExit):
+            raise
         err = "\n\nTERMINATING BECAUSE AN UNEXPECTED ERROR OCCURED:\n"
         loggingC.message(err, threshold=-1)
         exc_info = traceback.format_exc()

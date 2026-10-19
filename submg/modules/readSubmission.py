@@ -312,6 +312,9 @@ def submit_reads(config,
     usr, pwd = utility.get_login()
     read_receipts = {}
     read_accessions = {}
+    read_to_accession_file = os.path.join(logging_dir, 'readset_to_preliminary_accession.tsv')
+    with open(read_to_accession_file, 'w'):
+        pass
     for name, manifest in read_manifests.items():
         loggingC.message(f">Submitting file at {manifest}", threshold=2)
         read_set_logging_dir = os.path.join(logging_dir, f"reads_{name}")
@@ -326,18 +329,13 @@ def submit_reads(config,
                                                                test=test,
                                                                context='reads',
                                                                ascp=ascp)
+        with open(read_to_accession_file, 'a') as f:
+            csv.writer(f, delimiter='\t').writerow([name, read_accessions[name]])
         
     loggingC.message("\n>Read submission completed!", threshold=0)
     loggingC.message(">Read receipt paths are:", threshold=1)
     for name, receipt in read_receipts.items():
         loggingC.message(f"\t{name}: {os.path.abspath(receipt)}", threshold=1)
-
-    read_to_accession_file = os.path.join(logging_dir, 'readset_to_preliminary_accession.tsv')
-    with open(read_to_accession_file, 'w') as f:
-        writer = csv.writer(f, delimiter='\t')
-        for name, accession in read_accessions.items():
-            writer.writerow([name, accession])
-
 
     loggingC.message(f"\n>The preliminary(!) accessions of your reads have been written to {os.path.abspath(read_to_accession_file)}.\n", threshold=0)
       
