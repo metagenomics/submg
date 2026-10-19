@@ -65,7 +65,9 @@ def __prep_reads_manifest(config: dict,
     if 'FASTQ_FILE' in data: # Single-end reads
         rows.append(['FASTQ', os.path.basename(fastq1_path)])
     else: # Paired-end reads
-        rows.append(['INSERT_SIZE', from_config(data, 'INSERT_SIZE')])
+        insert_size = utility.optional_from_config(data, 'INSERT_SIZE')
+        if insert_size is not None and insert_size.strip():
+            rows.append(['INSERT_SIZE', insert_size])
         rows.append(['FASTQ', os.path.basename(fastq1_path)])
         rows.append(['FASTQ', os.path.basename(fastq2_path)])
 
