@@ -1,0 +1,85 @@
+ID   XXX; XXX; linear; genomic DNA; XXX; XXX; 200 BP.
+XX
+AC   XXX;
+XX
+AC * simulated_contig_1
+XX
+PR   Project:PRJEB71644;
+XX
+DT   19-OCT-2026 (Rel. 1, Created)
+XX
+DE   Simulated Escherichia coli example contig 1.
+XX
+KW   .
+XX
+OS   Escherichia coli
+XX
+OC   Bacteria; Pseudomonadota; Gammaproteobacteria; Enterobacterales;
+OC   Enterobacteriaceae; Escherichia.
+XX
+RN   [1]
+RP   1-200
+RG   XXX
+RT   ;
+RL   Submitted (19-OCT-2026) to the INSDC.
+XX
+FH   Key             Location/Qualifiers
+FH
+FT   source          1..200
+FT                   /organism="Escherichia coli"
+FT                   /mol_type="genomic DNA"
+FT                   /db_xref="taxon:562"
+FT                   /note="Synthetic sequence for a simulated submission example"
+FT   CDS             31..129
+FT                   /codon_start=1
+FT                   /locus_tag="LTAG01_00001"
+FT                   /product="hypothetical protein"
+FT                   /note="Artificial coding feature in a synthetic example"
+FT                   /transl_table=11
+FT                   /translation="MAGKELAGKELAGKELAGKELAGKELAGKELA"
+XX
+SQ   Sequence 200 BP; 67 A; 38 C; 52 G; 43 T; 0 other;
+     gaacatcgtt atttatgata aacaatcgca atggctggta aagaactggc tggtaaagaa       60
+     ctggctggta aagaactggc tggtaaagaa ctggctggta aagaactggc tggtaaagaa      120
+     ctggcttaac agacgcctta atggtgatca gccgtacgta cgagccgatc aagagacaac      180
+     gtccattcga atagacacct                                                  200
+//
+ID   XXX; XXX; linear; genomic DNA; XXX; XXX; 200 BP.
+XX
+AC   XXX;
+XX
+AC * simulated_contig_2
+XX
+PR   Project:PRJEB71644;
+XX
+DT   19-OCT-2026 (Rel. 1, Created)
+XX
+DE   Simulated Escherichia coli example contig 2.
+XX
+KW   .
+XX
+OS   Escherichia coli
+XX
+OC   Bacteria; Pseudomonadota; Gammaproteobacteria; Enterobacterales;
+OC   Enterobacteriaceae; Escherichia.
+XX
+RN   [1]
+RP   1-200
+RG   XXX
+RT   ;
+RL   Submitted (19-OCT-2026) to the INSDC.
+XX
+FH   Key             Location/Qualifiers
+FH
+FT   source          1..200
+FT                   /organism="Escherichia coli"
+FT                   /mol_type="genomic DNA"
+FT                   /db_xref="taxon:562"
+FT                   /note="Synthetic sequence for a simulated submission example"
+XX
+SQ   Sequence 200 BP; 48 A; 52 C; 55 G; 45 T; 0 other;
+     aggtgctatc cctgaggtcc tgacgagaaa ttggatccag ggccggccat gctctaggtc       60
+     caaaggtatc gaaagttgaa gggtcttacg tgccacctgg ggggatcatc gagtcctaca      120
+     gtcagtggga accggcgcct tgcgtactac tacaacgcct attgcgtaat atcgcacgca      180
+     tacaaatggc gctcatatct                                                  200
+//
