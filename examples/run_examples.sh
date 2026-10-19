@@ -224,13 +224,6 @@ submg-cli submit \
 --submit-mags
 rm -rf $STAGING_DIR $LOGGING_DIR
 
-echo ""
-echo "##################################################################"
-echo "##################################################################"
-echo "All examples submitted"
-echo "##################################################################"
-echo "##################################################################"
-
 CFG=13_samples.yaml
 RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
 cp $CFG $LOCAL
@@ -275,6 +268,59 @@ submg-cli submit \
 --logging-dir $LOGGING_DIR \
 --submit-samples \
 --submit-reads
+rm -rf $STAGING_DIR $LOGGING_DIR
+
+CFG=16_isolate_new_sample.yaml
+RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
+cp $CFG $LOCAL
+sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
+echo ""
+echo "##################################################################"
+echo "##################################################################"
+echo "Running CFG: $CFG"
+submg-cli submit \
+--config $LOCAL \
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--development-service 1 \
+--submit-samples \
+--submit-reads \
+--submit-assembly
+rm -rf $STAGING_DIR $LOGGING_DIR
+
+CFG=17_isolate_samples_reads.yaml
+RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
+cp $CFG $LOCAL
+sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
+echo ""
+echo "##################################################################"
+echo "##################################################################"
+echo "Running CFG: $CFG"
+submg-cli submit \
+--config $LOCAL \
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--development-service 1 \
+--submit-samples \
+--submit-reads
+rm -rf $STAGING_DIR $LOGGING_DIR
+
+CFG=18_isolate_annotated.yaml
+RANDOM_STR=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 5)
+cp $CFG $LOCAL
+sed -i "s/idx00/${RANDOM_STR}/g" "$LOCAL"
+echo ""
+echo "##################################################################"
+echo "##################################################################"
+echo "Running CFG: $CFG"
+submg-cli submit \
+--config $LOCAL \
+--staging-dir $STAGING_DIR \
+--logging-dir $LOGGING_DIR \
+--development-service 1 \
+--submit-samples \
+--submit-reads \
+--submit-assembly
 rm -rf $STAGING_DIR $LOGGING_DIR
 
 echo ""
