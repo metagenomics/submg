@@ -266,8 +266,13 @@ def __check_isolate_config(arguments: dict, config: dict):
     extra = assembly.get('ADDITIONAL_MANIFEST_FIELDS')
     if extra is not None and not isinstance(extra, dict):
         fail("ASSEMBLY.ADDITIONAL_MANIFEST_FIELDS must contain field names and values.")
+    for field in extra or {}:
+        if str(field).strip().upper() in ('STUDY', 'SAMPLE', 'ASSEMBLYNAME', 'ASSEMBLY_TYPE',
+                                          'COVERAGE', 'PROGRAM', 'PLATFORM', 'MOLECULETYPE',
+                                          'RUN_REF', 'FASTA', 'FLATFILE'):
+            fail(f"ASSEMBLY.ADDITIONAL_MANIFEST_FIELDS cannot override the generated field '{field}'.")
     for field in list(assembly) + list(extra or {}):
-        if str(field).upper() in ('AGP', 'CHROMOSOME_LIST', 'UNLOCALISED_LIST'):
+        if str(field).strip().upper() in ('AGP', 'CHROMOSOME_LIST', 'UNLOCALISED_LIST'):
             fail(f"Isolate submission supports contig-level assemblies only; remove {field}.")
 
     sequence_fields = [key for key in ('FASTA_FILE', 'EMBL_FILE') if assembly.get(key)]

@@ -1,4 +1,5 @@
 import os
+import sys
 import csv
 import requests
 import gzip
@@ -131,7 +132,7 @@ def __prep_assembly_manifest(config: dict,
         outdir (str): The directory where the manifest will be written.
         coverage (float): The resolved assembly coverage.
         sample_accession (str): The accession number of the sample.
-        fasta_path (str): The path to the fasta file.
+        fasta_path (str): The path to the staged FASTA or EMBL file.
         
     Returns:
         Tuple[str, str]: The upload directory and the path to the manifest file.
@@ -145,21 +146,23 @@ def __prep_assembly_manifest(config: dict,
 
     assert type(run_accessions) is list
     run_accessions = ",".join(run_accessions)
+    isolate = config.get('SUBMISSION_TYPE') == 'isolate'
+    assembly_dict = from_config(config, 'ASSEMBLY')
+    sequence_field = 'FLATFILE' if isolate and assembly_dict.get('EMBL_FILE') else 'FASTA'
 
     rows = [
         [ 'STUDY', utility.from_config(config, 'STUDY') ],
         [ 'SAMPLE', sample_accession ],
         [ 'ASSEMBLYNAME', utility.stamped_from_config(config, 'ASSEMBLY','ASSEMBLY_NAME') ],
-        [ 'ASSEMBLY_TYPE', staticConfig.sequence_assembly_type ],
+        [ 'ASSEMBLY_TYPE', 'clone or isolate' if isolate else staticConfig.sequence_assembly_type ],
         [ 'COVERAGE', coverage ],
         [ 'PROGRAM', utility.from_config(config, 'ASSEMBLY','ASSEMBLY_SOFTWARE') ],
         [ 'PLATFORM', PLATFORM ],
         [ 'MOLECULETYPE', staticConfig.assembly_molecule_type],
         [ 'RUN_REF', run_accessions ],
-        [ 'FASTA', os.path.basename(fasta_path)],   
+        [ sequence_field, os.path.basename(fasta_path)],
     ]
 
-    assembly_dict = from_config(config, 'ASSEMBLY')
     if 'ADDITIONAL_MANIFEST_FIELDS' in assembly_dict:
         if not assembly_dict['ADDITIONAL_MANIFEST_FIELDS'] is None:
             for key, value in assembly_dict['ADDITIONAL_MANIFEST_FIELDS'].items():
@@ -219,6 +222,10 @@ def submit_assembly(config: dict,
     # and we need to create a samplesheet and upload it
     origin_samples = [x['accession'] for x in sample_accessions_data]
     assert type(origin_samples) is list
+    isolate = config.get('SUBMISSION_TYPE') == 'isolate'
+    if isolate and len(origin_samples) != 1:
+        loggingC.message("ERROR: Isolate assembly submission requires exactly one biological sample.", threshold=-1)
+        sys.exit(1)
     if len(origin_samples) > 1:
         loggingC.message(f">Multiple SAMPLE_REFS in the config file mean this is a co-assembly", threshold=0)
         loggingC.message(f">For a co-assembly, a virtual sample object will be created in ENA", threshold=0)
@@ -241,17 +248,24 @@ def submit_assembly(config: dict,
         assembly_sample_accession = origin_samples[0]
 
     # Upload the actual assembly
-    ## make a directory and stage the fasta file
+    ## make a directory and stage the sequence file
     fasta_submission_dir = os.path.join(assembly_submission_dir, "fasta")
     os.makedirs(fasta_submission_dir, exist_ok=False)
 
-    fasta_path, gzipped = utility.check_fasta(from_config(config, 'ASSEMBLY', 'FASTA_FILE'))
-    gzipped_fasta_path = os.path.join(fasta_submission_dir, f"assembly_upload{staticConfig.zipped_fasta_extension}")
+    annotated = isolate and bool(config['ASSEMBLY'].get('EMBL_FILE'))
+    if annotated:
+        fasta_path = from_config(config, 'ASSEMBLY', 'EMBL_FILE')
+        gzipped = fasta_path.lower().endswith('.gz')
+        extension = staticConfig.zipped_emblff_extension
+    else:
+        fasta_path, gzipped = utility.check_fasta(from_config(config, 'ASSEMBLY', 'FASTA_FILE'))
+        extension = staticConfig.zipped_fasta_extension
+    gzipped_fasta_path = os.path.join(fasta_submission_dir, f"assembly_upload{extension}")
     if not gzipped:
-        loggingC.message(f">Gzipping assembly fasta file", threshold=0)
+        loggingC.message(f">Gzipping assembly sequence file", threshold=0)
         with open(fasta_path, 'rb') as f_in:
             with gzip.open(gzipped_fasta_path, 'wb', compresslevel=5) as f_out:
-                f_out.writelines(f_in)
+                shutil.copyfileobj(f_in, f_out)
     else:
         shutil.copyfile(fasta_path, gzipped_fasta_path)
     ## add a logging directory
