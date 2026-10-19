@@ -1,0 +1,46 @@
+# ABOUT: This is a config for submitting 1 isolate sample, 1 set of single-end reads, 1 set of paired-end reads and a FASTA assembly.
+# ABOUT: Uses simulated data for the ENA development service; coverage is known.
+# USAGE: navigate to the <examples> directory
+# USAGE: submg-cli submit --config 16_isolate_new_sample.yaml --staging-dir <path/to/staging/dir> --logging-dir <path/to/logging/dir> --development-service 1 --submit-samples --submit-reads --submit-assembly
+
+
+STUDY: "PRJEB71644"                                                         # The accession of your study (which has to already exist in ENA). >>EXAMPLE: "PRJEB71644"
+SUBMISSION_TYPE: "isolate"                                                  # Isolate configuration; omitting this field selects metagenomic behavior.
+ISOLATE_SCIENTIFIC_NAME: "Escherichia coli"                                 # Scientific name of the bacterial isolate; must match ISOLATE_TAXID. >>EXAMPLE: "Escherichia coli"
+ISOLATE_TAXID: "562"                                                        # ENA taxonomy ID matching ISOLATE_SCIENTIFIC_NAME. >>EXAMPLE: "562"
+SEQUENCING_PLATFORMS: ["ILLUMINA"]                                          # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#platform >>EXAMPLE: ["ILLUMINA","OXFORD_NANOPORE"]
+NEW_SAMPLES:                                                                # Register exactly one biological isolate sample for all selected reads and assembly.
+- TITLE: "idx00_ex16_isolate"                                               # A unique title for your sample. >>EXAMPLE: "Isolate_1"
+  collection date: "2026"                                                   # Any ISO compliant time. Can be truncated from the right (e.g. '2023-12-27T16:07' or '2023-12'). >>EXAMPLE: "2023-03"
+  geographic location (country and/or sea): "Germany"                       # See ENA checklists (e.g. https://www.ebi.ac.uk/ena/browser/view/ERC000011) for valid values. >>EXAMPLE: "Germany"
+  ADDITIONAL_SAMPLESHEET_FIELDS:                                            # You can add any additional fields of metadata to the samplesheet. They are recorded as pairs of keyword and value. There are no restrictions on what data can go in here. Use commas to separate list items. It is recommended to check the ENA samplesheet which most closely matches your data to see recommended fields.
+SINGLE_READS:
+- NAME: "idx00_ex16_se"                                                     # Choose any unique name. >>EXAMPLE: "Isolate_1_reads"
+  SEQUENCING_INSTRUMENT: "Illumina HiSeq 1500"                              # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument >>EXAMPLE: ["Illumina HiSeq 1500", "GridION"]
+  LIBRARY_SOURCE: "GENOMIC"                                                 # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "GENOMIC"
+  LIBRARY_SELECTION: "RANDOM"                                               # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-selection >>EXAMPLE: "RANDOM"
+  LIBRARY_STRATEGY: "WGS"                                                   # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy >>EXAMPLE: "WGS"
+  FASTQ_FILE: "data/isolate/single.fastq"                                   # Path to a fastq file. >>EXAMPLE: "/mnt/data/reads.fastq.gz"
+  RELATED_SAMPLE_TITLE: "idx00_ex16_isolate"                                # Must match the TITLE of the one NEW_SAMPLES entry. >>EXAMPLE: "Isolate_1"
+  ADDITIONAL_MANIFEST_FIELDS:                                               # You can add additional fields (as key value pairs) to be written to the manifest. Be aware that only certain fields are allowed here, depending on the type of data you are submitting. Consult the ENA documentation for information on allowed fields.
+PAIRED_END_READS:
+- NAME: "idx00_ex16_pe"                                                     # Choose any unique name. >>EXAMPLE: "Isolate_1_reads"
+  SEQUENCING_INSTRUMENT: "Illumina HiSeq 1500"                              # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#instrument >>EXAMPLE: ["Illumina HiSeq 1500", "GridION"]
+  LIBRARY_SOURCE: "GENOMIC"                                                 # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source >>EXAMPLE: "GENOMIC"
+  LIBRARY_SELECTION: "RANDOM"                                               # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-selection >>EXAMPLE: "RANDOM"
+  LIBRARY_STRATEGY: "WGS"                                                   # One of https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy >>EXAMPLE: "WGS"
+  INSERT_SIZE: "150"                                                        # Optional insert size of the paired-end reads in bases. Omit or leave blank if unknown (https://www.ebi.ac.uk/fg/annotare/help/seq_lib_spec.html). >>EXAMPLE: "300"
+  FASTQ1_FILE: "data/isolate/forward.fastq"                                 # Path to a fastq file with forward reads. >>EXAMPLE: "/mnt/data/reads_R1.fastq.gz"
+  FASTQ2_FILE: "data/isolate/reverse.fastq"                                 # Path to a fastq file with reverse reads. >>EXAMPLE: "/mnt/data/reads_R2.fastq.gz"
+  RELATED_SAMPLE_TITLE: "idx00_ex16_isolate"                                # Must match the TITLE of the one NEW_SAMPLES entry. >>EXAMPLE: "Isolate_1"
+  ADDITIONAL_MANIFEST_FIELDS:                                               # You can add additional fields (as key value pairs) to be written to the manifest. Be aware that only certain fields are allowed here, depending on the type of data you are submitting. Consult the ENA documentation for information on allowed fields.
+ASSEMBLY:
+  ASSEMBLY_NAME: "idx00_ex16_asm"                                           # Name of the contig-level isolate assembly. >>EXAMPLE: "Isolate_1_assembly"
+  ASSEMBLY_SOFTWARE: "Python synthetic construction (not assembled)"        # Software used to generate the assembly. >>EXAMPLE: "SPAdes"
+  FASTA_FILE: "data/isolate/assembly.fasta"                                 # Path to unannotated contig sequences in FASTA format, plain or gzip-compressed. >>EXAMPLE: "/mnt/data/assembly.fasta.gz"
+  COVERAGE_VALUE: 0.75                                                      # Read coverage of the assembly.
+  ADDITIONAL_MANIFEST_FIELDS:                                               # You can add additional fields (as key value pairs) to be written to the manifest. Be aware that only certain fields are allowed here, depending on the type of data you are submitting. Consult the ENA documentation for information on allowed fields.
+submission_outline:                                                         # This configuration form was created to submit the items listed below.
+- samples
+- reads
+- assembly
