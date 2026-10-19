@@ -1127,6 +1127,9 @@ def validate_parameter_combination(submit_samples: bool,
         if exit_on_invalid:
             # Dont use loggingC here, because this might be called from configGen
             print(f"\nERROR: The combination of parameters you have specified is not valid.")
+            print(print_submission_schedule(submit_samples, submit_reads,
+                                            submit_assembly, submit_bins,
+                                            submit_mags))
             print(staticConfig.submission_modes_message)
             sys.exit(1)
         else:
