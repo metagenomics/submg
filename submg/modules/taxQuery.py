@@ -765,20 +765,29 @@ def get_bin_taxonomy(filtered_bins, config) -> dict:
     return upload_taxonomy_data
 
 
-def taxid_from_scientific_name(scientific_name: str) -> str:
-    """
-    Get the taxid for a given scientific name from the ENA API. Returns None
-    if no taxid is found.
-
-    Args:
-        scientific_name (str): The scientific name to query for.
-    """
+def taxonomy_from_scientific_name(scientific_name: str) -> dict | None:
+    """Return the ENA taxonomy record for a unique exact name match, or None."""
     url = f"https://www.ebi.ac.uk/ena/taxonomy/rest/scientific-name/{scientific_name}"
-    response = requests.get(url, timeout=staticConfig.http_timeout)
-    items = response.json()
-    if not (len(items) == 1):
+    try:
+        response = requests.get(url, timeout=staticConfig.http_timeout)
+        response.raise_for_status()
+        items = response.json()
+        if not isinstance(items, list) or any(
+                not isinstance(item, dict)
+                or not isinstance(item.get('scientificName'), str)
+                or not item['scientificName'].strip()
+                or not isinstance(item.get('taxId'), (str, int))
+                or not str(item['taxId']).isdigit() for item in items):
+            raise ValueError('malformed taxonomy response')
+    except (requests.RequestException, ValueError) as error:
+        loggingC.message(f"\nERROR: Cannot retrieve ENA taxonomy for '{scientific_name}': {error}", threshold=-1)
+        sys.exit(1)
+    if len(items) != 1 or scientific_name != items[0]['scientificName']:
         return None
-    if not (scientific_name == items[0]['scientificName']):
-        return None
-    tax_id = items[0]['taxId']
-    return tax_id
+    return items[0]
+
+
+def taxid_from_scientific_name(scientific_name: str) -> str:
+    """Return the ENA taxid for a unique exact name match, or None."""
+    taxonomy = taxonomy_from_scientific_name(scientific_name)
+    return taxonomy['taxId'] if taxonomy is not None else None

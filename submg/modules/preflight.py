@@ -283,6 +283,43 @@ def __check_isolate_config(arguments: dict, config: dict):
     __check_isolate_assembly_file(path)
 
 
+def __check_isolate_taxonomy(arguments: dict, config: dict, testmode: bool):
+    """Check ENA eligibility and agreement with an existing sample's taxonomy."""
+    def fail(message):
+        loggingC.message(f"\nERROR: {message}", threshold=-1)
+        sys.exit(1)
+
+    name = utility.from_config(config, 'ISOLATE_SCIENTIFIC_NAME')
+    taxid = utility.from_config(config, 'ISOLATE_TAXID')
+    taxonomy = taxQuery.taxonomy_from_scientific_name(name)
+    if taxonomy is None:
+        fail(f"ISOLATE_SCIENTIFIC_NAME '{name}' has no unique exact match in ENA taxonomy.")
+    if str(taxonomy['taxId']) != taxid:
+        fail(f"ISOLATE_TAXID '{taxid}' does not match ENA taxid '{taxonomy['taxId']}' for '{name}'.")
+
+    lineage = taxonomy.get('lineage')
+    if not isinstance(lineage, str) or 'Bacteria' not in [entry.strip() for entry in lineage.split(';')]:
+        fail(f"Isolate taxonomy '{name}' ({taxid}) must have Bacteria in its ENA lineage; found {lineage!r}.")
+    required_flags = ['submittable']
+    if arguments['submit_assembly']:
+        required_flags.append('binomial')
+    for flag in required_flags:
+        value = taxonomy.get(flag)
+        if value is not True and value != 'true':
+            fail(f"Isolate taxonomy '{name}' ({taxid}) requires ENA {flag}=true; found {value!r}.")
+
+    if not arguments['submit_samples']:
+        accession = utility.from_config(config, 'SAMPLE_ACCESSIONS')
+        if isinstance(accession, list):
+            accession = accession[0]
+        sample_name = enaSearching.search_scientific_name_by_sample(accession, testmode)
+        sample_taxonomy = taxonomy if sample_name == name else taxQuery.taxonomy_from_scientific_name(sample_name)
+        if sample_taxonomy is None:
+            fail(f"Sample '{accession}' scientific name '{sample_name}' has no unique exact match in ENA taxonomy; expected '{name}' ({taxid}).")
+        if str(sample_taxonomy['taxId']) != taxid:
+            fail(f"Sample '{accession}' taxonomy '{sample_name}' ({sample_taxonomy['taxId']}) does not match configured isolate '{name}' ({taxid}).")
+
+
 def __check_isolate_assembly_file(path: str):
     """Check readability and gzip integrity without parsing sequences or features."""
     try:
@@ -1306,6 +1343,8 @@ def preflight_checks(arguments: dict) -> None:
         __check_windows_pysam(config)
     __check_study(config, testmode)
     __check_sample_accessions(config, testmode)
+    if config.get('SUBMISSION_TYPE') == 'isolate':
+        __check_isolate_taxonomy(arguments, config, testmode)
     __check_misc(arguments, config)
     __check_samples(arguments, config)
     __check_reads(arguments, config, testmode)
