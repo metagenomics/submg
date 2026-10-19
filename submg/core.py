@@ -173,7 +173,7 @@ def init_argparse():
                                 help="Submit bacterial isolate instead of metagenome.")
     parser_makecfg.add_argument("--annotated",
                                 action="store_true",
-                                help="Submit an assembly with gene annotations"
+                                help="Submit an assembly with gene annotations. "
                                 "Only applicable with --isolate and --submit-assembly.")
     parser_makecfg.add_argument("-s",
                                 "--submit-samples",
@@ -772,12 +772,13 @@ def submit(args, listener=None, gui=False):
     except (Exception, SystemExit) as error:
         if isinstance(error, SystemExit) and error.code in (None, 0):
             raise
-        loggingC.message(
-            f"\nSubmission stopped during {current_stage}.\n"
-            f"Completed submission stages: {', '.join(completed_stages) or 'none'}.\n"
-            f"Receipts, accessions and logs: {os.path.abspath(logging_subdir)}\n"
-            "Any successful submissions remain registered, including submissions from a partially completed stage. "
-            "Check the receipts and accession files before retrying.", threshold=-1)
+        if current_stage != 'preflight':  # Nothing was submitted yet
+            loggingC.message(
+                f"\nSubmission stopped during {current_stage}.\n"
+                f"Completed submission stages: {', '.join(completed_stages) or 'none'}.\n"
+                f"Receipts, accessions and logs: {os.path.abspath(logging_subdir)}\n"
+                "Any successful submissions remain registered, including submissions from a partially completed stage. "
+                "Check the receipts and accession files before retrying.", threshold=-1)
         if isinstance(error, SystemExit):
             raise
         err = "\n\nTERMINATING BECAUSE AN UNEXPECTED ERROR OCCURED:\n"

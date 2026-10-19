@@ -202,7 +202,7 @@ def __check_isolate_config(arguments: dict, config: dict):
     __check_fields(config, [('STUDY', str), ('ISOLATE_SCIENTIFIC_NAME', str)], category_name='isolate')
     taxid = utility.from_config(config, 'ISOLATE_TAXID')
     if not isinstance(taxid, str) or not taxid.strip():
-        fail("ISOLATE_TAXID must contain a taxonomy ID.")
+        fail('ISOLATE_TAXID must contain a single taxonomy ID, e.g. "562".')
     if checks_failed:
         sys.exit(1)
 

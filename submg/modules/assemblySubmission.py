@@ -148,7 +148,7 @@ def __prep_assembly_manifest(config: dict,
     run_accessions = ",".join(run_accessions)
     isolate = config.get('SUBMISSION_TYPE') == 'isolate'
     assembly_dict = from_config(config, 'ASSEMBLY')
-    sequence_field = 'FLATFILE' if isolate and assembly_dict.get('EMBL_FILE') else 'FASTA'
+    sequence_field = 'FLATFILE' if fasta_path.endswith(staticConfig.zipped_emblff_extension) else 'FASTA'
 
     rows = [
         [ 'STUDY', utility.from_config(config, 'STUDY') ],
