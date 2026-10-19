@@ -5,6 +5,9 @@ import shutil
 import subprocess
 import time
 import csv
+import gzip
+import re
+import zlib
 from datetime import datetime
 
 from submg.modules import loggingC, utility, enaSearching, binSubmission, taxQuery
@@ -173,7 +176,7 @@ def __check_fields(items: list,
                     )
                     loggingC.message(err, threshold=-1)
                     checks_failed = True
-            elif item[field] is None or item[field] == '':
+            elif item[field] is None or (isinstance(item[field], str) and not item[field].strip()):
                 if not optional:
                     err = f"\nERROR: A '{field}' field is empty in the {category_name} section (or one of the items in this section)."
                     loggingC.message(err, threshold=-1)
@@ -184,6 +187,117 @@ def __check_fields(items: list,
                 err = f"\nERROR: The '{field}' field in the {category_name} section (or one of the items in this section) is not of the correct type (type is <{found_type}> but should be <{desired_type}>)."
                 loggingC.message(err, threshold=-1)
                 checks_failed = True
+
+
+def __check_isolate_config(arguments: dict, config: dict):
+    """Check isolate selections and section shapes before the shared checks."""
+    def fail(message):
+        loggingC.message(f"\nERROR: {message}", threshold=-1)
+        sys.exit(1)
+
+    if arguments['submit_bins'] or arguments['submit_mags'] or 'BINS' in config or 'MAGS' in config:
+        fail("Isolate submissions do not support bins or MAGs.")
+    utility.validate_parameter_combination(arguments['submit_samples'], arguments['submit_reads'],
+                                           arguments['submit_assembly'], False, False)
+    __check_fields(config, [('STUDY', str), ('ISOLATE_SCIENTIFIC_NAME', str)], category_name='isolate')
+    taxid = utility.from_config(config, 'ISOLATE_TAXID')
+    if not isinstance(taxid, str) or not taxid.strip():
+        fail("ISOLATE_TAXID must contain a taxonomy ID.")
+    if checks_failed:
+        sys.exit(1)
+
+    sections = []
+    if arguments['submit_samples']:
+        samples = config.get('NEW_SAMPLES')
+        if not isinstance(samples, list) or len(samples) != 1 or config.get('SAMPLE_ACCESSIONS'):
+            fail("Provide exactly one NEW_SAMPLES entry and no SAMPLE_ACCESSIONS when registering an isolate sample.")
+        sections.append('NEW_SAMPLES')
+    else:
+        accessions = config.get('SAMPLE_ACCESSIONS')
+        accessions = accessions if isinstance(accessions, list) else [accessions]
+        if (len(accessions) != 1 or not isinstance(accessions[0], str)
+                or not accessions[0].strip() or config.get('NEW_SAMPLES')):
+            fail("Provide exactly one SAMPLE_ACCESSIONS value and no NEW_SAMPLES when reusing an isolate sample.")
+    if arguments['submit_reads']:
+        if not config.get('SINGLE_READS') and not config.get('PAIRED_END_READS'):
+            fail("Read submission requires at least one SINGLE_READS or PAIRED_END_READS entry.")
+        sections.extend(key for key in ('SINGLE_READS', 'PAIRED_END_READS') if key in config)
+    for section in sections:
+        entries = config[section]
+        if not isinstance(entries, list) or not entries or not all(isinstance(item, dict) for item in entries):
+            fail(f"{section} must be a nonempty list of entries containing field names and values.")
+        if section != 'NEW_SAMPLES':
+            for entry in entries:
+                if 'RELATED_SAMPLE_TITLE' in entry and 'RELATED_SAMPLE_ACCESSION' in entry:
+                    fail(f"Each {section} entry must use only one sample reference: title or accession.")
+
+    if not arguments['submit_assembly']:
+        return
+    assembly = config.get('ASSEMBLY')
+    if not isinstance(assembly, dict):
+        fail("ASSEMBLY must contain field names and values.")
+    __check_fields(assembly, [('ASSEMBLY_NAME', str), ('ASSEMBLY_SOFTWARE', str)], category_name='ASSEMBLY')
+    if checks_failed:
+        sys.exit(1)
+    __check_assembly_name(arguments, assembly['ASSEMBLY_NAME'])
+
+    platforms = config.get('SEQUENCING_PLATFORMS')
+    platforms = platforms if isinstance(platforms, list) else [platforms]
+    if not platforms or not all(isinstance(value, str) and value.strip() for value in platforms):
+        fail("SEQUENCING_PLATFORMS must contain at least one sequencing platform.")
+    if 'BAM_FILES' in config:
+        paths = config['BAM_FILES']
+        paths = paths if isinstance(paths, list) else [paths]
+        if not paths or not all(isinstance(path, str) and path.strip() for path in paths):
+            fail("BAM_FILES must contain one or more file paths.")
+
+    runs = assembly.get('RUN_ACCESSIONS', [])
+    if runs is None or runs == '':
+        runs = []
+    runs = runs if isinstance(runs, list) else [runs]
+    if runs:
+        if arguments['submit_samples']:
+            fail("Existing RUN_ACCESSIONS cannot reference a newly registered sample.")
+        if not all(isinstance(run, str) and re.fullmatch(r'(ERR|SRR|DRR)\d+', run) for run in runs):
+            fail("ASSEMBLY.RUN_ACCESSIONS must contain run accessions such as ERR123, SRR123 or DRR123.")
+    elif not arguments['submit_reads']:
+        fail("Assembly submission requires RUN_ACCESSIONS or new reads selected for submission.")
+
+    extra = assembly.get('ADDITIONAL_MANIFEST_FIELDS')
+    if extra is not None and not isinstance(extra, dict):
+        fail("ASSEMBLY.ADDITIONAL_MANIFEST_FIELDS must contain field names and values.")
+    for field in list(assembly) + list(extra or {}):
+        if str(field).upper() in ('AGP', 'CHROMOSOME_LIST', 'UNLOCALISED_LIST'):
+            fail(f"Isolate submission supports contig-level assemblies only; remove {field}.")
+
+    sequence_fields = [key for key in ('FASTA_FILE', 'EMBL_FILE') if assembly.get(key)]
+    if len(sequence_fields) != 1:
+        fail("Provide exactly one ASSEMBLY.FASTA_FILE or ASSEMBLY.EMBL_FILE.")
+    sequence_field = sequence_fields[0]
+    __check_fields(assembly, [(sequence_field, str)], category_name='ASSEMBLY')
+    if checks_failed:
+        sys.exit(1)
+    path = assembly[sequence_field]
+    if sequence_field == 'FASTA_FILE' and utility.is_fasta(path) is None:
+        fail(f"Assembly FASTA file '{path}' does not exist or has an unsupported FASTA extension.")
+    __check_isolate_assembly_file(path)
+
+
+def __check_isolate_assembly_file(path: str):
+    """Check readability and gzip integrity without parsing sequences or features."""
+    try:
+        if not os.path.isfile(path):
+            raise OSError('not a regular file or does not exist')
+        compressed = path.lower().endswith('.gz')
+        with (gzip.open(path, 'rb') if compressed else open(path, 'rb')) as sequence_file:
+            if not sequence_file.read(1):
+                raise OSError('file contains no sequence data')
+            if compressed:
+                while sequence_file.read(1024 * 1024):
+                    pass
+    except (OSError, EOFError, zlib.error) as error:
+        loggingC.message(f"\nERROR: Cannot read assembly file '{path}': {error}", threshold=-1)
+        sys.exit(1)
 
 
 def __check_date(date: str):
@@ -316,9 +430,12 @@ def __check_samples(arguments: dict,
         err = f"\nERROR: You chose to submit samples, but did not provide any sample data."
         loggingC.message(err, threshold=-1)
         checks_failed = True
-    mandatory_fields = [('collection date', str),
+    mandatory_fields = [('TITLE', str),
+                        ('collection date', str),
                         ('geographic location (country and/or sea)', str)]
     __check_fields(sample_items, mandatory_fields, category_name="NEW_SAMPLE")
+    if checks_failed:
+        sys.exit(1)
     for s in sample_items:
         __check_date(s['collection date'])
         __check_country_sea_location(s['geographic location (country and/or sea)'])
@@ -402,6 +519,8 @@ def __check_read_type(paired: bool,
     __check_fields(read_items,
                    mandatory_fields,
                    category_name=section_name)
+    if checks_failed:
+        sys.exit(1)
 
     for s in read_items:
         # Check if the read name already exists as aliases in ENA
@@ -537,7 +656,7 @@ def __check_misc(arguments: dict,
         utility.stamped_from_config(config, 'PROJECT_NAME')
 
     # Metagenome taxonomy
-    if arguments['submit_assembly']:
+    if arguments['submit_assembly'] and config.get('SUBMISSION_TYPE') != 'isolate':
         metagenome_scientific_name = utility.from_config(config,
                                                          'METAGENOME_SCIENTIFIC_NAME')
         metagenome_taxid = utility.from_config(config, 'METAGENOME_TAXID')
@@ -599,6 +718,9 @@ def __check_assembly(arguments: dict,
         testmode:     Whether or not to use the ENA development server.
     """
     global checks_failed
+
+    if config.get('SUBMISSION_TYPE') == 'isolate':
+        return  # Already checked by __check_isolate_config.
 
     if testmode:
         servertype = "development"
@@ -1014,7 +1136,7 @@ def __check_coverage(arguments: dict,
             # Check if the coverage value string can be cast to float
             try:
                 float(assembly_data['COVERAGE_VALUE'])
-            except ValueError:
+            except (TypeError, ValueError):
                 err = f"\nERROR: The coverage value '{assembly_data['COVERAGE_VALUE']}' is not a float value."
                 loggingC.message(err, threshold=-1)
                 sys.exit(1)
@@ -1173,7 +1295,13 @@ def preflight_checks(arguments: dict) -> None:
 
     # Check if the config file was filled out correctly
     testmode = arguments['development_service']
-    __check_windows_pysam(config)
+    if not isinstance(config, dict):
+        loggingC.message("\nERROR: The configuration must contain YAML field names and values.", threshold=-1)
+        sys.exit(1)
+    if config.get('SUBMISSION_TYPE') == 'isolate':
+        __check_isolate_config(arguments, config)
+    if config.get('SUBMISSION_TYPE') != 'isolate' or arguments['submit_assembly']:
+        __check_windows_pysam(config)
     __check_study(config, testmode)
     __check_sample_accessions(config, testmode)
     __check_misc(arguments, config)
