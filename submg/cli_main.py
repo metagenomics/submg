@@ -1,3 +1,5 @@
+import os
+
 from submg.core import (
     init_argparse,
     download_webin,
@@ -11,6 +13,8 @@ def main():
     if args.mode == 'download-webin':
         download_webin()
     elif args.mode == 'makecfg':
+        if os.path.isdir(args.outfile):
+            parser.error(f"Output path '{args.outfile}' is a directory; specify a file.")
         if min(args.submit_samples, args.submit_unpaired_reads,
                args.submit_paired_end_reads) < 0:
             parser.error("Sample and read counts must be non-negative.")
